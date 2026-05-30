@@ -51,10 +51,10 @@ export async function POST(req: NextRequest) {
 
     /* ── system prompt varies by intent ── */
     const systemContent = wantsFullAnalysis
-      ? buildSystemPrompt(approach) +
+      ? buildSystemPrompt(approach, message) +
         '\n\nO terapeuta descreveu um caso clínico. Gere a formulação completa.' +
         '\n\n' + JSON_SCHEMA_INSTRUCTIONS
-      : buildSystemPrompt(approach) +
+      : buildSystemPrompt(approach, message) +
         '\n\nVocê está em modo conversacional. O terapeuta pode estar fazendo uma pergunta, pedindo esclarecimento ou aprofundando um ponto específico.' +
         '\nResponda de forma direta, técnica e acolhedora em texto livre (sem JSON). Máximo 3 parágrafos.';
 

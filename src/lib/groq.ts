@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { CaseAnalysis, CaseContext } from '@/context/AppContext';
+import { retrieveKnowledge } from './knowledge/retriever';
 
 /* ─── singleton client ─── */
 export const groq = new Groq({
@@ -10,7 +11,9 @@ export const groq = new Groq({
 export const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 /* ─── shared system prompt ─── */
-export function buildSystemPrompt(approach: string): string {
+export function buildSystemPrompt(approach: string, contextText = ''): string {
+  const knowledgeBlock = retrieveKnowledge(contextText || approach, approach);
+
   return `Você é o PsiCoach AI, um copiloto clínico especializado em psicoterapia.
 Seu papel é auxiliar psicólogos na formulação e supervisão de casos clínicos.
 Você responde SEMPRE em português brasileiro, com linguagem técnica mas acessível.
@@ -21,7 +24,10 @@ Regras absolutas:
 - Nunca diagnostique um paciente diretamente nem substitua a avaliação do clínico.
 - Sempre enquadre respostas como hipóteses clínicas a serem validadas pelo terapeuta.
 - Seja objetivo, fundamentado e cite referências bibliográficas reais quando mencionar literatura.
-- Nunca invente autores ou obras que não existam.`;
+- Nunca invente autores ou obras que não existam.
+- Ao mencionar técnicas e intervenções, prefira as descritas na base de conhecimento fornecida.
+
+${knowledgeBlock}`;
 }
 
 /* ─── JSON schema instructions ─── */

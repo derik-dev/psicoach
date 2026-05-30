@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: buildSystemPrompt(approach) + '\n\n' + JSON_SCHEMA_INSTRUCTIONS,
+          content: buildSystemPrompt(approach, userMessage) + '\n\n' + JSON_SCHEMA_INSTRUCTIONS,
         },
         {
           role: 'user',
