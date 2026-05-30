@@ -4,31 +4,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp, CaseAnalysis } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import {
-  Brain,
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
-  Play,
-  RotateCcw,
-  Copy,
-  AlertTriangle,
-  HelpCircle,
-  BookOpen,
-  Eye,
-  FileText,
-  TrendingUp,
-  CheckCircle,
-  MessageSquare,
-  LayoutTemplate,
-  Send,
-  User,
-  Bot,
-  Plus,
+  Brain, Sparkles, ChevronDown, ChevronUp, Play, RotateCcw, Copy,
+  AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
+  CheckCircle, MessageSquare, LayoutTemplate, Send, User, Bot, Plus,
+  Target, ChevronRight, X, Shield, Zap,
 } from 'lucide-react';
 
 /* ─────────────────────────── types ─────────────────────────── */
 
 type Mode = 'standard' | 'chat';
+type AtencaoNivel = 'baixo' | 'moderado' | 'alto';
 
 interface ChatMessage {
   id: string;
@@ -38,281 +23,364 @@ interface ChatMessage {
   isLoading?: boolean;
 }
 
-/* ─────────────── shared analysis result card ─────────────── */
+/* ─────────────────────────── helpers ─────────────────────────── */
+
+function deriveAtencao(result: CaseAnalysis): AtencaoNivel {
+  if (result.nivel_atencao) return result.nivel_atencao;
+  const txt = (result.alerts || []).join(' ').toLowerCase();
+  if (
+    txt.includes('suicíd') || txt.includes('homicíd') ||
+    txt.includes('risco de vida') || txt.includes('autolesão') ||
+    txt.includes('auto-lesão')
+  ) return 'alto';
+  if ((result.alerts || []).length > 0) return 'moderado';
+  return 'baixo';
+}
+
+const ATENCAO_CFG: Record<AtencaoNivel, {
+  label: string; sublabel: string;
+  color: string; bg: string; border: string; dot: string;
+}> = {
+  baixo: {
+    label: 'Baixa atenção',
+    sublabel: 'Sem indícios de urgência',
+    color: 'text-emerald-700', bg: 'bg-emerald-50',
+    border: 'border-emerald-200', dot: 'bg-emerald-500',
+  },
+  moderado: {
+    label: 'Atenção moderada',
+    sublabel: 'Pontos que merecem investigação',
+    color: 'text-amber-700', bg: 'bg-amber-50',
+    border: 'border-amber-200', dot: 'bg-amber-500',
+  },
+  alto: {
+    label: 'Atenção clínica alta',
+    sublabel: 'Recomenda-se avaliação cuidadosa',
+    color: 'text-rose-700', bg: 'bg-rose-50',
+    border: 'border-rose-200', dot: 'bg-rose-500',
+  },
+};
+
+/* ══════════════════════ AnalysisCard ══════════════════════ */
+
+type TabId = 'sintese' | 'formulacao' | 'risco' | 'intervencoes' | 'prontuario' | 'referencias';
 
 function AnalysisCard({
-  result,
-  onCopy,
-  copySuccess,
+  result, onCopy, copySuccess,
 }: {
   result: CaseAnalysis;
   onCopy: () => void;
   copySuccess: boolean;
 }) {
+  const [activeTab, setActiveTab] = useState<TabId>('sintese');
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const nivel = deriveAtencao(result);
+  const cfg = ATENCAO_CFG[nivel];
+
+  /* map existing fields → new display structure */
+  const resumo       = result.resumo_rapido   || (result.hypothesis.split('.')[0] + '.');
+  const focoInicial  = result.foco_inicial    || result.approaches[0] || '—';
+  const proxPergunta = result.proxima_pergunta || result.questions[0] || '—';
+  const hipotese     = result.hipotese_central || result.hypothesis;
+  const fatores      = result.fatores_relevantes || result.approaches.slice(0, 5);
+  const plano        = result.plano_imediato   || result.approaches.slice(0, 3);
+  const perguntas    = result.perguntas_clinicas || result.questions.slice(0, 3);
+
+  const tabs: { id: TabId; label: string; content: string }[] = [
+    { id: 'sintese',      label: 'Síntese',          content: result.sintese        || result.blind_spot },
+    { id: 'formulacao',   label: 'Formulação',        content: result.formulacao     || result.hypothesis },
+    { id: 'risco',        label: 'Risco e proteção',  content: result.risco_e_protecao || (result.alerts || []).join('\n') || 'Sem alertas identificados.' },
+    { id: 'intervencoes', label: 'Intervenções',      content: result.intervencoes   || result.approaches.join('\n') },
+    { id: 'prontuario',   label: 'Prontuário',        content: result.prontuario     || '' },
+    { id: 'referencias',  label: 'Referências',       content: result.referencias_texto || result.references.join('\n') },
+  ];
+
+  const activeContent = tabs.find(t => t.id === activeTab)?.content || '';
+
   return (
-    <div className="space-y-5">
-      {/* header */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+    <div className="space-y-3">
+      {/* Card header */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-blue-600" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)]">
+            <Sparkles className="h-3.5 w-3.5" />
+          </div>
           <div>
-            <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest block">
-              Dossiê
-            </span>
-            <h3 className="text-[12px] font-semibold text-slate-600">Formulação Completa</h3>
+            <span className="block text-[9px] font-semibold uppercase tracking-widest text-blue-600">Mapa clínico</span>
+            <h3 className="text-[13px] font-semibold text-slate-800 leading-none mt-0.5">Formulação compacta</h3>
           </div>
         </div>
         <button
           onClick={onCopy}
-          className="px-3 py-2 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 text-slate-600 hover:text-blue-700 transition-all flex items-center gap-1.5 text-xs font-semibold"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
         >
-          <Copy className="w-3.5 h-3.5" />
-          <span>{copySuccess ? 'Copiado' : 'Copiar'}</span>
+          <Copy className="w-3 h-3" />
+          {copySuccess ? 'Copiado!' : 'Copiar'}
         </button>
       </div>
 
-      {/* sections */}
-      <section className="space-y-2">
-        <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-          <span className="p-1 rounded bg-blue-50 text-blue-600">
-            <Brain className="w-3.5 h-3.5" />
-          </span>
-          <span>Hipótese Clínica</span>
-        </h4>
-        <p
-          className="text-[13px] leading-relaxed text-slate-700 p-4 bg-slate-50 border border-slate-100 rounded-2xl italic"
-          style={{ fontFamily: 'Georgia, serif' }}
-        >
-          {result.hypothesis}
-        </p>
-      </section>
-
-      <section className="space-y-2">
-        <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-          <span className="p-1 rounded bg-emerald-50 text-emerald-600">
-            <TrendingUp className="w-3.5 h-3.5" />
-          </span>
-          <span>Intervenções</span>
-        </h4>
-        <div className="space-y-2">
-          {result.approaches.map((app, idx) => (
-            <div
-              key={idx}
-              className="flex gap-3 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[13px] text-slate-600"
-            >
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
-                {idx + 1}
-              </span>
-              <p className="leading-relaxed">{app}</p>
-            </div>
-          ))}
+      {/* ── NÍVEL 1 — 4 mini cards em linha ── */}
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-3">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-blue-600">Resumo rápido</span>
+          <p className="mt-1.5 text-[11px] leading-snug text-blue-950 line-clamp-2">{resumo}</p>
         </div>
-      </section>
 
-      <section className="space-y-2">
-        <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-          <span className="p-1 rounded bg-amber-50 text-amber-500">
-            <HelpCircle className="w-3.5 h-3.5" />
-          </span>
-          <span>Eixos de Questionamento</span>
-        </h4>
-        <div className="space-y-2">
-          {result.questions.map((q, idx) => (
-            <div
-              key={idx}
-              className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[13px] text-slate-700 italic"
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              &ldquo;{q}&rdquo;
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-          <span className="p-1 rounded bg-emerald-50 text-emerald-600">
-            <BookOpen className="w-3.5 h-3.5" />
-          </span>
-          <span>Literatura</span>
-        </h4>
-        <div className="space-y-1.5">
-          {result.references.map((ref, idx) => (
-            <div
-              key={idx}
-              className="p-3 bg-slate-50 rounded-xl text-[12px] text-slate-600 flex gap-2 border border-slate-100"
-            >
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>{ref}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-          <span className="p-1 rounded bg-sky-50 text-sky-600">
-            <Eye className="w-3.5 h-3.5" />
-          </span>
-          <span>Pontos Cegos</span>
-        </h4>
-        <p className="text-[13px] leading-relaxed text-slate-600 p-4 bg-slate-50 border border-slate-100 rounded-2xl border-l-4 border-l-blue-600">
-          {result.blind_spot}
-        </p>
-      </section>
-
-      {result.alerts && result.alerts.length > 0 && (
-        <section className="space-y-2">
-          <h4 className="text-[10px] font-semibold text-rose-600 uppercase tracking-widest flex items-center gap-2">
-            <span className="p-1 rounded bg-rose-50 text-rose-500">
-              <AlertTriangle className="w-3.5 h-3.5" />
-            </span>
-            <span>Alertas</span>
-          </h4>
-          <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl space-y-2">
-            {result.alerts.map((al, idx) => (
-              <div key={idx} className="text-[13px] text-rose-700 leading-relaxed flex gap-2">
-                <span className="font-bold">•</span>
-                <span>{al}</span>
-              </div>
-            ))}
+        <div className={`rounded-2xl border p-3 ${cfg.bg} ${cfg.border}`}>
+          <span className={`text-[9px] font-semibold uppercase tracking-widest ${cfg.color}`}>Atenção clínica</span>
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+            <p className={`text-[11px] font-semibold leading-none ${cfg.color}`}>{cfg.label}</p>
           </div>
-        </section>
+          <p className={`mt-1 text-[9px] leading-snug ${cfg.color} opacity-75`}>{cfg.sublabel}</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-500">Foco inicial</span>
+          <p className="mt-1.5 text-[11px] leading-snug text-slate-700 line-clamp-2">{focoInicial}</p>
+        </div>
+
+        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-amber-600">Próxima pergunta</span>
+          <p className="mt-1.5 text-[11px] italic leading-snug text-slate-700 line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+            &ldquo;{proxPergunta}&rdquo;
+          </p>
+        </div>
+      </div>
+
+      {/* ── NÍVEL 2 — grid 2×2 ── */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
+            <Brain className="h-3 w-3 text-blue-600" />
+            Hipótese central
+          </h4>
+          <p className="text-[11px] italic leading-relaxed text-slate-700 line-clamp-4" style={{ fontFamily: 'Georgia, serif' }}>
+            {hipotese}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
+            <Target className="h-3 w-3 text-purple-600" />
+            Fatores relevantes
+          </h4>
+          <ul className="space-y-1">
+            {fatores.slice(0, 5).map((f, i) => (
+              <li key={i} className="flex gap-1.5 text-[11px] text-slate-600 leading-snug">
+                <span className="mt-1 h-1 w-1 rounded-full bg-blue-400 shrink-0" />
+                <span className="line-clamp-1">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
+            <TrendingUp className="h-3 w-3 text-emerald-600" />
+            Plano imediato
+          </h4>
+          <ol className="space-y-1.5">
+            {plano.slice(0, 3).map((p, i) => (
+              <li key={i} className="flex gap-2 text-[11px] text-slate-600 leading-snug">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
+                  {i + 1}
+                </span>
+                <span className="line-clamp-2">{p}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
+            <HelpCircle className="h-3 w-3 text-amber-600" />
+            Perguntas clínicas
+          </h4>
+          <ul className="space-y-1.5">
+            {perguntas.slice(0, 3).map((q, i) => (
+              <li key={i} className="text-[11px] italic leading-snug text-slate-600 line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+                &ldquo;{q}&rdquo;
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* ── NÍVEL 3 — Abas compactas ── */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200">
+        <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`shrink-0 border-b-2 px-3 py-2 text-[10px] font-semibold transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-600 bg-white text-blue-600'
+                  : 'border-transparent text-slate-500 hover:bg-white/60 hover:text-slate-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="min-h-[72px] bg-white p-3.5">
+          {activeContent ? (
+            <div>
+              <p className="line-clamp-3 text-[12px] leading-relaxed text-slate-600">
+                {activeContent}
+              </p>
+              {activeContent.length > 180 && (
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  Ver análise completa <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <p className="text-[12px] italic text-slate-400">Não disponível para este caso.</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Botões de ação rápida ── */}
+      <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+        <button
+          onClick={onCopy}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+        >
+          <Copy className="w-3 h-3" /> Copiar síntese
+        </button>
+        <button
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+        >
+          <Zap className="w-3 h-3" /> Gerar evolução
+        </button>
+        <button
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+        >
+          <HelpCircle className="w-3 h-3" /> Gerar perguntas
+        </button>
+        <button
+          onClick={() => setModalOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+        >
+          <Eye className="w-3 h-3" /> Ver análise completa
+        </button>
+      </div>
+
+      {/* ── Modal análise completa ── */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl bg-white shadow-2xl">
+            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+              <h3 className="text-sm font-semibold text-slate-800">
+                {tabs.find(t => t.id === activeTab)?.label || 'Análise completa'}
+              </h3>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-[13px] leading-relaxed text-slate-700 whitespace-pre-line">
+                {activeContent}
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-/* ═══════════════════════════ main page ═══════════════════════════ */
+/* ════════════════════ main page ════════════════════ */
 
 export default function NovaAnalise() {
   const { user } = useApp();
   const router = useRouter();
 
-  /* ── mode toggle ── */
   const [mode, setMode] = useState<Mode>('standard');
 
-  /* ── shared config ── */
-  const [sessionsCount, setSessionsCount] = useState('1-5');
+  /* shared config */
+  const [sessionsCount, setSessionsCount]   = useState('1-5');
   const [currentDiagnosis, setCurrentDiagnosis] = useState('');
-  const [alreadyTried, setAlreadyTried] = useState('');
+  const [alreadyTried, setAlreadyTried]     = useState('');
   const [specificQuestion, setSpecificQuestion] = useState('');
   const [customApproach, setCustomApproach] = useState('');
   const [useCustomApproach, setUseCustomApproach] = useState(false);
   const [contextExpanded, setContextExpanded] = useState(false);
 
-  /* ── standard mode state ── */
-  const [title, setTitle] = useState('');
-  const [inputText, setInputText] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  /* standard mode */
+  const [title, setTitle]                   = useState('');
+  const [inputText, setInputText]           = useState('');
+  const [isAnalyzing, setIsAnalyzing]       = useState(false);
   const [analysisResult, setAnalysisResult] = useState<CaseAnalysis | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [errorMessage, setErrorMessage]     = useState<string | null>(null);
+  const [copySuccess, setCopySuccess]       = useState(false);
 
-  /* ── chat mode state ── */
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
+  /* chat mode */
+  const [chatMessages, setChatMessages]   = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput]         = useState('');
   const [isChatSending, setIsChatSending] = useState(false);
-  const [chatCopyId, setChatCopyId] = useState<string | null>(null);
+  const [chatCopyId, setChatCopyId]       = useState<string | null>(null);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-  const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  const bottomRef      = useRef<HTMLDivElement>(null);
+  const chatBottomRef  = useRef<HTMLDivElement>(null);
+  const chatInputRef   = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (user && !useCustomApproach) {
-      setCustomApproach(user.mainApproach);
-    }
+    if (user && !useCustomApproach) setCustomApproach(user.mainApproach);
   }, [user, useCustomApproach]);
 
-  /* scroll to bottom whenever chat changes */
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  /* ─────────────────── standard handlers ─────────────────── */
+  /* ── standard handlers ── */
 
   const handleReset = () => {
-    setTitle('');
-    setInputText('');
-    setSessionsCount('1-5');
-    setCurrentDiagnosis('');
-    setAlreadyTried('');
-    setSpecificQuestion('');
+    setTitle(''); setInputText(''); setSessionsCount('1-5');
+    setCurrentDiagnosis(''); setAlreadyTried(''); setSpecificQuestion('');
     setUseCustomApproach(false);
     setCustomApproach(user?.mainApproach || '');
-    setAnalysisResult(null);
-    setErrorMessage(null);
+    setAnalysisResult(null); setErrorMessage(null);
   };
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText || inputText.trim().length < 10) return;
-
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-    setErrorMessage(null);
+    setIsAnalyzing(true); setAnalysisResult(null); setErrorMessage(null);
 
     const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
-
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title,
-          input_text: inputText,
-          approach,
-          context: {
-            sessions_count: sessionsCount,
-            current_diagnosis: currentDiagnosis,
-            already_tried: alreadyTried,
-            specific_question: specificQuestion,
-          },
+          title, input_text: inputText, approach,
+          context: { sessions_count: sessionsCount, current_diagnosis: currentDiagnosis, already_tried: alreadyTried, specific_question: specificQuestion },
         }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setErrorMessage(data?.error || 'Não foi possível gerar a análise no momento.');
-      } else if (data?.analysis) {
-        setAnalysisResult(data.analysis as CaseAnalysis);
-      } else {
-        setErrorMessage('Resposta inesperada do servidor de IA.');
-      }
+      if (!res.ok)          setErrorMessage(data?.error || 'Não foi possível gerar a análise no momento.');
+      else if (data?.analysis) setAnalysisResult(data.analysis as CaseAnalysis);
+      else                  setErrorMessage('Resposta inesperada do servidor de IA.');
     } catch {
       setErrorMessage('Falha de comunicação com o servidor de IA.');
     } finally {
       setIsAnalyzing(false);
-      setTimeout(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 200);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 200);
     }
   };
 
   const buildCopyText = (result: CaseAnalysis) =>
-    `PsiCoach AI - Análise
-Abordagem: ${useCustomApproach ? customApproach : user?.mainApproach}
-
-HIPÓTESE
-${result.hypothesis}
-
-ABORDAGENS
-${result.approaches.map((a, i) => `${i + 1}. ${a}`).join('\n')}
-
-PERGUNTAS
-${result.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
-
-REFERÊNCIAS
-${result.references.map((r, i) => `${i + 1}. ${r}`).join('\n')}
-
-PONTO CEGO
-${result.blind_spot}
-
-ALERTAS
-${result.alerts.map((a) => `- ${a}`).join('\n')}
-`;
+    `PsiCoach AI — Análise\nAbordagem: ${useCustomApproach ? customApproach : user?.mainApproach}\n\nHIPÓTESE\n${result.hypothesis}\n\nABORDAGENS\n${result.approaches.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\nPERGUNTAS\n${result.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nREFERÊNCIAS\n${result.references.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nPONTO CEGO\n${result.blind_spot}\n\nALERTAS\n${result.alerts.map(a => `- ${a}`).join('\n')}`;
 
   const handleCopyText = () => {
     if (!analysisResult) return;
@@ -321,93 +389,48 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  /* ─────────────────── chat handlers ─────────────────── */
+  /* ── chat handlers ── */
 
-  const handleChatReset = () => {
-    setChatMessages([]);
-    setChatInput('');
-  };
+  const handleChatReset = () => { setChatMessages([]); setChatInput(''); };
 
   const handleChatSend = async () => {
     const text = chatInput.trim();
     if (!text || isChatSending) return;
 
-    const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      text,
-    };
-
-    const loadingMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      text: '',
-      isLoading: true,
-    };
-
-    setChatMessages((prev) => [...prev, userMsg, loadingMsg]);
-    setChatInput('');
-    setIsChatSending(true);
+    const userMsg: ChatMessage   = { id: crypto.randomUUID(), role: 'user', text };
+    const loadingMsg: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', text: '', isLoading: true };
+    setChatMessages(prev => [...prev, userMsg, loadingMsg]);
+    setChatInput(''); setIsChatSending(true);
 
     const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
-
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: text,
-          approach,
-          context: {
-            sessions_count: sessionsCount,
-            current_diagnosis: currentDiagnosis,
-            already_tried: alreadyTried,
-            specific_question: specificQuestion,
-          },
-          history: chatMessages.map((m) => ({ role: m.role, content: m.text })),
+          message: text, approach,
+          context: { sessions_count: sessionsCount, current_diagnosis: currentDiagnosis, already_tried: alreadyTried, specific_question: specificQuestion },
+          history: chatMessages.map(m => ({ role: m.role, content: m.text })),
         }),
       });
-
       const data = await res.json();
-
-      setChatMessages((prev) => {
+      setChatMessages(prev => {
         const updated = [...prev];
-        const idx = updated.findIndex((m) => m.id === loadingMsg.id);
+        const idx = updated.findIndex(m => m.id === loadingMsg.id);
         if (idx === -1) return prev;
-
-        if (!res.ok) {
-          updated[idx] = {
-            ...loadingMsg,
-            isLoading: false,
-            text: data?.error || 'Não foi possível gerar a análise no momento.',
-          };
-        } else if (data?.analysis) {
-          updated[idx] = {
-            ...loadingMsg,
-            isLoading: false,
-            text: 'Aqui está a formulação clínica com base no que você compartilhou:',
-            analysis: data.analysis as CaseAnalysis,
-          };
-        } else {
-          updated[idx] = {
-            ...loadingMsg,
-            isLoading: false,
-            text: data?.reply || 'Resposta inesperada do servidor de IA.',
-          };
-        }
+        if (!res.ok)
+          updated[idx] = { ...loadingMsg, isLoading: false, text: data?.error || 'Não foi possível gerar a análise no momento.' };
+        else if (data?.analysis)
+          updated[idx] = { ...loadingMsg, isLoading: false, text: 'Aqui está a formulação clínica com base no que você compartilhou:', analysis: data.analysis as CaseAnalysis };
+        else
+          updated[idx] = { ...loadingMsg, isLoading: false, text: data?.reply || 'Resposta inesperada do servidor de IA.' };
         return updated;
       });
     } catch {
-      setChatMessages((prev) => {
+      setChatMessages(prev => {
         const updated = [...prev];
-        const idx = updated.findIndex((m) => m.id === loadingMsg.id);
-        if (idx !== -1) {
-          updated[idx] = {
-            ...loadingMsg,
-            isLoading: false,
-            text: 'Falha de comunicação com o servidor de IA.',
-          };
-        }
+        const idx = updated.findIndex(m => m.id === loadingMsg.id);
+        if (idx !== -1) updated[idx] = { ...loadingMsg, isLoading: false, text: 'Falha de comunicação com o servidor de IA.' };
         return updated;
       });
     } finally {
@@ -416,10 +439,7 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
   };
 
   const handleChatKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleChatSend();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend(); }
   };
 
   const handleChatCopy = (msgId: string, result: CaseAnalysis) => {
@@ -428,78 +448,69 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
     setTimeout(() => setChatCopyId(null), 2000);
   };
 
-  /* ── context config panel (shared) ── */
+  void router;
+
+  /* ── shared sub-panels ── */
+
   const ContextPanel = () => (
-    <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/40">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/40">
       <button
         type="button"
         onClick={() => setContextExpanded(!contextExpanded)}
-        className="w-full px-4 py-3 bg-white hover:bg-slate-50 flex items-center justify-between text-[11px] font-semibold text-slate-600 uppercase tracking-widest transition-colors"
+        className="flex w-full items-center justify-between bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-50"
       >
         <span className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-blue-600" />
-          <span>Configurações adicionais</span>
+          <FileText className="h-3.5 w-3.5 text-blue-600" />
+          Configurações adicionais
         </span>
-        {contextExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        {contextExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
       </button>
-
       {contextExpanded && (
-        <div className="p-4 border-t border-slate-100 space-y-4 bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-                Sessões realizadas
-              </label>
+        <div className="space-y-3 border-t border-slate-100 bg-white p-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Sessões</label>
               <select
                 value={sessionsCount}
-                onChange={(e) => setSessionsCount(e.target.value)}
-                className="w-full bg-white border border-slate-200 focus:border-blue-400 rounded-xl px-3 py-2.5 text-xs text-slate-700 outline-none"
+                onChange={e => setSessionsCount(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
               >
-                <option value="1-5">Acolhimento inicial (1-5)</option>
-                <option value="5-10">Aliança terapêutica (5-10)</option>
+                <option value="1-5">Acolhimento (1-5)</option>
+                <option value="5-10">Aliança (5-10)</option>
                 <option value="10-20">Processamento (10-20)</option>
-                <option value="20-50">Elaboração tardia (20-50)</option>
+                <option value="20-50">Elaboração (20-50)</option>
                 <option value="+50">Longa duração (+50)</option>
               </select>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-                Diagnóstico
-              </label>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Diagnóstico</label>
               <input
                 type="text"
                 value={currentDiagnosis}
-                onChange={(e) => setCurrentDiagnosis(e.target.value)}
-                placeholder="Ex: F41.1 (TAG)"
-                className="w-full bg-white border border-slate-200 focus:border-blue-400 rounded-xl px-3 py-2.5 text-xs text-slate-700 outline-none"
+                onChange={e => setCurrentDiagnosis(e.target.value)}
+                placeholder="Ex: F41.1"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
               />
             </div>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-              O que já foi trabalhado?
-            </label>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Já foi trabalhado</label>
             <input
               type="text"
               value={alreadyTried}
-              onChange={(e) => setAlreadyTried(e.target.value)}
+              onChange={e => setAlreadyTried(e.target.value)}
               placeholder="Ex: Psicoeducação do pânico..."
-              className="w-full bg-white border border-slate-200 focus:border-blue-400 rounded-xl px-3 py-2.5 text-xs text-slate-700 outline-none"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-              Dúvida específica
-            </label>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Dúvida específica</label>
             <input
               type="text"
               value={specificQuestion}
-              onChange={(e) => setSpecificQuestion(e.target.value)}
+              onChange={e => setSpecificQuestion(e.target.value)}
               placeholder="Ex: Como lidar com a racionalização?"
-              className="w-full bg-white border border-slate-200 focus:border-blue-400 rounded-xl px-3 py-2.5 text-xs text-slate-700 outline-none"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
             />
           </div>
         </div>
@@ -508,234 +519,222 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
   );
 
   const ApproachPanel = () => (
-    <div className="p-3 rounded-xl bg-slate-50/60 border border-slate-100 space-y-2">
+    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
       <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
+        <div>
           <h4 className="text-[13px] font-semibold text-slate-800">Diretriz teórica</h4>
           <p className="text-[10px] text-slate-400">O vocabulário se adapta à escolha.</p>
         </div>
-        <div className="flex items-center">
+        <label className="flex cursor-pointer items-center gap-2">
           <input
-            id="override-approach"
             type="checkbox"
             checked={useCustomApproach}
-            onChange={(e) => setUseCustomApproach(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+            onChange={e => setUseCustomApproach(e.target.checked)}
+            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />
-          <label
-            htmlFor="override-approach"
-            className="ml-2 text-xs font-semibold text-blue-600 cursor-pointer"
-          >
-            Mudar
-          </label>
-        </div>
+          <span className="text-xs font-semibold text-blue-600">Mudar</span>
+        </label>
       </div>
-
-      {!useCustomApproach ? (
-        <div className="flex items-center gap-2 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 p-2.5 rounded-xl">
-          <CheckCircle className="w-4 h-4 text-emerald-500" />
-          <span>Padrão: {user?.mainApproach || 'Não definida'}</span>
-        </div>
-      ) : (
-        <select
-          value={customApproach}
-          onChange={(e) => setCustomApproach(e.target.value)}
-          className="w-full bg-white border border-slate-200 focus:border-blue-400 rounded-xl px-3 py-2.5 text-xs text-slate-700 outline-none"
-        >
-          <option value="TCC (Terapia Cognitivo-Comportamental)">TCC</option>
-          <option value="Psicanálise">Psicanálise</option>
-          <option value="Humanista / Fenomenologia">Humanista</option>
-          <option value="Sistêmica / Terapia Familiar">Sistêmica</option>
-          <option value="Gestalt-terapia">Gestalt</option>
-          <option value="Junguiana / Psicologia Analítica">Junguiana</option>
-        </select>
-      )}
+      <div className="mt-2">
+        {!useCustomApproach ? (
+          <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 p-2.5 text-xs font-medium text-blue-700">
+            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+            <span>Padrão: {user?.mainApproach || 'Não definida'}</span>
+          </div>
+        ) : (
+          <select
+            value={customApproach}
+            onChange={e => setCustomApproach(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-blue-400"
+          >
+            <option value="TCC (Terapia Cognitivo-Comportamental)">TCC</option>
+            <option value="Psicanálise">Psicanálise</option>
+            <option value="Humanista / Fenomenologia">Humanista</option>
+            <option value="Sistêmica / Terapia Familiar">Sistêmica</option>
+            <option value="Gestalt-terapia">Gestalt</option>
+            <option value="Junguiana / Psicologia Analítica">Junguiana</option>
+          </select>
+        )}
+      </div>
     </div>
   );
 
-  // Avoid TS unused warning
-  void router;
-
   /* ══════════════════════════ render ══════════════════════════ */
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div className="space-y-1.5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
           <h1 className="page-headline">
             Nova <span className="page-headline-accent">análise.</span>
           </h1>
-          <p className="text-slate-500 text-sm max-w-xl">
+          <p className="mt-1 text-sm text-slate-500">
             Forneça as anotações do paciente. A IA estruturará o caso sob um olhar científico.
           </p>
         </div>
 
         {/* Mode toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-100 border border-slate-200 self-start sm:self-auto shrink-0">
+        <div className="flex shrink-0 items-center gap-1 self-start rounded-2xl border border-slate-200 bg-slate-100 p-1 sm:self-auto">
           <button
             onClick={() => setMode('standard')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${
               mode === 'standard'
-                ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
+                ? 'border border-slate-200 bg-white text-blue-600 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            <LayoutTemplate className="w-4 h-4" />
-            <span>Padrão</span>
+            <LayoutTemplate className="h-4 w-4" /> Padrão
           </button>
           <button
             onClick={() => setMode('chat')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${
               mode === 'chat'
-                ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
+                ? 'border border-slate-200 bg-white text-blue-600 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            <MessageSquare className="w-4 h-4" />
-            <span>Chat</span>
+            <MessageSquare className="h-4 w-4" /> Chat
           </button>
         </div>
       </div>
 
       {/* ══════════════ STANDARD MODE ══════════════ */}
       {mode === 'standard' && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-          {/* LEFT: Input form */}
-          <div className="space-y-5 bg-white border border-slate-100 rounded-3xl shadow-sm p-6 lg:p-7">
-            <form onSubmit={handleAnalyze} className="space-y-3.5">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[2fr_3fr]">
+
+          {/* ── Coluna esquerda — Entrada do caso ── */}
+          <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+            {/* Section header */}
+            <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <FileText className="h-3.5 w-3.5" />
+              </div>
+              <h2 className="text-[13px] font-semibold text-slate-800">Entrada do caso</h2>
+            </div>
+
+            <form onSubmit={handleAnalyze} className="space-y-3">
+              {/* Pseudônimo */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
                   Pseudônimo (opcional)
                 </label>
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex: Caso G. - Fobia Social"
-                  className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder="Ex: Caso G. — Fobia Social"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
-              <div className="space-y-1.5">
+              {/* Relato clínico */}
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                    <span>Relato clínico</span>
-                    <span className="text-rose-500">*</span>
+                  <label className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                    Relato clínico <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    {inputText.length} car. ({'>'} 200 recomendado)
+                  <span className={`text-[10px] font-medium ${inputText.length >= 200 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {inputText.length} car.
                   </span>
                 </div>
                 <textarea
                   required
                   rows={6}
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  onChange={e => setInputText(e.target.value)}
                   placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
-                  className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-2xl px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all resize-y leading-relaxed"
+                  className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
+                {inputText.length > 0 && inputText.length < 200 && (
+                  <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
+                )}
               </div>
 
               <ContextPanel />
               <ApproachPanel />
 
-              <div className="flex items-center gap-3">
+              {/* Aviso anonimização */}
+              <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                <Shield className="h-3 w-3 shrink-0 text-slate-400" />
+                <p className="text-[10px] text-slate-500">Use apenas dados anonimizados.</p>
+              </div>
+
+              {/* Botões */}
+              <div className="flex items-center gap-2 pt-1">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold transition-all"
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Limpar</span>
+                  <RotateCcw className="h-4 w-4" /> Limpar
                 </button>
-
                 <button
                   type="submit"
                   disabled={inputText.trim().length < 10 || isAnalyzing}
-                  className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
+                  className="inline-flex flex-[2] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
                 >
                   {isAnalyzing ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Processando...</span>
-                    </>
+                    <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Processando...</>
                   ) : (
-                    <>
-                      <Play className="w-4 h-4 fill-current" />
-                      <span>Gerar Análise</span>
-                    </>
+                    <><Play className="h-4 w-4 fill-current" /> Gerar análise</>
                   )}
                 </button>
               </div>
             </form>
           </div>
 
-          {/* RIGHT: Output */}
-          <div className="space-y-6">
+          {/* ── Coluna direita — Resultado ── */}
+          <div className="xl:sticky xl:top-6">
             {errorMessage ? (
-              <div className="h-[580px] rounded-3xl border border-rose-200 bg-rose-50/40 flex flex-col items-center justify-center text-center p-8 space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                  <AlertTriangle className="w-7 h-7" />
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+                  <AlertTriangle className="h-7 w-7" />
                 </div>
-                <div className="space-y-2 max-w-sm">
-                  <h3 className="text-base font-semibold text-rose-700">Análise indisponível</h3>
-                  <p className="text-[13px] text-rose-600 leading-relaxed">{errorMessage}</p>
-                  <p className="text-[11px] text-slate-500">
-                    Tente novamente em instantes. A integração com a IA está sendo finalizada.
-                  </p>
-                </div>
+                <h3 className="text-base font-semibold text-rose-700">Análise indisponível</h3>
+                <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-rose-600">{errorMessage}</p>
+                <p className="mt-2 text-[11px] text-slate-500">Tente novamente em instantes.</p>
               </div>
+
             ) : !isAnalyzing && !analysisResult ? (
-              <div className="h-[580px] rounded-3xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-center p-8 space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
-                  <Brain className="w-7 h-7" />
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
+                  <Brain className="h-7 w-7" />
                 </div>
-                <div className="space-y-2 max-w-sm">
-                  <h3 className="text-base font-semibold text-slate-800">Dossiê vazio</h3>
-                  <p className="text-[13px] text-slate-500 leading-relaxed">
-                    Digite seu relato e clique em{' '}
-                    <strong className="text-slate-700">Gerar Análise</strong>. O copiloto formulará
-                    a hipótese e indicará eixos terapêuticos.
-                  </p>
-                </div>
+                <h3 className="text-base font-semibold text-slate-800">Dossiê vazio</h3>
+                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-slate-500">
+                  Digite o relato e clique em <strong className="text-slate-700">Gerar análise</strong>. O copiloto formulará a hipótese e indicará eixos terapêuticos.
+                </p>
               </div>
+
             ) : isAnalyzing ? (
-              <div className="h-[580px] rounded-3xl border border-slate-100 bg-white shadow-sm flex flex-col items-center justify-center text-center p-8 space-y-5">
-                <div className="relative">
-                  <div className="absolute -inset-4 rounded-full bg-blue-100 blur-2xl animate-ping" />
-                  <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center relative">
-                    <Brain className="w-8 h-8 animate-pulse" />
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+                <div className="relative mb-5">
+                  <div className="absolute -inset-4 animate-ping rounded-full bg-blue-100 blur-2xl" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                    <Brain className="h-8 w-8 animate-pulse" />
                   </div>
                 </div>
-                <div className="space-y-2 max-w-sm">
-                  <span className="section-badge">Processando</span>
-                  <h3 className="text-base font-semibold text-slate-800 mt-2">
-                    Tecendo formulações clínicas...
-                  </h3>
-                  <p className="text-[12px] text-slate-500 leading-relaxed">
-                    Mapeando afetos e estruturação psíquica no modelo de{' '}
-                    <span className="text-blue-600 font-semibold">
-                      {useCustomApproach ? customApproach : user?.mainApproach}
-                    </span>
-                    .
-                  </p>
-                </div>
-                <div className="w-40 bg-slate-100 rounded-full h-1 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-blue-600 animate-pulse"
-                    style={{ width: '70%' }}
-                  />
+                <span className="section-badge">Processando</span>
+                <h3 className="mt-3 text-base font-semibold text-slate-800">Tecendo formulações clínicas...</h3>
+                <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-slate-500">
+                  Mapeando afetos no modelo de{' '}
+                  <span className="font-semibold text-blue-600">
+                    {useCustomApproach ? customApproach : user?.mainApproach}
+                  </span>.
+                </p>
+                <div className="mt-5 h-1 w-40 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full w-[70%] animate-pulse rounded-full bg-blue-600" />
                 </div>
               </div>
+
             ) : analysisResult ? (
-              <div className="space-y-6">
-                <div className="p-7 rounded-3xl bg-white border border-slate-100 shadow-sm space-y-6">
-                  <AnalysisCard
-                    result={analysisResult}
-                    onCopy={handleCopyText}
-                    copySuccess={copySuccess}
-                  />
-                </div>
+              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+                <AnalysisCard
+                  result={analysisResult}
+                  onCopy={handleCopyText}
+                  copySuccess={copySuccess}
+                />
                 <div ref={bottomRef} />
               </div>
             ) : null}
@@ -745,81 +744,57 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
 
       {/* ══════════════ CHAT MODE ══════════════ */}
       {mode === 'chat' && (
-        <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-6 items-start">
-          {/* LEFT: Sidebar with shared config */}
-          <div className="space-y-4 bg-white border border-slate-100 rounded-3xl shadow-sm p-5">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center">
-                <Brain className="w-4 h-4" />
+        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[320px_1fr]">
+
+          {/* Left: config panel */}
+          <div className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white">
+                <Brain className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                  Copiloto clínico
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Copiloto clínico</p>
                 <p className="text-[12px] font-semibold text-slate-800">Modo conversação</p>
               </div>
             </div>
-
             <ContextPanel />
             <ApproachPanel />
-
             <button
               onClick={handleChatReset}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold transition-all"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
             >
-              <Plus className="w-4 h-4" />
-              <span>Nova conversa</span>
+              <Plus className="h-4 w-4" /> Nova conversa
             </button>
-
-            {/* tips */}
-            <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-100 space-y-2">
-              <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">
-                Dica
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-600">Dica</p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-blue-700">
+                Descreva o caso livremente. Você pode fazer perguntas, pedir novas intervenções ou aprofundar hipóteses.
               </p>
-              <p className="text-[11px] text-blue-700 leading-relaxed">
-                Descreva o caso livremente. Você pode fazer perguntas, pedir novas intervenções ou
-                aprofundar hipóteses ao longo da conversa.
-              </p>
-              <p className="text-[10px] text-blue-500">Enter para enviar · Shift+Enter para quebrar linha</p>
+              <p className="mt-1.5 text-[10px] text-blue-500">Enter para enviar · Shift+Enter para nova linha</p>
             </div>
           </div>
 
-          {/* RIGHT: Chat window */}
-          <div className="bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col overflow-hidden"
-            style={{ height: 'calc(100vh - 220px)', minHeight: '520px' }}>
-
-            {/* messages area */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          {/* Right: chat window */}
+          <div
+            className="flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm"
+            style={{ height: 'calc(100vh - 220px)', minHeight: '520px' }}
+          >
+            <div className="flex-1 space-y-5 overflow-y-auto p-5">
               {chatMessages.length === 0 ? (
-                /* empty state */
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
-                    <MessageSquare className="w-7 h-7" />
+                <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
+                    <MessageSquare className="h-7 w-7" />
                   </div>
-                  <div className="space-y-2 max-w-sm">
-                    <h3 className="text-base font-semibold text-slate-800">
-                      Inicie a conversa
-                    </h3>
-                    <p className="text-[13px] text-slate-500 leading-relaxed">
-                      Descreva o caso do seu paciente como se estivesse conversando com um
-                      supervisor. A IA responderá com formulação clínica completa.
-                    </p>
-                  </div>
-
-                  {/* suggestion chips */}
-                  <div className="flex flex-wrap gap-2 justify-center pt-2">
-                    {[
-                      'Paciente com queixas de ansiedade intensa...',
-                      'Preciso de ajuda com um caso de fobia...',
-                      'Tenho um caso de luto complicado...',
-                    ].map((s) => (
+                  <h3 className="text-base font-semibold text-slate-800">Inicie a conversa</h3>
+                  <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-slate-500">
+                    Descreva o caso como se estivesse conversando com um supervisor. A IA responderá com formulação clínica completa.
+                  </p>
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    {['Paciente com queixas de ansiedade intensa...', 'Preciso de ajuda com um caso de fobia...', 'Tenho um caso de luto complicado...'].map(s => (
                       <button
                         key={s}
-                        onClick={() => {
-                          setChatInput(s);
-                          chatInputRef.current?.focus();
-                        }}
-                        className="px-3.5 py-2 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-[12px] text-slate-600 hover:text-blue-700 transition-all font-medium"
+                        onClick={() => { setChatInput(s); chatInputRef.current?.focus(); }}
+                        className="rounded-xl border border-slate-200 px-3.5 py-2 text-[12px] font-medium text-slate-600 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
                       >
                         {s}
                       </button>
@@ -827,52 +802,32 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
                   </div>
                 </div>
               ) : (
-                chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                  >
-                    {/* avatar */}
-                    <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                        msg.role === 'user'
-                          ? 'bg-slate-200 text-slate-600'
-                          : 'bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.28)]'
-                      }`}
-                    >
-                      {msg.role === 'user' ? (
-                        <User className="w-4 h-4" />
-                      ) : (
-                        <Bot className="w-4 h-4" />
-                      )}
+                chatMessages.map(msg => (
+                  <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${msg.role === 'user' ? 'bg-slate-200 text-slate-600' : 'bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.28)]'}`}>
+                      {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                     </div>
-
-                    {/* bubble */}
-                    <div className={`max-w-[80%] space-y-3 ${msg.role === 'user' ? 'items-end flex flex-col' : ''}`}>
+                    <div className={`max-w-[80%] space-y-3 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}>
                       {msg.isLoading ? (
-                        /* typing indicator */
-                        <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-white border border-slate-100 shadow-sm flex items-center gap-2">
+                        <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm border border-slate-100 bg-white px-4 py-3 shadow-sm">
                           <div className="flex gap-1">
-                            <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                            {[0, 150, 300].map(d => <span key={d} className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: `${d}ms` }} />)}
                           </div>
                           <span className="text-[12px] text-slate-400">Tecendo formulação...</span>
                         </div>
                       ) : msg.role === 'user' ? (
-                        <div className="px-4 py-3 rounded-2xl rounded-tr-sm bg-blue-600 text-white text-[13px] leading-relaxed">
+                        <div className="rounded-2xl rounded-tr-sm bg-blue-600 px-4 py-3 text-[13px] leading-relaxed text-white">
                           {msg.text}
                         </div>
                       ) : (
-                        /* assistant: text + optional analysis card */
                         <div className="space-y-3">
                           {msg.text && (
-                            <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-white border border-slate-100 shadow-sm text-[13px] text-slate-700 leading-relaxed">
+                            <div className="rounded-2xl rounded-tl-sm border border-slate-100 bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-700 shadow-sm">
                               {msg.text}
                             </div>
                           )}
                           {msg.analysis && (
-                            <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm">
+                            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                               <AnalysisCard
                                 result={msg.analysis}
                                 onCopy={() => handleChatCopy(msg.id, msg.analysis!)}
@@ -880,14 +835,11 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
                               />
                             </div>
                           )}
-                          {!msg.analysis && msg.text && (
-                            /* error / plain message */
-                            msg.text.includes('IA') || msg.text.includes('servidor') ? (
-                              <div className="flex items-start gap-2 px-4 py-3 rounded-2xl rounded-tl-sm bg-rose-50 border border-rose-100 text-[12px] text-rose-700">
-                                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                                {msg.text}
-                              </div>
-                            ) : null
+                          {!msg.analysis && msg.text && (msg.text.includes('IA') || msg.text.includes('servidor')) && (
+                            <div className="flex items-start gap-2 rounded-2xl rounded-tl-sm border border-rose-100 bg-rose-50 px-4 py-3 text-[12px] text-rose-700">
+                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                              {msg.text}
+                            </div>
                           )}
                         </div>
                       )}
@@ -898,27 +850,27 @@ ${result.alerts.map((a) => `- ${a}`).join('\n')}
               <div ref={chatBottomRef} />
             </div>
 
-            {/* input area */}
+            {/* Chat input */}
             <div className="border-t border-slate-100 p-4">
-              <div className="flex gap-3 items-end">
+              <div className="flex items-end gap-3">
                 <textarea
                   ref={chatInputRef}
                   rows={2}
                   value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
+                  onChange={e => setChatInput(e.target.value)}
                   onKeyDown={handleChatKeyDown}
                   placeholder="Descreva o caso ou faça uma pergunta ao copiloto..."
-                  className="flex-1 bg-slate-50 border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-2xl px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all resize-none leading-relaxed"
+                  className="flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
                 <button
                   onClick={handleChatSend}
                   disabled={!chatInput.trim() || isChatSending}
-                  className="w-11 h-11 rounded-2xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 disabled:cursor-not-allowed text-white flex items-center justify-center transition-all shadow-[0_8px_20px_rgba(37,99,235,0.28)] hover:-translate-y-0.5 shrink-0"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:shadow-none"
                 >
                   {isChatSending ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <Send className="h-4 w-4" />
                   )}
                 </button>
               </div>

@@ -17,6 +17,22 @@ export interface CaseAnalysis {
   references: string[];
   blind_spot: string;
   alerts: string[];
+  // Extended fields returned by the new API response format (optional)
+  resumo_rapido?: string;
+  nivel_atencao?: 'baixo' | 'moderado' | 'alto';
+  foco_inicial?: string;
+  proxima_pergunta?: string;
+  hipotese_central?: string;
+  fatores_relevantes?: string[];
+  plano_imediato?: string[];
+  perguntas_clinicas?: string[];
+  tags?: string[];
+  sintese?: string;
+  formulacao?: string;
+  risco_e_protecao?: string;
+  intervencoes?: string;
+  prontuario?: string;
+  referencias_texto?: string;
 }
 
 export interface CaseMessage {
