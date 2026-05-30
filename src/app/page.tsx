@@ -23,7 +23,10 @@ import {
   ChevronRight,
   ChevronDown,
   Star,
-  Sun
+  Sun,
+  Linkedin,
+  Twitter,
+  Instagram
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -509,23 +512,46 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer
-        className="relative text-white"
+        className="relative text-white flex flex-col"
         style={{
           backgroundImage: "url('/imagens/imagem-bg-pc-ft.png')",
-          backgroundSize: '100% auto',
+          backgroundSize: 'cover',
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat',
-          backgroundColor: '#4a7cf7',
+          backgroundColor: '#5b8cf5',
+          minHeight: '520px',
         }}
       >
-        <div className="max-w-6xl mx-auto px-6 py-16 flex flex-col items-center gap-10">
-          <div className="flex items-center gap-6 flex-wrap justify-center text-white/70 text-sm font-medium">
+        {/* Nav pill no topo */}
+        <div className="flex justify-center pt-10">
+          <nav className="flex items-center gap-8 rounded-full border border-white/30 bg-white/20 px-8 py-3 text-[12px] font-medium text-white/80 backdrop-blur-sm">
             <Link href="#diferenciais" className="hover:text-white transition-colors">Recursos</Link>
             <Link href="#abordagens" className="hover:text-white transition-colors">Abordagens</Link>
             <Link href="/pricing" className="hover:text-white transition-colors">Preços</Link>
             <Link href="#depoimentos" className="hover:text-white transition-colors">Depoimentos</Link>
-          </div>
+          </nav>
+        </div>
 
+        {/* Espaço central — a imagem tem o texto grande */}
+        <div className="flex-1" />
+
+        {/* Rodapé: ícones sociais + copyright */}
+        <div className="flex flex-col items-center gap-5 pb-10">
+          <div className="flex items-center gap-3">
+            {[
+              { icon: <Linkedin className="w-4 h-4" />, href: '#' },
+              { icon: <Twitter className="w-4 h-4" />, href: '#' },
+              { icon: <Instagram className="w-4 h-4" />, href: '#' },
+            ].map((s, i) => (
+              <a
+                key={i}
+                href={s.href}
+                className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white hover:bg-white/25 transition-colors backdrop-blur-sm"
+              >
+                {s.icon}
+              </a>
+            ))}
+          </div>
           <p className="text-white/50 text-xs">© 2026 PsiCoach AI. Todos os direitos reservados.</p>
         </div>
       </footer>
