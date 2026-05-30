@@ -515,7 +515,7 @@ export default function LandingPage() {
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat',
-          backgroundColor: '#5b8cf5',
+          backgroundColor: '#f4f6f9',
           minHeight: '780px',
         }}
       >
