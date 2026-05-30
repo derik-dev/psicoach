@@ -508,21 +508,25 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 py-12 bg-white text-slate-450 text-xs">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shadow shadow-blue-650/15">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold text-sm text-slate-900">PsiCoach AI</span>
+      <footer
+        className="relative text-white"
+        style={{
+          backgroundImage: "url('/imagens/imagem-bg-pc-ft.png')",
+          backgroundSize: '100% auto',
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: '#4a7cf7',
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 py-16 flex flex-col items-center gap-10">
+          <div className="flex items-center gap-6 flex-wrap justify-center text-white/70 text-sm font-medium">
+            <Link href="#diferenciais" className="hover:text-white transition-colors">Recursos</Link>
+            <Link href="#abordagens" className="hover:text-white transition-colors">Abordagens</Link>
+            <Link href="/pricing" className="hover:text-white transition-colors">Preços</Link>
+            <Link href="#depoimentos" className="hover:text-white transition-colors">Depoimentos</Link>
           </div>
 
-          <div className="flex items-center gap-6 flex-wrap justify-center text-slate-550 font-medium">
-            <span>© 2026 PsiCoach AI. Todos os direitos reservados.</span>
-            <Link href="/pricing" className="hover:text-blue-600 transition-colors">Preços</Link>
-            <Link href="/login" className="hover:text-blue-600 transition-colors">Login</Link>
-            <Link href="/cadastro" className="hover:text-blue-600 transition-colors">Cadastro</Link>
-          </div>
+          <p className="text-white/50 text-xs">© 2026 PsiCoach AI. Todos os direitos reservados.</p>
         </div>
       </footer>
 
