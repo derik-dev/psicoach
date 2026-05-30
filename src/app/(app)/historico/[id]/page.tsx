@@ -48,19 +48,26 @@ export default function IndividualCase() {
     }
   }, [c]);
 
-  useEffect(() => {
-    if (c === undefined && cases.length > 0) {
-      router.push('/historico');
-    }
-  }, [c, cases, router]);
-
   if (!c) {
     return (
-      <div className="flex h-[450px] items-center justify-center text-slate-500 text-sm">
-        Carregando dados do caso clínico...
+      <div className="flex flex-col items-center justify-center h-[450px] gap-4 text-center px-6">
+        <h2 className="text-xl font-light text-slate-800">Caso não encontrado.</h2>
+        <p className="text-sm text-slate-500 max-w-md">
+          Este caso clínico pode ter sido removido ou o link está incorreto.
+        </p>
+        <Link
+          href="/historico"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Voltar ao histórico</span>
+        </Link>
       </div>
     );
   }
+
+  // suppress unused router warning
+  void router;
 
   const handleSaveNotes = () => {
     updateCase(c.id, { notes });
@@ -116,34 +123,37 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const [chatError, setChatError] = useState<string | null>(null);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
 
     const userText = chatMessage;
     setChatMessage('');
-    addChatMessage(c.id, 'user', userText);
+    setChatError(null);
+    await addChatMessage(c.id, 'user', userText);
     setIsSendingMessage(true);
 
-    setTimeout(() => {
-      let botResponse = '';
-      if (userText.toLowerCase().includes('transferencia') || userText.toLowerCase().includes('transferência')) {
-        botResponse = 'Na clínica sob transferência, recomendo observar como o paciente projeta em você as demandas de aprovação infantil. Evite ocupar o lugar do juiz (Superego). Em vez disso, aponte em ato: "Você percebe que se preocupa em falar o que acha que eu gostaria de ouvir?". Isso desloca o sujeito para a própria implicação subjetiva.';
-      } else if (userText.toLowerCase().includes('resistencia') || userText.toLowerCase().includes('resistência')) {
-        botResponse = 'A resistência sinaliza que nos aproximamos de um núcleo doloroso (o trauma ou a fantasia nuclear). Na TCC, valide a dor ("Compreendo que seja muito difícil falar sobre isso") antes de insistir na exposição. Reduza o nível do experimento comportamental na escala de ansiedade, garantindo que o paciente sinta que tem controle sobre o processo.';
-      } else if (userText.toLowerCase().includes('famili') || userText.toLowerCase().includes('pais') || userText.toLowerCase().includes('mãe')) {
-        botResponse = 'Excelente ponto. As figuras parentais estabeleceram a "matriz de apego" do paciente. Investigue as regras implícitas estabelecidas pelo clã familiar: "Para ser amado neste clã, eu preciso sofrer/ser perfeito?". A neurose do paciente é a tentativa de responder a essa demanda infantil para assegurar o amor do outro.';
-      } else {
-        botResponse = `Essa é uma excelente reflexão clínica. Considerando a abordagem de ${c.approach_used}, recomendo que na próxima sessão você foque em desacelerar o ritmo e permitir que o paciente explore essa dúvida em primeira pessoa. O segredo é não fornecer respostas imediatas, mas atuar como o espelho que reflete as próprias incongruências estruturais do discurso dele. Como você se sente conduzindo essa intervenção?`;
+    try {
+      // TODO: substituir por endpoint real de follow-up quando a IA estiver integrada.
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ case_id: c.id, message: userText, approach: c.approach_used }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setChatError(data?.error || 'Não foi possível obter resposta da IA.');
       }
-
-      addChatMessage(c.id, 'assistant', botResponse);
+    } catch {
+      setChatError('Falha de comunicação com o servidor de IA.');
+    } finally {
       setIsSendingMessage(false);
-
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
-    }, 1500);
+    }
   };
 
   return (
@@ -396,6 +406,12 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
                   <p className="whitespace-pre-line">{msg.content}</p>
                 </div>
               ))
+            )}
+
+            {chatError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-[11px] text-rose-700 leading-relaxed">
+                {chatError}
+              </div>
             )}
 
             {isSendingMessage && (

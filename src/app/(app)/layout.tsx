@@ -14,8 +14,7 @@ import {
   Menu,
   X,
   Sparkles,
-  Lock,
-  MessageSquare
+  Lock
 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -39,7 +38,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Nova Análise', href: '/nova-analise', icon: PlusCircle, highlight: true },
-    { name: 'Chat Livre', href: '/chat', icon: MessageSquare },
     { name: 'Histórico', href: '/historico', icon: FolderHeart },
     { name: 'Biblioteca', href: '/biblioteca', icon: BookOpen },
     { name: 'Configurações', href: '/configuracoes', icon: Settings }

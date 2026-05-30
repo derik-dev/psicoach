@@ -40,7 +40,7 @@ export default function Dashboard() {
 
   const totalCases = cases.length;
   const remaining = analysesLimit !== null ? Math.max(0, analysesLimit - analysesUsed) : 'Ilimitado';
-  const recentCases = cases.slice(0, 3);
+  const recentCases = cases.slice(0, 5);
 
   const rotateTip = () => {
     setTipIndex((prev) => (prev + 1) % CLINICAL_TIPS.length);
@@ -78,7 +78,7 @@ export default function Dashboard() {
           { label: 'Consultas IA', value: analysesUsed, icon: FileText, sub: 'Total executadas', color: 'text-blue-600' },
           { label: 'Disponíveis', value: remaining, icon: Layers, sub: activePlan === 'starter' ? 'No plano mensal' : 'Plano Pro', color: 'text-emerald-500' },
           { label: 'Casos Salvos', value: totalCases, icon: Bookmark, sub: 'Sob sigilo', color: 'text-amber-500' },
-          { label: 'Assinatura', value: 'Ativa', icon: Calendar, sub: 'Em dia', color: 'text-rose-400' }
+          { label: 'Plano', value: activePlan.charAt(0).toUpperCase() + activePlan.slice(1), icon: Calendar, sub: 'Assinatura atual', color: 'text-rose-400' }
         ].map(({ label, value, icon: Icon, sub, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-4">
             <div className="flex items-center justify-between">
