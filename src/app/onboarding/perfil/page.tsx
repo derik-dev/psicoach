@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { ArrowRight, Star, Users } from 'lucide-react';
+import { ArrowRight, Star, Users, AlertCircle } from 'lucide-react';
 
 const SPECIALTIES = [
   'Ansiedade e Pânico',
@@ -20,41 +20,53 @@ export default function OnboardingPerfil() {
   const { user, setUser } = useApp();
   const router = useRouter();
 
-  const [experience, setExperience] = useState('1-2');
-  const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
+  const [experience, setExperience]                   = useState('1-2');
+  const [selectedPatients, setSelectedPatients]       = useState<string[]>([]);
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [saving, setSaving]                           = useState(false);
+  const [saveError, setSaveError]                     = useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    }
+  useEffect(() => {
+    if (!user) { router.push('/login'); return; }
+    if (user.yearsExperience)       setExperience(user.yearsExperience);
+    if (user.patientTypes?.length)  setSelectedPatients(user.patientTypes);
+    if (user.specialties?.length)   setSelectedSpecialties(user.specialties);
   }, [user, router]);
 
   if (!user) return null;
 
-  const togglePatient = (type: string) => {
-    setSelectedPatients((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+  const togglePatient = (type: string) =>
+    setSelectedPatients(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
     );
-  };
 
-  const toggleSpecialty = (spec: string) => {
-    setSelectedSpecialties((prev) =>
-      prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]
+  const toggleSpecialty = (spec: string) =>
+    setSelectedSpecialties(prev =>
+      prev.includes(spec) ? prev.filter(s => s !== spec) : [...prev, spec]
     );
-  };
 
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
 
-    await setUser({
-      ...user,
-      yearsExperience: experience,
-      patientTypes: selectedPatients,
-      specialties: selectedSpecialties
-    });
-
-    router.push('/onboarding/abordagem');
+    try {
+      await setUser({
+        ...user,
+        yearsExperience: experience,
+        patientTypes: selectedPatients,
+        specialties: selectedSpecialties,
+      });
+      router.push('/onboarding/abordagem');
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível salvar. Verifique sua conexão e tente novamente.'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -79,6 +91,13 @@ export default function OnboardingPerfil() {
           </p>
         </div>
 
+        {saveError && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+            <p className="text-sm text-rose-700">{saveError}</p>
+          </div>
+        )}
+
         <form onSubmit={handleNext} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
@@ -87,7 +106,7 @@ export default function OnboardingPerfil() {
             </label>
             <select
               value={experience}
-              onChange={(e) => setExperience(e.target.value)}
+              onChange={e => setExperience(e.target.value)}
               className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all"
             >
               <option value="1-2">Recém-formada (1 a 2 anos)</option>
@@ -103,7 +122,7 @@ export default function OnboardingPerfil() {
               <span>Quem você atende?</span>
             </label>
             <div className="grid grid-cols-2 gap-2.5">
-              {['Adultos', 'Adolescentes', 'Crianças', 'Casais'].map((type) => {
+              {['Adultos', 'Adolescentes', 'Crianças', 'Casais'].map(type => {
                 const isSelected = selectedPatients.includes(type);
                 return (
                   <button
@@ -129,7 +148,7 @@ export default function OnboardingPerfil() {
               <span>Áreas de foco / especialidades</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {SPECIALTIES.map((spec) => {
+              {SPECIALTIES.map(spec => {
                 const isSelected = selectedSpecialties.includes(spec);
                 return (
                   <button
@@ -151,10 +170,14 @@ export default function OnboardingPerfil() {
 
           <button
             type="submit"
-            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
+            disabled={saving}
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:shadow-none"
           >
-            <span>Continuar para Abordagem</span>
-            <ArrowRight className="w-4 h-4" />
+            {saving ? (
+              <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Salvando...</>
+            ) : (
+              <><span>Continuar para Abordagem</span><ArrowRight className="w-4 h-4" /></>
+            )}
           </button>
         </form>
       </div>

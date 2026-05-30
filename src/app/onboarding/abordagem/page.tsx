@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { ArrowRight, ArrowLeft, Award, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Award, Sparkles, AlertCircle } from 'lucide-react';
 
 const APPROACHES = [
   {
@@ -37,26 +37,39 @@ export default function OnboardingAbordagem() {
   const router = useRouter();
 
   const [selectedApproach, setSelectedApproach] = useState('TCC (Terapia Cognitivo-Comportamental)');
-  const [description, setDescription] = useState('');
+  const [description, setDescription]           = useState('');
+  const [saving, setSaving]                     = useState(false);
+  const [saveError, setSaveError]               = useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    }
+  useEffect(() => {
+    if (!user) { router.push('/login'); return; }
+    if (user.mainApproach)          setSelectedApproach(user.mainApproach);
+    if (user.approachDescription)   setDescription(user.approachDescription);
   }, [user, router]);
 
   if (!user) return null;
 
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
 
-    await setUser({
-      ...user,
-      mainApproach: selectedApproach,
-      approachDescription: description
-    });
-
-    router.push('/onboarding/tour');
+    try {
+      await setUser({
+        ...user,
+        mainApproach: selectedApproach,
+        approachDescription: description,
+      });
+      router.push('/onboarding/tour');
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível salvar. Verifique sua conexão e tente novamente.'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -81,9 +94,16 @@ export default function OnboardingAbordagem() {
           </p>
         </div>
 
+        {saveError && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+            <p className="text-sm text-rose-700">{saveError}</p>
+          </div>
+        )}
+
         <form onSubmit={handleNext} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1">
-            {APPROACHES.map((ap) => {
+            {APPROACHES.map(ap => {
               const isSelected = selectedApproach === ap.name;
               return (
                 <button
@@ -113,7 +133,7 @@ export default function OnboardingAbordagem() {
             </label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Ex: Psicanálise lacaniana, ou TCC com foco em ACT..."
               rows={3}
               className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl p-3.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all resize-none leading-relaxed"
@@ -132,10 +152,14 @@ export default function OnboardingAbordagem() {
 
             <button
               type="submit"
-              className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
+              disabled={saving}
+              className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:shadow-none"
             >
-              <span>Prosseguir para Tour</span>
-              <ArrowRight className="w-4 h-4" />
+              {saving ? (
+                <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Salvando...</>
+              ) : (
+                <><span>Prosseguir para Tour</span><ArrowRight className="w-4 h-4" /></>
+              )}
             </button>
           </div>
         </form>

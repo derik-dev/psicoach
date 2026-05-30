@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp, CaseAnalysis } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
 import {
   Brain, Sparkles, ChevronDown, ChevronUp, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
@@ -354,6 +355,16 @@ export default function NovaAnalise() {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  /* ── auth token helper ── */
+  const getAuthHeaders = async (): Promise<Record<string, string> | null> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    };
+  };
+
   /* ── standard handlers ── */
 
   const handleReset = () => {
@@ -378,9 +389,16 @@ export default function NovaAnalise() {
     };
 
     try {
+      const headers = await getAuthHeaders();
+      if (!headers) {
+        setErrorMessage('Sessão expirada. Faça login novamente.');
+        setIsAnalyzing(false);
+        return;
+      }
+
       const res = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           title, input_text: inputText, approach,
           context: clinicalContext,
@@ -465,9 +483,21 @@ export default function NovaAnalise() {
 
       await addChatMessage(persistedCaseId, 'user', text);
 
+      const headers = await getAuthHeaders();
+      if (!headers) {
+        setChatMessages(prev => {
+          const updated = [...prev];
+          const idx = updated.findIndex(m => m.id === loadingMsg.id);
+          if (idx !== -1) updated[idx] = { ...loadingMsg, isLoading: false, text: 'Sessão expirada. Faça login novamente.' };
+          return updated;
+        });
+        setIsChatSending(false);
+        return;
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           message: text, approach,
           context: clinicalContext,

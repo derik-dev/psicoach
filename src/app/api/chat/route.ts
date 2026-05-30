@@ -9,6 +9,7 @@ import {
   TherapistProfile,
 } from '@/lib/groq';
 import { CaseContext } from '@/context/AppContext';
+import { getAuthenticatedUser } from '@/lib/supabase/server';
 
 interface HistoryMessage {
   role: 'user' | 'assistant';
@@ -29,6 +30,11 @@ function isAnalysisRequest(message: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const { user, error: authError } = await getAuthenticatedUser(req);
+  if (!user) {
+    return Response.json({ error: authError || 'Não autorizado.' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const {
