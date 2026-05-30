@@ -21,6 +21,7 @@ import {
   Search,
   ArrowUpRight,
   ChevronRight,
+  ChevronDown,
   Star,
   Sun
 } from 'lucide-react';
@@ -30,6 +31,7 @@ export default function LandingPage() {
   const router = useRouter();
   const [emailInput, setEmailInput] = useState('');
   const [caseInput, setCaseInput] = useState('');
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   // Se já estiver logado e completou o onboarding, redireciona para o dashboard
   React.useEffect(() => {
@@ -58,8 +60,9 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen selection:bg-blue-600/10 selection:text-blue-700 relative overflow-hidden font-sans">
-      <section className="hero-shell relative isolate overflow-hidden px-5 pb-10 pt-6">
+    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen selection:bg-blue-600/10 selection:text-blue-700 relative overflow-x-hidden font-sans">
+      <section className="hero-shell relative isolate overflow-hidden px-5 pb-20 pt-6">
+        <div className="hero-fade" />
         <header className="relative z-20 mx-auto flex h-11 max-w-[1440px] items-center justify-between">
           <Link href="/" className="group inline-flex items-center">
             <span className="relative text-xl font-extrabold leading-none tracking-normal text-slate-950 sm:text-2xl">
@@ -95,14 +98,14 @@ export default function LandingPage() {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center pt-12 text-center sm:pt-14 lg:pt-16" style={{ zoom: 0.8 }}>
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center pt-16 text-center sm:pt-20 lg:pt-24" style={{ zoom: 0.88 }}>
           <div className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/80 px-5 py-2.5 text-[12px] font-semibold text-slate-600 shadow-[0_8px_28px_rgba(59,130,246,0.14)] backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5 text-blue-600" />
             Copiloto clínico inteligente
           </div>
 
           <h1 className="hero-headline mt-7 max-w-5xl text-slate-950">
-            Descreva. Analise. <em>Acolha.</em>
+            Descreva. Analise.
             <br />
             Seu copiloto <span className="hero-headline-accent">clínico.</span>
           </h1>
@@ -156,129 +159,129 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Smarter Features - Bento Grid Section (from screenshot 2) */}
-      <section id="diferenciais" className="bg-slate-50/50 border-t border-b border-slate-100 py-24 lg:py-32 px-6">
-        <div className="max-w-7xl mx-auto space-y-16">
-          
+      {/* Features Section */}
+      <section id="diferenciais" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
+        <div className="max-w-6xl mx-auto space-y-14">
+
           <div className="text-center space-y-4 max-w-2xl mx-auto">
-            {/* Services Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/70 text-[10px] font-bold text-blue-600 mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 mx-auto shadow-sm">
               <Sparkles className="w-3 h-3 text-blue-500" />
-              <span>DIFERENCIAIS</span>
+              <span>Recursos</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Recursos Inteligentes para uma Prática Clínica Fluida
+            <h2 className="text-3xl sm:text-4xl font-light text-slate-800 tracking-tight leading-tight">
+              Recursos inteligentes para uma prática clínica mais sólida
             </h2>
-            <p className="text-slate-500 text-sm font-normal">
-              Acesse ferramentas integradas e éticas criadas para enriquecer seu raciocínio terapêutico e dar suporte nos momentos complexos da rotina clínica.
+            <p className="text-slate-400 text-sm font-normal max-w-lg mx-auto leading-relaxed">
+              Ferramentas criadas para enriquecer seu raciocínio terapêutico e dar suporte nos momentos mais complexos da rotina clínica.
             </p>
           </div>
 
-          {/* Bento-Style Grid Layout (from screenshot 2) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Bento Card 1: Advanced Clinical Calibration (from screenshot 2 Left Upper) */}
-            <div className="bg-white border border-slate-150 rounded-3xl p-8 flex flex-col justify-between shadow-sm shadow-slate-100 gap-8">
+          {/* Top row — 2 large cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            {/* Card 1 — Abordagens */}
+            <div className="bg-white rounded-3xl p-8 flex flex-col gap-8 shadow-sm">
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-center space-y-2">
-                  <span className="text-[10px] font-bold text-blue-600 block">TCC</span>
-                  <span className="text-[9px] text-slate-400 font-medium">Ativo</span>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-center space-y-2">
-                  <span className="text-[10px] font-bold text-slate-700 block">Psicanálise</span>
-                  <span className="text-[9px] text-slate-400 font-medium">Calibrado</span>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-center space-y-2">
-                  <span className="text-[10px] font-bold text-slate-700 block">Sistêmica</span>
-                  <span className="text-[9px] text-slate-400 font-medium">Calibrado</span>
-                </div>
+                {[
+                  { label: 'TCC', sub: 'Ativo', color: 'text-blue-600' },
+                  { label: 'Psicanálise', sub: 'Calibrado', color: 'text-slate-700' },
+                  { label: 'Sistêmica', sub: 'Calibrado', color: 'text-slate-700' },
+                ].map((item) => (
+                  <div key={item.label} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-center space-y-2 flex flex-col items-center justify-center">
+                    <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                      <Brain className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <span className={`text-[11px] font-semibold block ${item.color}`}>{item.label}</span>
+                    <span className="text-[9px] text-slate-400 font-medium">{item.sub}</span>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Abordagens Clínicas Precisas</h3>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  A IA formula insights respeitando rigorosamente a abordagem de sua escolha (TCC, Psicanálise, etc.), garantindo coerência técnica nas hipóteses e tarefas.
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold text-slate-800">Abordagens Clínicas Precisas</h3>
+                <p className="text-[13px] text-slate-400 leading-relaxed">
+                  A IA formula insights respeitando sua abordagem — TCC, Psicanálise, Sistêmica e mais — com coerência técnica nas hipóteses.
                 </p>
               </div>
             </div>
 
-            {/* Bento Card 2: Voice Mode Waveform Visual (from screenshot 2 Right Upper) */}
-            <div className="bg-white border border-slate-150 rounded-3xl p-8 flex flex-col justify-between shadow-sm shadow-slate-100 md:col-span-2 gap-8">
-              <div className="bg-gradient-to-r from-blue-50/30 to-indigo-50/20 border border-slate-100/80 rounded-2xl p-6 flex items-center justify-center h-28 relative overflow-hidden">
-                {/* Waveform graphic representation */}
-                <div className="flex items-center gap-1.5 h-12">
-                  <span className="w-1 h-3 bg-blue-400/40 rounded-full" />
-                  <span className="w-1 h-6 bg-blue-500/60 rounded-full animate-pulse" />
-                  <span className="w-1 h-10 bg-blue-600 rounded-full" />
-                  <span className="w-1 h-7 bg-indigo-500 rounded-full" />
-                  <span className="w-1 h-5 bg-indigo-400/70 rounded-full" />
-                  <span className="w-1 h-9 bg-blue-500/85 rounded-full" />
-                  <span className="w-1 h-12 bg-blue-600 rounded-full" />
-                  <span className="w-1 h-6 bg-indigo-600 rounded-full" />
-                  <span className="w-1 h-4 bg-indigo-400/40 rounded-full" />
+            {/* Card 2 — Análise estruturada */}
+            <div className="bg-white rounded-3xl p-8 flex flex-col gap-8 shadow-sm">
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 flex items-center justify-center h-36 overflow-hidden">
+                <div className="flex items-end gap-[3px] h-16">
+                  {[12, 22, 36, 28, 16, 40, 52, 32, 20, 44, 56, 34, 18, 38, 50, 30, 14, 42, 24, 16].map((h, i) => (
+                    <span key={i} className="w-[3px] rounded-full bg-blue-400/70" style={{ height: `${h}px` }} />
+                  ))}
                 </div>
               </div>
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Questionamento Socrático & Reflexão</h3>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Receba propostas detalhadas de perguntas abertas e reflexivas estruturadas de forma socrática, perfeitas para auxiliar o paciente a descobrir novos significados.
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold text-slate-800">Análise Estruturada em Segundos</h3>
+                <p className="text-[13px] text-slate-400 leading-relaxed">
+                  Receba hipóteses clínicas, perguntas para a próxima sessão e referências teóricas organizadas em um formato claro e profissional.
                 </p>
               </div>
             </div>
+          </div>
 
-            {/* Bento Card 3: Chat Clínico Interativo (from screenshot 2 Left Bottom) */}
-            <div className="bg-white border border-slate-150 rounded-3xl p-8 flex flex-col justify-between shadow-sm shadow-slate-100 gap-8">
-              <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-3 text-[10px] leading-relaxed">
-                <div className="flex gap-2">
-                  <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center shrink-0">
+          {/* Bottom row — 3 cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            {/* Card 3 — Chat */}
+            <div className="bg-white rounded-3xl p-7 flex flex-col gap-7 shadow-sm">
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
+                <div className="flex gap-2 items-start">
+                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                     <Brain className="w-3 h-3 text-white" />
                   </div>
-                  <div className="bg-white border border-slate-100 rounded-lg p-2.5 text-slate-700 shadow-sm font-medium">
-                    Como posso conduzir a resistência em sessão?
+                  <div className="bg-white border border-slate-100 rounded-xl rounded-tl-none px-3 py-2 text-[11px] text-slate-600 shadow-sm">
+                    Como lidar com a resistência do paciente?
                   </div>
                 </div>
-                <div className="flex gap-2 justify-end">
-                  <div className="bg-blue-650 text-white rounded-lg p-2.5 max-w-[85%] font-medium">
-                    Tente experimentos comportamentais gradativos ou questionamento...
+                <div className="flex gap-2 justify-end items-start">
+                  <div className="bg-blue-600 rounded-xl rounded-tr-none px-3 py-2 text-[11px] text-white max-w-[80%]">
+                    Tente experimentos comportamentais graduais...
                   </div>
                 </div>
               </div>
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Chat de Aprofundamento por Caso</h3>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Depois de receber a análise teórica de um caso, você pode abrir o chat e tirar dúvidas clínicas secundárias ou simular possíveis diálogos com o paciente.
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold text-slate-800">Chat por Caso</h3>
+                <p className="text-[13px] text-slate-400 leading-relaxed">
+                  Aprofunde pontos da análise em um chat contextualizado com todo o histórico do caso.
                 </p>
               </div>
             </div>
 
-            {/* Bento Card 4: Web Search (from screenshot 2 Middle Bottom) */}
-            <div className="bg-white border border-slate-150 rounded-3xl p-8 flex flex-col justify-between shadow-sm shadow-slate-100 gap-8">
-              <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-3">
-                <div className="bg-white border border-slate-150 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm">
-                  <Search className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-[10px] text-slate-500 font-normal">Pesquisar referências...</span>
+            {/* Card 4 — Referências */}
+            <div className="bg-white rounded-3xl p-7 flex flex-col gap-7 shadow-sm">
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
+                <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
+                  <Search className="w-3.5 h-3.5 text-slate-300" />
+                  <span className="text-[11px] text-slate-300">Pesquisar referências...</span>
                 </div>
-                <div className="h-0.5 bg-blue-600/10 rounded-full w-[80%]" />
-                <div className="h-0.5 bg-blue-600/10 rounded-full w-[50%]" />
+                <div className="space-y-2 pt-1">
+                  <div className="h-2 bg-blue-500/20 rounded-full w-[75%]" />
+                  <div className="h-2 bg-blue-500/10 rounded-full w-[55%]" />
+                  <div className="h-2 bg-blue-500/10 rounded-full w-[65%]" />
+                </div>
               </div>
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Referências e Literatura Sólida</h3>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Todas as hipóteses sugeridas acompanham sugestões de bibliografia teórica consolidada de autores renomados, fornecendo respaldo científico às suas anotações.
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold text-slate-800">Literatura Sólida</h3>
+                <p className="text-[13px] text-slate-400 leading-relaxed">
+                  Toda hipótese vem acompanhada de referências bibliográficas de autores consolidados.
                 </p>
               </div>
             </div>
 
-            {/* Bento Card 5: Shield / Security (from screenshot 2 Right Bottom) */}
-            <div className="bg-white border border-slate-150 rounded-3xl p-8 flex flex-col justify-between shadow-sm shadow-slate-100 gap-8">
-              <div className="flex items-center justify-center h-24">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shadow-inner">
-                  <Lock className="w-7 h-7 text-blue-600" />
+            {/* Card 5 — LGPD */}
+            <div className="bg-white rounded-3xl p-7 flex flex-col gap-7 shadow-sm">
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-center h-[88px]">
+                <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <Lock className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Anonimização e Conformidade LGPD</h3>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Sua privacidade e o sigilo profissional são prioridades máximas. Dados clínicos são criptografados de ponta a ponta e nunca utilizados para fins de publicidade.
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold text-slate-800">Privacidade & LGPD</h3>
+                <p className="text-[13px] text-slate-400 leading-relaxed">
+                  Dados clínicos criptografados de ponta a ponta. Nunca usados para publicidade ou treinamento de IA.
                 </p>
               </div>
             </div>
@@ -287,277 +290,221 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Model Cards Grid Section (from screenshot 3) */}
-      <section id="abordagens" className="py-24 lg:py-32 px-6 max-w-7xl mx-auto space-y-16">
-        
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          {/* Features Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/70 text-[10px] font-bold text-blue-600 mx-auto">
-            <Sparkle className="w-3 h-3 text-blue-500" />
-            <span>ABORDAGENS</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            As Maiores Abordagens Teóricas em um Só Lugar
-          </h2>
-          <p className="text-slate-500 text-sm font-normal">
-            O PsiCoach AI compreende as nuances, vocabulários e estruturas conceituais de múltiplos referenciais. Escolha o seu referencial teórico principal:
-          </p>
-        </div>
+      {/* Abordagens Section */}
+      <section id="abordagens" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
+        <div className="max-w-6xl mx-auto space-y-14">
 
-        {/* 6 Models Card Grid (from screenshot 3) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Card 1: TCC */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-7 space-y-5 shadow-sm shadow-slate-100/50 relative hover:border-blue-400/50 hover:-translate-y-1 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 text-sm font-bold">
-                TC
-              </div>
-              <span className="text-slate-350 text-xs font-bold font-mono">...</span>
+          <div className="text-center space-y-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 mx-auto shadow-sm">
+              <Sparkle className="w-3 h-3 text-blue-500" />
+              <span>Abordagens</span>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">TCC (Terapia Cognitivo-Comportamental)</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                Mapeamento de pensamentos automáticos disfuncionais, identificação de crenças intermediárias/centrais e formulação de experimentos comportamentais.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 2: Psicanálise */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-7 space-y-5 shadow-sm shadow-slate-100/50 relative hover:border-blue-400/50 hover:-translate-y-1 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 text-sm font-bold">
-                ψ
-              </div>
-              <span className="text-slate-350 text-xs font-bold font-mono">...</span>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Psicanálise (Freudiana e Lacaniana)</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                Análise baseada na manifestação do inconsciente, mecanismos de defesa do ego, elaboração de transferência e análise da economia libidinal do sujeito.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3: Sistêmica */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-7 space-y-5 shadow-sm shadow-slate-100/50 relative hover:border-blue-400/50 hover:-translate-y-1 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center text-green-600 text-sm font-bold">
-                SF
-              </div>
-              <span className="text-slate-350 text-xs font-bold font-mono">...</span>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Terapia Sistêmica Familiar</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                Investigação de padrões de comunicação intergeracional, dinâmicas de triângulos relacionais e formulações de genogramas estruturais.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4: Humanismo & Gestalt */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-7 space-y-5 shadow-sm shadow-slate-100/50 relative hover:border-blue-400/50 hover:-translate-y-1 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-sm font-bold">
-                GT
-              </div>
-              <span className="text-slate-350 text-xs font-bold font-mono">...</span>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Gestalt & Psicologia Humanista</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                Foco na conscientização do presente (awareness), abordagem fenomenológica centrada na pessoa, contato e na relação terapêutica dialógica direta.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 5: Junguiana */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-7 space-y-5 shadow-sm shadow-slate-100/50 relative hover:border-blue-400/50 hover:-translate-y-1 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 text-sm font-bold">
-                JA
-              </div>
-              <span className="text-slate-350 text-xs font-bold font-mono">...</span>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Psicologia Analítica Junguiana</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                Ampliação de materiais oníricos (sonhos), símbolos do inconsciente pessoal e coletivo, análise arquetípica e facilitação do processo de individuação.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 6: Integrativa */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-7 space-y-5 shadow-sm shadow-slate-100/50 relative hover:border-blue-400/50 hover:-translate-y-1 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600 text-sm font-bold">
-                IT
-              </div>
-              <span className="text-slate-350 text-xs font-bold font-mono">...</span>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Formulação Clínica Integrativa</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                Articulação flexível e embasada cientificamente de diferentes pilares teóricos com foco estrito na demanda e singularidade única do paciente.
-              </p>
-            </div>
-          </div>
-
-
-        </div>
-      </section>
-
-      {/* CTA Boxed Section (from screenshot 4 style) */}
-      <section className="px-6 py-12 max-w-7xl mx-auto">
-        <div className="bg-gradient-to-tr from-blue-600/10 via-indigo-600/5 to-transparent border border-blue-150 rounded-[40px] py-16 px-8 sm:px-16 text-center space-y-8 relative overflow-hidden shadow-sm">
-          
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
-              Sua prática clínica mais segura com o PsiCoach AI
+            <h2 className="text-3xl sm:text-5xl text-slate-800 tracking-tight leading-tight">
+              As principais <span className="font-semibold">abordagens teóricas</span> em um só lugar
             </h2>
-            <p className="text-slate-500 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed font-normal">
-              Eleve o patamar de suas formulações diagnósticas e intervenções terapêuticas. Faça seu teste gratuito de 7 dias hoje mesmo, sem compromisso técnico.
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xl mx-auto">
+              O PsiCoach AI compreende as nuances e vocabulários de cada referencial. Escolha o seu e receba análises coerentes com sua prática.
             </p>
           </div>
 
-          {/* Centered Email Capture (from screenshot 4) */}
-          <form onSubmit={handleEmailSubmit} className="relative max-w-md mx-auto">
-            <div className="bg-white border border-slate-200/80 rounded-full py-1.5 pl-5 pr-2 shadow-md shadow-slate-100 flex items-center justify-between gap-3 focus-within:border-blue-450 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-              <input 
-                type="email" 
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                placeholder="Seu endereço de e-mail de contato..." 
-                className="bg-transparent border-none outline-none text-slate-800 text-xs sm:text-sm flex-1 placeholder:text-slate-400 font-normal min-w-0"
-              />
-              <button 
-                type="submit"
-                className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-500 transition-colors shadow shadow-blue-500/20 active:scale-95 shrink-0"
-              >
-                <ArrowUpRight className="w-5 h-5" />
-              </button>
-            </div>
-          </form>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { symbol: 'TC', label: 'TCC', bg: 'bg-orange-50', border: 'border-orange-100', text: 'text-orange-600', title: 'Terapia Cognitivo-Comportamental', desc: 'Mapeamento de pensamentos automáticos, crenças intermediárias e experimentos comportamentais para mudança efetiva.' },
+              { symbol: 'ψ', label: 'PSI', bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-600', title: 'Psicanálise Freudiana e Lacaniana', desc: 'Análise do inconsciente, mecanismos de defesa, transferência e elaboração da economia libidinal do sujeito.' },
+              { symbol: 'SF', label: 'SIS', bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-600', title: 'Terapia Sistêmica Familiar', desc: 'Padrões de comunicação intergeracional, triângulos relacionais e genogramas estruturais.' },
+              { symbol: 'GT', label: 'GES', bg: 'bg-indigo-50', border: 'border-indigo-100', text: 'text-indigo-600', title: 'Gestalt & Psicologia Humanista', desc: 'Consciência do presente (awareness), abordagem fenomenológica e relação terapêutica dialógica.' },
+              { symbol: 'JA', label: 'JUN', bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-600', title: 'Psicologia Analítica Junguiana', desc: 'Sonhos, símbolos, inconsciente coletivo, análise arquetípica e processo de individuação.' },
+              { symbol: 'IT', label: 'INT', bg: 'bg-pink-50', border: 'border-pink-100', text: 'text-pink-600', title: 'Formulação Clínica Integrativa', desc: 'Articulação flexível de diferentes pilares teóricos com foco na singularidade do paciente.' },
+            ].map((item) => (
+              <div key={item.label} className="bg-white rounded-2xl p-6 flex flex-col gap-10 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 cursor-pointer">
+                <div className="flex items-start justify-between">
+                  <div className={`w-11 h-11 rounded-xl ${item.bg} border ${item.border} flex items-center justify-center ${item.text} text-sm font-bold`}>
+                    {item.symbol}
+                  </div>
+                  <span className="text-slate-300 text-lg leading-none">···</span>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-[15px] font-semibold text-slate-800 leading-snug">{item.title}</h3>
+                  <p className="text-[13px] text-slate-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
         </div>
       </section>
 
-      {/* Testimonials Section (from screenshot 5) */}
-      <section id="depoimentos" className="py-24 lg:py-32 px-6 max-w-7xl mx-auto space-y-16">
-        
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          {/* Testimonials Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/70 text-[10px] font-bold text-blue-600 mx-auto">
-            <Users className="w-3 h-3 text-blue-500" />
-            <span>DEPOIMENTOS</span>
+      {/* CTA Section */}
+      <section className="bg-[#f4f6f9] px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <div className="rounded-3xl overflow-hidden" style={{ background: 'radial-gradient(ellipse at 20% 50%, #c7d9f8 0%, #dce8fb 40%, #edf3fd 100%)' }}>
+            <div className="py-20 px-8 text-center space-y-8">
+
+              <div className="space-y-4 max-w-2xl mx-auto">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl text-slate-800 tracking-tight font-light">
+                  Atenda com mais clareza com o <span className="font-semibold">PsiCoach AI</span>
+                </h2>
+                <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
+                  Comece grátis por 7 dias. Sem cartão de crédito. Cancele quando quiser.
+                </p>
+              </div>
+
+              <form onSubmit={handleEmailSubmit} className="max-w-sm mx-auto">
+                <div className="bg-white/80 backdrop-blur-sm rounded-full py-1.5 pl-5 pr-2 flex items-center gap-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-200 transition-all">
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="Seu endereço de e-mail"
+                    className="bg-transparent outline-none text-sm text-slate-700 flex-1 placeholder:text-slate-400 min-w-0"
+                  />
+                  <button
+                    type="submit"
+                    className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-500 transition-colors shadow-md shadow-blue-500/25 active:scale-95 shrink-0"
+                  >
+                    <ArrowUpRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
+
+            </div>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            O que dizem as psicólogas parceiras
-          </h2>
-          <p className="text-slate-500 text-sm font-normal">
-            Junte-se a centenas de terapeutas em todo o Brasil que integraram a inteligência artificial ao seu planejamento de atendimentos.
-          </p>
         </div>
+      </section>
 
-        {/* Big Testimonial Highlight Card (from screenshot 5 Upper) */}
-        <div className="bg-white border border-slate-150 rounded-[32px] p-8 md:p-12 shadow-sm shadow-slate-100/60 max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-10">
-          
-          <div className="flex-1 space-y-6">
-            <div className="flex gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-              ))}
+      {/* Testimonials Section */}
+      <section id="depoimentos" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
+        <div className="max-w-6xl mx-auto space-y-10">
+
+          <div className="text-center space-y-4 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 shadow-sm">
+              <Users className="w-3 h-3 text-blue-500" />
+              <span>Depoimentos</span>
             </div>
-            <p className="text-slate-700 text-base sm:text-lg font-medium leading-relaxed italic">
-              "Encontrei no PsiCoach AI o parceiro de estudos clínicos que me faltava. A profundidade técnica das análises é incrível, e a coerência teórica nas respostas me traz insights de alta qualidade, servindo de apoio clínico perfeito na preparação de casos complexos."
+            <h2 className="text-3xl sm:text-5xl text-slate-800 tracking-tight leading-tight font-light">
+              O que dizem as <span className="font-semibold">psicólogas</span> parceiras
+            </h2>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-lg mx-auto">
+              Centenas de terapeutas no Brasil já usam o PsiCoach AI para preparar casos e ganhar mais clareza clínica.
             </p>
-            <div className="space-y-1 border-l-2 border-blue-600 pl-4">
-              <h4 className="text-sm font-bold text-slate-900">Dra. Beatriz Mendes</h4>
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Psicóloga Clínica - Especialista TCC (USP)</p>
+          </div>
+
+          {/* Featured testimonial */}
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row">
+            <div className="flex-1 p-10 flex flex-col justify-center gap-6">
+              <p className="text-xl sm:text-2xl font-semibold text-slate-800 leading-snug">
+                "O PsiCoach virou meu parceiro de raciocínio clínico. Entro em cada sessão com muito mais clareza e segurança nas intervenções."
+              </p>
+              <p className="text-[13px] text-slate-400 leading-relaxed">
+                A profundidade técnica das análises é incrível. A coerência teórica nas respostas me traz insights que eu não conseguiria em grupos de WhatsApp ou supervisão esporádica.
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
+                  BM
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Dra. Beatriz Mendes</p>
+                  <p className="text-xs text-slate-400">Psicóloga Clínica · Especialista TCC</p>
+                </div>
+              </div>
+            </div>
+            <div className="w-full md:w-[420px] h-[260px] md:h-auto bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-300 shrink-0 flex items-center justify-center">
+              <Brain className="w-24 h-24 text-white/50" />
             </div>
           </div>
 
-          <div className="w-full md:w-[320px] h-[280px] bg-slate-100 border border-slate-150 rounded-2xl overflow-hidden relative shadow-inner shrink-0 flex items-center justify-center">
-            {/* Minimal High-fidelity visual mockup of professional portrait */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent z-10" />
-            <Brain className="w-20 h-20 text-slate-350 opacity-40 animate-pulse" />
-            <div className="absolute bottom-4 left-4 z-20">
-              <span className="px-2.5 py-1 bg-white/95 backdrop-blur-sm border border-slate-150 text-[10px] font-bold text-slate-700 rounded-full shadow-sm">
-                Usuária Premium
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Small Testimonials Grid (from screenshot 5 Lower) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto pt-6">
-          
-          {/* Card 1 */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-6 space-y-5 shadow-sm shadow-slate-100/50">
-            <div className="flex gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              ))}
-            </div>
-            <p className="text-xs text-slate-650 leading-relaxed font-medium">
-              "Fiquei surpresa com o questionamento socrático sugerido para um caso de TOC. Abriu caminhos clínicos excelentes que fizeram total diferença na adesão do paciente na sessão seguinte."
-            </p>
-            <div className="flex items-center gap-3 pt-2">
-              <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-xs border border-slate-150">
-                MS
+          {/* 3 small cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { initials: 'MS', name: 'Mariana S.', role: 'Terapeuta Cognitiva · UFMG', stars: 4, quote: '"O questionamento socrático sugerido para um caso de TOC abriu caminhos que fizeram diferença real na adesão do paciente."' },
+              { initials: 'LR', name: 'Lucas R.', role: 'Psicanalista · UFRJ', stars: 5, quote: '"O sigilo é minha maior exigência e a plataforma cumpre. Hipóteses ricas embasadas nos maiores teóricos da psicanálise."' },
+              { initials: 'CF', name: 'Camila F.', role: 'Gestalt-terapeuta · PUC-SP', stars: 5, quote: '"Entro na sala de terapia com muito mais clareza conceitual. Sem dúvida elevou a qualidade dos meus atendimentos."' },
+            ].map((t) => (
+              <div key={t.initials} className="bg-white rounded-2xl p-6 flex flex-col justify-between gap-6 shadow-sm">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-3.5 h-3.5 ${i < t.stars ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'}`} />
+                  ))}
+                </div>
+                <p className="text-[13px] text-slate-600 leading-relaxed flex-1">{t.quote}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-semibold text-xs shrink-0">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">{t.name}</p>
+                    <p className="text-[11px] text-slate-400">{t.role}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h5 className="text-xs font-bold text-slate-900">Mariana S.</h5>
-                <p className="text-[10px] text-slate-400 font-semibold uppercase">Terap. Cognitiva (UFMG)</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-6 space-y-5 shadow-sm shadow-slate-100/50">
-            <div className="flex gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              ))}
-            </div>
-            <p className="text-xs text-slate-650 leading-relaxed font-medium">
-              "O sigilo ético absoluto é minha maior exigência e a plataforma cumpre com louvor. Relatos clínicos 100% descaracterizados me trazem hipóteses ricas embasadas nos maiores teóricos."
-            </p>
-            <div className="flex items-center gap-3 pt-2">
-              <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-xs border border-slate-150">
-                LR
-              </div>
-              <div>
-                <h5 className="text-xs font-bold text-slate-900">Lucas R.</h5>
-                <p className="text-[10px] text-slate-400 font-semibold uppercase">Psicanalista (UFRJ)</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-white border border-slate-150 rounded-3xl p-6 space-y-5 shadow-sm shadow-slate-100/50">
-            <div className="flex gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              ))}
-            </div>
-            <p className="text-xs text-slate-650 leading-relaxed font-medium">
-              "O PsiCoach virou parte fundamental da minha rotina. Entro na sala de terapia com muito mais clareza conceitual de intervenção. Sem dúvida, elevou a qualidade dos meus atendimentos."
-            </p>
-            <div className="flex items-center gap-3 pt-2">
-              <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-xs border border-slate-150">
-                CF
-              </div>
-              <div>
-                <h5 className="text-xs font-bold text-slate-900">Camila F.</h5>
-                <p className="text-[10px] text-slate-400 font-semibold uppercase">Gestalt-terapeuta (PUC-SP)</p>
-              </div>
-            </div>
+            ))}
           </div>
 
         </div>
+      </section>
 
+      {/* FAQ Section */}
+      <section className="bg-[#f4f6f9] py-24 px-6">
+        <div className="max-w-3xl mx-auto space-y-12">
+
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 shadow-sm">
+              <HelpCircle className="w-3 h-3 text-blue-500" />
+              <span>FAQs</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl text-slate-800 tracking-tight leading-tight font-light">
+              Perguntas <span className="font-semibold">Frequentes</span>
+            </h2>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto">
+              Tudo o que você precisa saber sobre o PsiCoach AI. Não encontrou sua dúvida? Entre em contato.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              {
+                q: 'O PsiCoach AI substitui a supervisão clínica oficial?',
+                a: 'Não. O PsiCoach AI é um copiloto clínico — uma segunda opinião disponível a qualquer hora. Ele não é reconhecido pelo CFP como supervisão oficial e não substitui o julgamento clínico da psicóloga. É uma ferramenta de apoio ao raciocínio terapêutico.',
+              },
+              {
+                q: 'Meus dados clínicos são seguros?',
+                a: 'Sim. Todos os dados são criptografados de ponta a ponta e nunca são usados para treinamento de IA ou publicidade. Você pode anonimizar os casos antes de descrever, e nós nunca pedimos dados identificadores do paciente.',
+              },
+              {
+                q: 'Como funciona o limite de análises do plano Starter?',
+                a: 'O plano Starter inclui 10 análises por mês. Cada vez que você clica em "Analisar caso", conta como uma análise. O contador zera todo mês na data de renovação. Os planos Pro e Clínica têm análises ilimitadas.',
+              },
+              {
+                q: 'Posso cancelar quando quiser?',
+                a: 'Sim, sem burocracia. Você pode cancelar a assinatura a qualquer momento nas configurações da sua conta. O acesso continua até o fim do período já pago.',
+              },
+              {
+                q: 'A IA entende minha abordagem teórica específica?',
+                a: 'Sim. Durante o onboarding você escolhe sua abordagem principal (TCC, Psicanálise, Sistêmica, Gestalt, Junguiana ou Integrativa) e todas as análises são geradas dentro desse referencial. Você pode alterar a abordagem a qualquer momento nas configurações.',
+              },
+              {
+                q: 'Existe teste gratuito?',
+                a: 'Sim. Você tem 7 dias gratuitos ao criar sua conta, sem precisar inserir cartão de crédito. Durante o teste você acessa todos os recursos do plano Pro.',
+              },
+            ].map((item, i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between px-6 py-5 text-left gap-4"
+                >
+                  <span className="text-[15px] font-medium text-slate-700">{item.q}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === i && (
+                  <div className="px-6 pb-5">
+                    <p className="text-[13px] text-slate-400 leading-relaxed">{item.a}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+        </div>
       </section>
 
       {/* Footer */}
