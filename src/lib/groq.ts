@@ -10,17 +10,64 @@ export const groq = new Groq({
 /* ─── model to use ─── */
 export const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
-/* ─── shared system prompt ─── */
-export function buildSystemPrompt(approach: string, contextText = ''): string {
-  const knowledgeBlock = retrieveKnowledge(contextText || approach, approach);
+/* ─── therapist profile shape (sent from frontend) ─── */
+export interface TherapistProfile {
+  approach: string;
+  yearsExperience?: string;
+  patientTypes?: string[];
+  specialties?: string[];
+  approachDescription?: string;
+}
+
+/* ─── experience-level adaptation ─── */
+function buildExperienceBlock(yearsExperience?: string): string {
+  const map: Record<string, string> = {
+    '1-2': 'O terapeuta está no início da carreira (1-2 anos de clínica). Seja didático: explique os conceitos com mais detalhes, fundamente cada hipótese teoricamente e indique referências acessíveis. Evite jargões sem explicação.',
+    '3-5': 'O terapeuta tem experiência intermediária (3-5 anos). Use terminologia técnica adequada e assuma familiaridade com conceitos básicos da abordagem. Seja preciso sem ser excessivamente introdutório.',
+    '5-10': 'O terapeuta é experiente (5-10 anos de clínica). Use linguagem técnica avançada, vá direto ao ponto e ofereça análises sofisticadas. Pode mencionar debates ou variações dentro da abordagem.',
+    '+10': 'O terapeuta é sênior (+10 anos). Use o nível técnico mais alto possível. Assuma domínio completo da teoria, foque em nuances clínicas e complexidades do caso. Discuta perspectivas alternativas, controvérsias e possíveis impasses terapêuticos quando pertinente.',
+  };
+  return map[yearsExperience ?? ''] ?? '';
+}
+
+/* ─── build personalized system prompt ─── */
+export function buildSystemPrompt(profile: TherapistProfile, contextText = ''): string {
+  const knowledgeBlock = retrieveKnowledge(contextText || profile.approach, profile.approach);
+
+  const experienceBlock = buildExperienceBlock(profile.yearsExperience);
+
+  const patientTypesLine = profile.patientTypes?.length
+    ? `- Público atendido: ${profile.patientTypes.join(', ')}`
+    : '';
+
+  const specialtiesLine = profile.specialties?.length
+    ? `- Especialidades clínicas: ${profile.specialties.join(', ')}`
+    : '';
+
+  const nuancesLine = profile.approachDescription?.trim()
+    ? `- Nuances ou autores preferidos: ${profile.approachDescription.trim()}`
+    : '';
+
+  const profileBlock = [patientTypesLine, specialtiesLine, nuancesLine]
+    .filter(Boolean)
+    .join('\n');
 
   return `Você é o PsiCoach AI, um copiloto clínico especializado em psicoterapia.
 Seu papel é auxiliar psicólogos na formulação e supervisão de casos clínicos.
 Você responde SEMPRE em português brasileiro, com linguagem técnica mas acessível.
-A abordagem teórica preferencial do terapeuta é: ${approach || 'não especificada'}.
-Adapte todo o vocabulário, os conceitos e as intervenções a essa abordagem.
 
-Regras absolutas:
+━━━ PERFIL DO TERAPEUTA QUE VOCÊ ESTÁ ASSISTINDO ━━━
+- Abordagem teórica: ${profile.approach || 'não especificada'}
+${profileBlock}
+
+INSTRUÇÕES DE PERSONALIZAÇÃO:
+${experienceBlock ? `• ${experienceBlock}` : ''}
+${profile.patientTypes?.length ? `• Ajuste hipóteses e intervenções ao contexto de atendimento: ${profile.patientTypes.join(', ')}.` : ''}
+${profile.specialties?.length ? `• Quando o caso apresentar elementos de ${profile.specialties.join(' ou ')}, aprofunde nessas áreas com precisão técnica.` : ''}
+${nuancesLine ? `• Respeite as nuances teóricas informadas pelo terapeuta: ${profile.approachDescription}.` : ''}
+• Adapte todo o vocabulário, os conceitos e as intervenções à abordagem: ${profile.approach || 'não especificada'}.
+
+REGRAS ABSOLUTAS:
 - Nunca diagnostique um paciente diretamente nem substitua a avaliação do clínico.
 - Sempre enquadre respostas como hipóteses clínicas a serem validadas pelo terapeuta.
 - Seja objetivo, fundamentado e cite referências bibliográficas reais quando mencionar literatura.
@@ -63,7 +110,6 @@ export function buildAnalysisUserMessage(
 
 /* ─── parse and validate the AI JSON response ─── */
 export function parseAnalysisJson(raw: string): CaseAnalysis {
-  // strip possible markdown fences
   const clean = raw
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/gi, '')
@@ -71,7 +117,6 @@ export function parseAnalysisJson(raw: string): CaseAnalysis {
 
   const parsed = JSON.parse(clean);
 
-  // minimal validation
   if (
     typeof parsed.hypothesis !== 'string' ||
     !Array.isArray(parsed.approaches) ||

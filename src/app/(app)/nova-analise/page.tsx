@@ -384,6 +384,12 @@ export default function NovaAnalise() {
         body: JSON.stringify({
           title, input_text: inputText, approach,
           context: clinicalContext,
+          profile: {
+            yearsExperience: user?.yearsExperience,
+            patientTypes: user?.patientTypes,
+            specialties: user?.specialties,
+            approachDescription: user?.approachDescription,
+          },
         }),
       });
       const data = await res.json();
@@ -466,6 +472,12 @@ export default function NovaAnalise() {
           message: text, approach,
           context: clinicalContext,
           history: chatMessages.map(m => ({ role: m.role, content: m.text })),
+          profile: {
+            yearsExperience: user?.yearsExperience,
+            patientTypes: user?.patientTypes,
+            specialties: user?.specialties,
+            approachDescription: user?.approachDescription,
+          },
         }),
       });
       const data = await res.json();

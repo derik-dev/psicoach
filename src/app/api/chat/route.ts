@@ -6,6 +6,7 @@ import {
   buildAnalysisUserMessage,
   parseAnalysisJson,
   JSON_SCHEMA_INSTRUCTIONS,
+  TherapistProfile,
 } from '@/lib/groq';
 import { CaseContext } from '@/context/AppContext';
 
@@ -14,7 +15,6 @@ interface HistoryMessage {
   content: string;
 }
 
-/* ─── detect if the user's message has enough clinical detail for a full analysis ─── */
 function isAnalysisRequest(message: string): boolean {
   const minLength = 80;
   const clinicalKeywords = [
@@ -36,42 +36,47 @@ export async function POST(req: NextRequest) {
       approach,
       context,
       history = [],
+      profile,
     }: {
       message: string;
       approach: string;
       context: CaseContext;
       history: HistoryMessage[];
+      profile?: Omit<TherapistProfile, 'approach'>;
     } = body;
 
     if (!message || message.trim().length < 3) {
       return Response.json({ error: 'Mensagem muito curta.' }, { status: 400 });
     }
 
+    const therapistProfile: TherapistProfile = {
+      approach: approach || 'não especificada',
+      yearsExperience: profile?.yearsExperience,
+      patientTypes: profile?.patientTypes,
+      specialties: profile?.specialties,
+      approachDescription: profile?.approachDescription,
+    };
+
     const wantsFullAnalysis = isAnalysisRequest(message);
 
-    /* ── system prompt varies by intent ── */
     const systemContent = wantsFullAnalysis
-      ? buildSystemPrompt(approach, message) +
+      ? buildSystemPrompt(therapistProfile, message) +
         '\n\nO terapeuta descreveu um caso clínico. Gere a formulação completa.' +
         '\n\n' + JSON_SCHEMA_INSTRUCTIONS
-      : buildSystemPrompt(approach, message) +
+      : buildSystemPrompt(therapistProfile, message) +
         '\n\nVocê está em modo conversacional. O terapeuta pode estar fazendo uma pergunta, pedindo esclarecimento ou aprofundando um ponto específico.' +
         '\nResponda de forma direta, técnica e acolhedora em texto livre (sem JSON). Máximo 3 parágrafos.';
 
-    /* ── build messages array ── */
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
       { role: 'system', content: systemContent },
     ];
 
-    // include prior conversation history (limit to last 10 turns to save tokens)
     const recent = history.slice(-10);
     for (const h of recent) {
       messages.push({ role: h.role, content: h.content });
     }
 
-    // if previous messages already contain context, enrich only with current question
     if (wantsFullAnalysis && history.length === 0) {
-      // first message — treat as full clinical description
       const contextual = buildAnalysisUserMessage(message, context);
       messages.push({ role: 'user', content: contextual });
     } else {

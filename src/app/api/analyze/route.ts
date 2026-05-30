@@ -6,6 +6,7 @@ import {
   buildAnalysisUserMessage,
   parseAnalysisJson,
   JSON_SCHEMA_INSTRUCTIONS,
+  TherapistProfile,
 } from '@/lib/groq';
 import { CaseContext } from '@/context/AppContext';
 
@@ -17,16 +18,26 @@ export async function POST(req: NextRequest) {
       input_text,
       approach,
       context,
+      profile,
     }: {
       title?: string;
       input_text: string;
       approach: string;
       context: CaseContext;
+      profile?: Omit<TherapistProfile, 'approach'>;
     } = body;
 
     if (!input_text || input_text.trim().length < 10) {
       return Response.json({ error: 'Relato clínico muito curto.' }, { status: 400 });
     }
+
+    const therapistProfile: TherapistProfile = {
+      approach: approach || 'não especificada',
+      yearsExperience: profile?.yearsExperience,
+      patientTypes: profile?.patientTypes,
+      specialties: profile?.specialties,
+      approachDescription: profile?.approachDescription,
+    };
 
     const userMessage = buildAnalysisUserMessage(input_text, context, title);
 
@@ -37,7 +48,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: buildSystemPrompt(approach, userMessage) + '\n\n' + JSON_SCHEMA_INSTRUCTIONS,
+          content: buildSystemPrompt(therapistProfile, userMessage) + '\n\n' + JSON_SCHEMA_INSTRUCTIONS,
         },
         {
           role: 'user',
@@ -47,7 +58,6 @@ export async function POST(req: NextRequest) {
     });
 
     const raw = completion.choices[0]?.message?.content ?? '';
-
     const analysis = parseAnalysisJson(raw);
 
     return Response.json({ analysis });
