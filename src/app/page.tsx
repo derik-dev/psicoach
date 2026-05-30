@@ -59,11 +59,7 @@ export default function LandingPage() {
 
   return (
     <div className="bg-[#FAFBFD] text-slate-900 min-h-screen selection:bg-blue-600/10 selection:text-blue-700 relative overflow-hidden font-sans">
-      <section className="hero-shell relative isolate min-h-[720px] overflow-hidden px-5 pb-10 pt-6 sm:min-h-[760px] lg:min-h-[790px]">
-        <div className="hero-plane" />
-        <div className="hero-left-shape" />
-        <div className="hero-right-shape" />
-
+      <section className="hero-shell relative isolate overflow-hidden px-5 pb-10 pt-6">
         <header className="relative z-20 mx-auto flex h-11 max-w-[1440px] items-center justify-between">
           <Link href="/" className="group inline-flex items-center">
             <span className="relative text-xl font-extrabold leading-none tracking-normal text-slate-950 sm:text-2xl">
@@ -99,34 +95,32 @@ export default function LandingPage() {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center pt-24 text-center sm:pt-28 lg:pt-32">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/82 px-4 py-2 text-[12px] font-semibold text-slate-600 shadow-[0_12px_34px_rgba(59,130,246,0.12)] backdrop-blur-md">
-            <Sparkle className="h-3.5 w-3.5 text-blue-600" />
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center pt-12 text-center sm:pt-14 lg:pt-16" style={{ zoom: 0.8 }}>
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/80 px-5 py-2.5 text-[12px] font-semibold text-slate-600 shadow-[0_8px_28px_rgba(59,130,246,0.14)] backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
             Copiloto clínico inteligente
           </div>
 
-          <h1 className="hero-headline mt-7 max-w-6xl text-slate-950">
-            Descreva. Analise. Acolha.
+          <h1 className="hero-headline mt-7 max-w-5xl text-slate-950">
+            Descreva. Analise. <em>Acolha.</em>
             <br />
-            <span className="text-[#ff0054]">PsiCoach organiza o resto.</span>
+            Seu copiloto <span className="hero-headline-accent">clínico.</span>
           </h1>
 
-          <p className="mt-7 max-w-[620px] text-sm font-medium leading-6 text-slate-500 sm:text-[15px]">
-            Uma segunda opinião disponível a qualquer hora para estruturar casos complexos,
-            levantar hipóteses, sugerir perguntas para a próxima sessão e organizar seu
-            raciocínio clínico com mais clareza.
+          <p className="mt-6 max-w-[560px] text-sm font-normal leading-6 text-slate-500 sm:text-[15px]">
+            Segunda opinião clínica disponível a qualquer hora.
           </p>
 
           <Link
             href="/cadastro"
-            className="mt-8 inline-flex h-12 items-center justify-center gap-3 rounded-md bg-blue-600 px-8 text-sm font-bold text-white shadow-[0_16px_34px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0"
+            className="mt-8 inline-flex h-12 items-center justify-center gap-3 rounded-lg bg-blue-600 px-9 text-sm font-bold text-white shadow-[0_16px_34px_rgba(37,99,235,0.30)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0"
           >
-            Começar agora
+            Experimentar agora
             <ArrowRight className="h-4 w-4" />
           </Link>
 
-          <form onSubmit={handleCaseSubmit} className="mt-14 w-full max-w-[650px] px-2">
-            <div className="group flex min-h-16 items-center gap-4 rounded-full border border-white/85 bg-white/88 py-2 pl-5 pr-2 shadow-[0_18px_50px_rgba(37,99,235,0.16)] backdrop-blur-xl transition-all focus-within:border-blue-300 focus-within:bg-white">
+          <form onSubmit={handleCaseSubmit} className="mt-10 w-full max-w-[640px] px-2">
+            <div className="group flex min-h-[60px] items-center gap-3 rounded-full border border-white/85 bg-white/88 py-2 pl-4 pr-2 shadow-[0_20px_60px_rgba(37,99,235,0.18)] backdrop-blur-xl transition-all focus-within:border-blue-300 focus-within:bg-white">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center">
                 <span className="hero-spark-icon" />
               </div>
@@ -134,26 +128,26 @@ export default function LandingPage() {
                 type="text"
                 value={caseInput}
                 onChange={(e) => setCaseInput(e.target.value)}
-                placeholder="Descreva um caso clínico que está pedindo uma segunda leitura..."
-                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                placeholder="Descreva um caso clínico para uma segunda leitura..."
+                className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-slate-800 outline-none placeholder:text-slate-400"
               />
               <button
                 type="submit"
-                aria-label="Enviar caso para rascunho"
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_10px_28px_rgba(37,99,235,0.28)] transition-all hover:bg-blue-500 active:scale-95"
+                aria-label="Enviar caso"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_8px_24px_rgba(37,99,235,0.32)] transition-all hover:bg-blue-500 active:scale-95"
               >
-                <ArrowUp className="h-5 w-5" />
+                <ArrowUp className="h-4 w-4" />
               </button>
             </div>
           </form>
 
-          <div className="mt-20 w-full space-y-7">
-            <p className="text-[11px] font-semibold text-white/92">
-              Pensado para psicólogas clínicas no Brasil
+          <div className="mt-10 w-full space-y-4">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
+              Compatível com as principais abordagens clínicas
             </p>
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-16 gap-y-5 text-white/82">
+            <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-12 gap-y-4 text-white/60">
               {['TCC', 'PSICANÁLISE', 'SISTÊMICA', 'GESTALT', 'JUNGUIANA', 'INTEGRATIVA'].map((item) => (
-                <span key={item} className="text-xl font-black tracking-normal opacity-80 sm:text-2xl">
+                <span key={item} className="text-lg font-extrabold tracking-wider sm:text-xl">
                   {item}
                 </span>
               ))}
