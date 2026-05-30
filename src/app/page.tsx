@@ -512,10 +512,9 @@ export default function LandingPage() {
         className="relative text-white flex flex-col"
         style={{
           backgroundImage: "url('/imagens/imagem-bg-pc-ft.png')",
-          backgroundSize: 'cover',
+          backgroundSize: '100% 100%',
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat',
-          backgroundColor: '#f4f6f9',
           minHeight: '780px',
         }}
       >
