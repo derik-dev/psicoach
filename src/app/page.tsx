@@ -444,7 +444,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="bg-[#f4f6f9] py-24 px-6">
+      <section className="faq-to-footer bg-[#f4f6f9] px-6 pb-28 pt-24">
         <div className="max-w-3xl mx-auto space-y-12">
 
           <div className="text-center space-y-4">
@@ -508,9 +508,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <div className="bg-[#f4f6f9]">
+      <div className="footer-join bg-[#f4f6f9]">
       <footer
-        className="relative text-white flex flex-col"
+        className="site-footer relative text-white flex flex-col"
         style={{
           backgroundImage: "url('/imagens/imagem-bg-pc-ft.png')",
           backgroundSize: '100% 100%',
@@ -521,7 +521,7 @@ export default function LandingPage() {
       >
         {/* Nav pill no topo */}
         <div className="flex justify-center pt-10">
-          <nav className="flex items-center gap-8 rounded-full border border-white/30 bg-white/20 px-8 py-3 text-[12px] font-medium text-white/80 backdrop-blur-sm">
+          <nav className="flex items-center gap-8 rounded-full border border-white/55 bg-white/32 px-8 py-3 text-[12px] font-semibold text-white shadow-[0_14px_40px_rgba(37,99,235,0.16)] backdrop-blur-md ring-1 ring-white/20">
             <Link href="#diferenciais" className="hover:text-white transition-colors">Recursos</Link>
             <Link href="#abordagens" className="hover:text-white transition-colors">Abordagens</Link>
             <Link href="/pricing" className="hover:text-white transition-colors">Preços</Link>

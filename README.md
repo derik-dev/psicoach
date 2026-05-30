@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Project Workflow
+
+All commits made for this project should be pushed to GitHub as part of the same workflow.
+
+Default flow:
+
+```bash
+git status
+git add <files-in-scope>
+git commit -m "short description"
+git push
+```
+
+Use `origin/main` as the default target unless the project owner asks for another branch.
+
 ## Getting Started
 
 First, run the development server:
