@@ -206,24 +206,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     crp: string,
     password: string
   ): Promise<{ error: string | null; needsEmailConfirmation?: boolean }> => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name, crp } },
+    });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'Erro inesperado ao criar conta.' };
-
-    await Promise.all([
-      supabase.from('profiles').insert({
-        user_id: data.user.id,
-        full_name: name,
-        crp: crp,
-        onboarding_completed: false,
-      }),
-      supabase.from('subscriptions').insert({
-        user_id: data.user.id,
-        plan: 'starter',
-        analyses_limit: 10,
-        analyses_used: 0,
-      }),
-    ]);
+    // Profile and subscription are created automatically by the DB trigger
 
     if (!data.session) {
       return { error: null, needsEmailConfirmation: true };
