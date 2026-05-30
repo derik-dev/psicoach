@@ -7,9 +7,7 @@ import {
   Brain,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
   Layers,
-  HelpCircle,
   ShieldCheck,
   Zap
 } from 'lucide-react';
@@ -17,7 +15,7 @@ import {
 export default function OnboardingTour() {
   const { user, setUser } = useApp();
   const router = useRouter();
-  
+
   const [slide, setSlide] = useState(0);
 
   React.useEffect(() => {
@@ -30,33 +28,33 @@ export default function OnboardingTour() {
 
   const slides = [
     {
-      title: "Como funciona a Análise Clínica?",
-      desc: "Você descreve o relato do caso, falas emblemáticas e sintomas. A inteligência artificial de última geração analisa as informações cruzando com literatura de ponta e com a sua abordagem teórica de preferência.",
+      title: 'Como funciona a Análise Clínica?',
+      desc: 'Você descreve o relato do caso, falas emblemáticas e sintomas. A IA cruza tudo isso com a literatura e a sua abordagem teórica preferida.',
       icon: Brain,
-      badge: "Passo 1: Descrever"
+      badge: 'Passo 1 · Descrever'
     },
     {
-      title: "Consulte Intervenções e Referências",
-      desc: "A resposta é totalmente estruturada em seções intuitivas: hipótese diagnóstica, sugestões práticas de caminhos terapêuticos, sugestão de perguntas de reestruturação/exposição para a sessão e embasamento bibliográfico.",
+      title: 'Consulte intervenções e referências',
+      desc: 'A resposta vem estruturada: hipótese diagnóstica, sugestões práticas, perguntas para a sessão e embasamento bibliográfico.',
       icon: Layers,
-      badge: "Passo 2: Revisar"
+      badge: 'Passo 2 · Revisar'
     },
     {
-      title: "Aprofunde em Chat Livre sobre o Caso",
-      desc: "Após a análise, uma caixa de chat complementar é aberta. Você pode conversar de forma contínua com a inteligência artificial, pedir para detalhar teorias, sugerir experimentos ou debater resistências e contra-transferências.",
+      title: 'Aprofunde em chat livre sobre o caso',
+      desc: 'Após a análise, abra um chat contextual contínuo. Detalhe teorias, sugira experimentos ou debata resistências.',
       icon: Zap,
-      badge: "Passo 3: Aprofundar"
+      badge: 'Passo 3 · Aprofundar'
     }
   ];
 
   const current = slides[slide];
+  const Icon = current.icon;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (slide < slides.length - 1) {
       setSlide(slide + 1);
     } else {
-      // Mark onboarding as completed
-      setUser({
+      await setUser({
         ...user,
         onboardingCompleted: true
       });
@@ -73,70 +71,62 @@ export default function OnboardingTour() {
   };
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-indigo-650/10 rounded-full blur-[100px] -z-10" />
-
-      <div className="w-full max-w-xl bg-slate-900/30 border border-slate-800 rounded-3xl p-6 lg:p-8 backdrop-blur-xl space-y-6">
-        {/* Progress header */}
+    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen flex items-center justify-center p-5 font-sans">
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-100 shadow-sm p-8 lg:p-10 space-y-7">
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
-            <span>Passo 3 de 3: Tour Guiado</span>
-            <span className="text-indigo-400">99% Concluído</span>
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <span>Passo 3 de 3 · Tour Guiado</span>
+            <span className="text-blue-600">99%</span>
           </div>
-          {/* Progress bar */}
-          <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-            <div className="w-full h-full bg-indigo-600 rounded-full transition-all duration-300" />
+          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-full bg-blue-600 rounded-full transition-all duration-300" />
           </div>
         </div>
 
-        {/* Animated Slide Display */}
-        <div className="p-6 rounded-2xl bg-slate-950/60 border border-slate-850 space-y-5 text-center min-h-[300px] flex flex-col justify-center items-center relative overflow-hidden">
-          <div className="absolute -top-10 -left-10 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl" />
-          
-          {/* Badge */}
-          <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full uppercase tracking-wider">
-            {current.badge}
-          </span>
-          
-          {/* Icon */}
-          <div className="p-4 rounded-full bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 animate-pulse mt-2">
-            <current.icon className="w-10 h-10" />
+        <div className="space-y-3 text-center">
+          <h1 className="page-headline">
+            Um <span className="page-headline-accent">tour</span> rápido.
+          </h1>
+        </div>
+
+        <div className="p-7 rounded-3xl bg-slate-50 border border-slate-100 text-center min-h-[300px] flex flex-col items-center justify-center space-y-5">
+          <span className="section-badge">{current.badge}</span>
+
+          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
+            <Icon className="w-7 h-7" />
           </div>
 
-          <div className="space-y-2">
-            <h3 className="text-base font-bold text-slate-200">{current.title}</h3>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+          <div className="space-y-2 max-w-md">
+            <h3 className="text-base font-semibold text-slate-800">{current.title}</h3>
+            <p className="text-[13px] text-slate-500 leading-relaxed">
               {current.desc}
             </p>
           </div>
 
-          {/* Dots Indicator */}
-          <div className="flex items-center justify-center gap-1.5 pt-2">
+          <div className="flex items-center justify-center gap-1.5 pt-1">
             {slides.map((_, idx) => (
               <span
                 key={idx}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  slide === idx ? 'w-4 bg-indigo-500' : 'bg-slate-800'
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  slide === idx ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-300'
                 }`}
               />
             ))}
           </div>
         </div>
 
-        {/* Compliance Footer check */}
-        <div className="p-4 rounded-xl bg-slate-950 border border-slate-900 flex gap-3 text-slate-500 text-[10px] leading-relaxed">
-          <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100 flex gap-3 text-slate-600 text-[12px] leading-relaxed">
+          <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <span>
-            <strong>Lembre-se sempre:</strong> O sigilo ético é o coração da clínica. Nunca digite nomes civis completos, endereços exatos ou dados explícitos de identificação pessoal dos pacientes. Cumpra com as diretrizes do CFP.
+            <strong className="font-semibold text-slate-800">Lembre-se:</strong> nunca digite nomes civis completos, endereços exatos ou dados identificadores dos pacientes. Mantenha o sigilo conforme as diretrizes do CFP.
           </span>
         </div>
 
-        {/* CTAs */}
-        <div className="flex items-center gap-3 pt-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleBack}
-            className="flex-1 inline-flex items-center justify-center gap-1 px-4 py-3.5 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-5 py-3.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Voltar</span>
@@ -145,11 +135,9 @@ export default function OnboardingTour() {
           <button
             type="button"
             onClick={handleNext}
-            className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-650/15"
+            className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
           >
-            <span>
-              {slide === slides.length - 1 ? 'Iniciar Primeira Análise' : 'Próximo Passo'}
-            </span>
+            <span>{slide === slides.length - 1 ? 'Iniciar Primeira Análise' : 'Próximo Passo'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

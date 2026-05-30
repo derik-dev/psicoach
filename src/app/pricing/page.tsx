@@ -4,16 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import {
-  Brain,
-  Check,
-  Sparkles,
-  ArrowRight,
-  HelpCircle,
-  Clock,
-  ShieldCheck,
-  Coins
-} from 'lucide-react';
+import { Check, Sparkles, Coins } from 'lucide-react';
 
 export default function PricingPage() {
   const { activePlan, setActivePlan, user } = useApp();
@@ -34,240 +25,201 @@ export default function PricingPage() {
   const clinicaPrice = billingPeriod === 'monthly' ? 397 : Math.round(397 * 0.8);
 
   const features = [
-    { name: "Análises de Caso Clínico por Mês", starter: "10", pro: "Ilimitado", clinica: "Ilimitado" },
-    { name: "Chat Complementar Livre de Aprofundamento", starter: "Básico", pro: "Avançado", clinica: "Avançado" },
-    { name: "Sugestões de Intervenção Prática", starter: "Sim", pro: "Sim", clinica: "Sim" },
-    { name: "Questionamento Socrático", starter: "Sim", pro: "Sim", clinica: "Sim" },
-    { name: "Referências Bibliográficas com Autores", starter: "Não", pro: "Sim", clinica: "Sim" },
-    { name: "Anotações Clínicas & Editor de Tags", starter: "Sim", pro: "Sim", clinica: "Sim" },
-    { name: "Painel Gestor Unificado (Multi-psicólogas)", starter: "Não", pro: "Não", clinica: "Até 5 Contas" },
-    { name: "Conformidade Criptografada LGPD", starter: "Sim", pro: "Sim", clinica: "Sim" },
+    { name: 'Análises de Caso Clínico por Mês', starter: '10', pro: 'Ilimitado', clinica: 'Ilimitado' },
+    { name: 'Chat Complementar Livre de Aprofundamento', starter: 'Básico', pro: 'Avançado', clinica: 'Avançado' },
+    { name: 'Sugestões de Intervenção Prática', starter: 'Sim', pro: 'Sim', clinica: 'Sim' },
+    { name: 'Questionamento Socrático', starter: 'Sim', pro: 'Sim', clinica: 'Sim' },
+    { name: 'Referências Bibliográficas com Autores', starter: 'Não', pro: 'Sim', clinica: 'Sim' },
+    { name: 'Anotações Clínicas & Editor de Tags', starter: 'Sim', pro: 'Sim', clinica: 'Sim' },
+    { name: 'Painel Gestor Unificado (Multi-psicólogas)', starter: 'Não', pro: 'Não', clinica: 'Até 5 contas' },
+    { name: 'Conformidade Criptografada LGPD', starter: 'Sim', pro: 'Sim', clinica: 'Sim' }
   ];
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen selection:bg-indigo-650 selection:text-white flex flex-col justify-between">
-      {/* Header / Navbar */}
-      <header className="bg-slate-950/80 backdrop-blur-md border-b border-slate-900/60 h-16 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto h-full px-4 lg:px-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
-              <Brain className="w-5 h-5 text-indigo-400" />
-            </div>
-            <span className="font-bold text-base bg-gradient-to-r from-indigo-200 via-purple-300 to-indigo-200 bg-clip-text text-transparent">
-              PsiCoach <span className="text-indigo-400 font-medium">AI</span>
+    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen font-sans flex flex-col">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto h-16 px-5 lg:px-8 flex items-center justify-between">
+          <Link href="/" className="inline-flex items-center">
+            <span className="text-xl font-extrabold leading-none tracking-normal text-slate-950">
+              PsiCoach<span className="ml-1 text-blue-600">AI</span>
             </span>
           </Link>
 
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-xs font-semibold text-slate-350 hover:text-indigo-400 transition-colors"
-            >
-              Página Inicial
-            </Link>
-            <Link
-              href="/login"
-              className="text-xs font-semibold text-slate-350 hover:text-indigo-400 transition-colors"
-            >
-              Entrar
-            </Link>
+          <div className="flex items-center gap-5">
+            <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">Início</Link>
+            <Link href="/login" className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">Entrar</Link>
             <Link
               href="/cadastro"
-              className="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs transition-colors shadow-md shadow-indigo-600/10"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-[11px] font-bold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500"
             >
-              Criar Conta Grátis
+              Criar Conta
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Pricing Area */}
-      <main className="max-w-6xl w-full mx-auto px-4 lg:px-8 py-12 lg:py-20 flex-1 space-y-12">
-        {/* Title */}
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-            Invista na segurança das suas condutas clínicas.
+      <main className="max-w-6xl w-full mx-auto px-5 lg:px-8 py-16 lg:py-24 flex-1 space-y-14">
+        <div className="text-center space-y-5 max-w-3xl mx-auto">
+          <div className="section-badge mx-auto">
+            <Sparkles className="w-3 h-3 text-blue-600" />
+            <span>Planos</span>
+          </div>
+          <h1 className="page-headline">
+            Invista na sua <span className="page-headline-accent">prática.</span>
           </h1>
-          <p className="text-slate-450 text-sm sm:text-base leading-relaxed">
-            Economize milhares de reais em supervisões avulsas e garanta uma segunda opinião científica qualificada a qualquer hora do dia ou da noite.
+          <p className="text-slate-500 text-[15px] leading-relaxed max-w-xl mx-auto">
+            Economize em supervisões avulsas e tenha uma segunda opinião científica qualificada a qualquer hora.
           </p>
 
-          {/* Monthly / Annual Toggle */}
-          <div className="inline-flex items-center gap-2 p-1.5 rounded-full bg-slate-900 border border-slate-850 mx-auto">
+          <div className="inline-flex items-center gap-1 p-1.5 rounded-full bg-white border border-slate-200 mx-auto shadow-sm">
             <button
               onClick={() => setBillingPeriod('monthly')}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${
-                billingPeriod === 'monthly' ? 'bg-indigo-605 bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              className={`px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${
+                billingPeriod === 'monthly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               Mensal
             </button>
             <button
               onClick={() => setBillingPeriod('annual')}
-              className={`relative px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
-                billingPeriod === 'annual' ? 'bg-indigo-605 bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              className={`relative px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                billingPeriod === 'annual' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <span>Anual</span>
-              <span className="bg-emerald-500 text-slate-950 font-extrabold text-[8px] px-1 py-0.2 rounded uppercase scale-95 font-sans">
-                -20%
-              </span>
+              <span className="bg-emerald-500 text-white font-extrabold text-[9px] px-1.5 py-0.5 rounded uppercase">-20%</span>
             </button>
           </div>
         </div>
 
-        {/* 3 cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {/* Card 1: Starter */}
-          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-800 flex flex-col justify-between h-[450px]">
-            <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+          {/* Starter */}
+          <div className="p-7 rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col justify-between gap-6">
+            <div className="space-y-5">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Início Clínico</span>
-                <h3 className="text-lg font-bold text-slate-250">PsiCoach Starter</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Início Clínico</span>
+                <h3 className="text-lg font-semibold text-slate-800">PsiCoach Starter</h3>
               </div>
-
-              <div className="flex items-baseline gap-1 py-2">
-                <span className="text-3xl font-extrabold text-white">R$ {starterPrice}</span>
-                <span className="text-xs text-slate-500">/ mês</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {starterPrice}</span>
+                <span className="text-xs text-slate-400">/ mês</span>
               </div>
-              <p className="text-xs text-slate-400 leading-normal">
+              <p className="text-[13px] text-slate-500 leading-relaxed">
                 Ideal para recém-formadas que querem experimentar e obter suporte nos primeiros casos complexos.
               </p>
-              
-              <ul className="space-y-2 pt-4">
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>10 análises clínicas por mês</span>
-                </li>
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Anotações & Evolução clínica</span>
-                </li>
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Conformidade Criptografada LGPD</span>
-                </li>
+              <ul className="space-y-2.5 pt-2">
+                {['10 análises clínicas por mês', 'Anotações & evolução clínica', 'Conformidade LGPD'].map((it) => (
+                  <li key={it} className="text-[13px] text-slate-600 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>{it}</span>
+                  </li>
+                ))}
               </ul>
             </div>
-
             <button
               onClick={() => handleSelectPlan('starter')}
-              className="w-full py-3 text-xs font-bold rounded-xl border border-slate-850 hover:border-indigo-500/30 hover:bg-indigo-500/10 text-slate-200 hover:text-indigo-300 transition-all text-center"
+              className="w-full py-3 text-sm font-semibold rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-all"
             >
-              Assinar Plano Starter →
+              Assinar Starter
             </button>
           </div>
 
-          {/* Card 2: Pro */}
-          <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-indigo-950/20 border-2 border-indigo-500 flex flex-col justify-between h-[450px] relative shadow-[0_0_30px_rgba(99,102,241,0.1)]">
-            <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[8px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-bl">Mais Popular</div>
-            
-            <div className="space-y-4">
+          {/* Pro - highlighted */}
+          <div className="p-7 rounded-3xl bg-white border-2 border-blue-500 shadow-[0_24px_48px_rgba(37,99,235,0.18)] flex flex-col justify-between gap-6 relative md:-mt-4">
+            <div className="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-bl-xl rounded-tr-3xl">Mais Popular</div>
+            <div className="space-y-5">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                   <span>Maturidade Clínica</span>
                 </span>
-                <h3 className="text-lg font-bold text-white">PsiCoach Pro</h3>
+                <h3 className="text-lg font-semibold text-slate-900">PsiCoach Pro</h3>
               </div>
-
-              <div className="flex items-baseline gap-1 py-2">
-                <span className="text-3xl font-extrabold text-white">R$ {proPrice}</span>
-                <span className="text-xs text-slate-500">/ mês</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {proPrice}</span>
+                <span className="text-xs text-slate-400">/ mês</span>
               </div>
-              <p className="text-xs text-indigo-200/80 leading-normal">
-                Análises ilimitadas e referências bibliográficas robustas para profissionais com agenda cheia e casos recorrentes.
+              <p className="text-[13px] text-slate-500 leading-relaxed">
+                Análises ilimitadas e referências bibliográficas robustas para profissionais com agenda cheia.
               </p>
-              
-              <ul className="space-y-2 pt-4">
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <strong className="text-white">Análises clínicas ILIMITADAS</strong>
+              <ul className="space-y-2.5 pt-2">
+                <li className="text-[13px] text-slate-700 flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <strong className="font-semibold">Análises ilimitadas</strong>
                 </li>
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <li className="text-[13px] text-slate-600 flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>Chat avançado de aprofundamento</span>
                 </li>
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <li className="text-[13px] text-slate-600 flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>Referências completas com autores</span>
                 </li>
               </ul>
             </div>
-
             <button
               onClick={() => handleSelectPlan('pro')}
-              className="w-full py-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors text-center shadow shadow-indigo-650/20"
+              className="w-full py-3 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)]"
             >
-              Assinar Plano Pro →
+              Assinar Pro
             </button>
           </div>
 
-          {/* Card 3: Clínica */}
-          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-800 flex flex-col justify-between h-[450px]">
-            <div className="space-y-4">
+          {/* Clínica */}
+          <div className="p-7 rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col justify-between gap-6">
+            <div className="space-y-5">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Espaços e Times</span>
-                <h3 className="text-lg font-bold text-slate-250">PsiCoach Clínica</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Times e Espaços</span>
+                <h3 className="text-lg font-semibold text-slate-800">PsiCoach Clínica</h3>
               </div>
-
-              <div className="flex items-baseline gap-1 py-2">
-                <span className="text-3xl font-extrabold text-white">R$ {clinicaPrice}</span>
-                <span className="text-xs text-slate-500">/ mês</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {clinicaPrice}</span>
+                <span className="text-xs text-slate-400">/ mês</span>
               </div>
-              <p className="text-xs text-slate-400 leading-normal">
-                Painel administrativo gestor multi-usuárias para clínicas, consultórios coletivos ou parcerias de pós-graduação.
+              <p className="text-[13px] text-slate-500 leading-relaxed">
+                Painel gestor multi-usuárias para clínicas, consultórios coletivos ou parcerias de pós-graduação.
               </p>
-              
-              <ul className="space-y-2 pt-4">
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Contas para até 5 psicólogas</span>
-                </li>
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Painel do gestor administrativo</span>
-                </li>
-                <li className="text-xs text-slate-300 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Suporte prioritário via WhatsApp</span>
-                </li>
+              <ul className="space-y-2.5 pt-2">
+                {['Contas para até 5 psicólogas', 'Painel do gestor administrativo', 'Suporte prioritário via WhatsApp'].map((it) => (
+                  <li key={it} className="text-[13px] text-slate-600 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>{it}</span>
+                  </li>
+                ))}
               </ul>
             </div>
-
             <button
               onClick={() => handleSelectPlan('clinica')}
-              className="w-full py-3 text-xs font-bold rounded-xl border border-slate-850 hover:border-indigo-500/30 hover:bg-indigo-500/10 text-slate-200 hover:text-indigo-300 transition-all text-center"
+              className="w-full py-3 text-sm font-semibold rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-all"
             >
-              Assinar Plano Clínica →
+              Assinar Clínica
             </button>
           </div>
         </div>
 
-        {/* Feature Comparison Table */}
-        <div className="space-y-4 pt-12">
-          <h2 className="text-center text-lg font-bold tracking-tight text-white flex items-center justify-center gap-2">
-            <Coins className="w-5 h-5 text-indigo-400" />
-            <span>Comparativo Completo de Recursos</span>
+        <div className="space-y-5 pt-8">
+          <h2 className="text-center text-2xl font-light text-slate-800 tracking-tight flex items-center justify-center gap-2">
+            <Coins className="w-5 h-5 text-blue-600" />
+            <span>Comparativo <span className="font-semibold">completo</span></span>
           </h2>
-          
-          <div className="overflow-x-auto rounded-2xl border border-slate-900">
-            <table className="w-full text-left text-xs">
+
+          <div className="overflow-x-auto rounded-3xl border border-slate-100 bg-white shadow-sm">
+            <table className="w-full text-left text-[13px]">
               <thead>
-                <tr className="bg-slate-950 text-slate-400 border-b border-slate-900 font-bold uppercase tracking-wider">
-                  <th className="p-4">Funcionalidade / Benefício</th>
-                  <th className="p-4 text-center">Starter</th>
-                  <th className="p-4 text-center">Pro</th>
-                  <th className="p-4 text-center">Clínica</th>
+                <tr className="text-slate-500 border-b border-slate-100 font-semibold uppercase tracking-wider text-[10px]">
+                  <th className="p-5">Funcionalidade</th>
+                  <th className="p-5 text-center">Starter</th>
+                  <th className="p-5 text-center">Pro</th>
+                  <th className="p-5 text-center">Clínica</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-900 bg-slate-900/5">
+              <tbody className="divide-y divide-slate-100">
                 {features.map((feat, idx) => (
-                  <tr key={idx} className="hover:bg-slate-900/20">
-                    <td className="p-4 font-medium text-slate-300">{feat.name}</td>
-                    <td className="p-4 text-center font-semibold text-slate-450">{feat.starter}</td>
-                    <td className="p-4 text-center font-bold text-indigo-300">{feat.pro}</td>
-                    <td className="p-4 text-center font-semibold text-slate-350">{feat.clinica}</td>
+                  <tr key={idx} className="hover:bg-slate-50/50">
+                    <td className="p-5 font-medium text-slate-700">{feat.name}</td>
+                    <td className="p-5 text-center text-slate-500">{feat.starter}</td>
+                    <td className="p-5 text-center font-semibold text-blue-700">{feat.pro}</td>
+                    <td className="p-5 text-center text-slate-500">{feat.clinica}</td>
                   </tr>
                 ))}
               </tbody>
@@ -276,20 +228,15 @@ export default function PricingPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900/60 py-12 bg-slate-950 text-slate-500 text-xs">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <div className="p-1 rounded bg-slate-900 border border-slate-800 flex items-center justify-center">
-              <Brain className="w-4 h-4 text-indigo-400" />
-            </div>
-            <span className="font-semibold text-slate-400">PsiCoach AI</span>
-          </div>
-
+      <footer className="bg-[#f4f6f9] border-t border-slate-100 py-10 text-slate-500 text-xs">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <span className="font-extrabold text-slate-900 text-sm">
+            PsiCoach<span className="ml-1 text-blue-600">AI</span>
+          </span>
           <div className="flex items-center gap-6">
             <span>© 2026 PsiCoach AI. Todos os direitos reservados.</span>
-            <Link href="/" className="hover:text-slate-350">Página Inicial</Link>
-            <Link href="/login" className="hover:text-slate-350">Login</Link>
+            <Link href="/" className="hover:text-slate-800">Início</Link>
+            <Link href="/login" className="hover:text-slate-800">Login</Link>
           </div>
         </div>
       </footer>

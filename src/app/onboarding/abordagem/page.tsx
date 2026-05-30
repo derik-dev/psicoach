@@ -3,32 +3,32 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { Brain, ArrowRight, ArrowLeft, Award, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Award, Sparkles } from 'lucide-react';
 
 const APPROACHES = [
   {
     name: 'TCC (Terapia Cognitivo-Comportamental)',
-    desc: 'Foco na flexibilização de pensamentos disfuncionais, crenças intermediárias e experimentos comportamentais de exposição.'
+    desc: 'Foco na flexibilização de pensamentos disfuncionais, crenças intermediárias e experimentos comportamentais.'
   },
   {
     name: 'Psicanálise',
-    desc: 'Formulações focadas nas formações do inconsciente, repressão edípica, Superego severo, transferência e livre associação.'
+    desc: 'Formulações focadas no inconsciente, repressão edípica, Superego severo, transferência e livre associação.'
   },
   {
     name: 'Gestalt-terapia',
-    desc: 'Intervenções baseadas na autorregulação organísmica, contato do self, ciclo de contato e atenção plena ao aqui-e-agora.'
+    desc: 'Intervenções baseadas na autorregulação organísmica, contato do self e atenção plena ao aqui-e-agora.'
   },
   {
     name: 'Sistêmica / Terapia Familiar',
-    desc: 'Mapeamento circular interativo do clã familiar, genograma, triangulação de conflitos e ciclos patológicos repetitivos.'
+    desc: 'Mapeamento circular interativo do clã familiar, genograma e triangulação de conflitos.'
   },
   {
     name: 'Humanista / Fenomenologia',
-    desc: 'Foco na empatia incondicional, congruência terapêutica, autoatualização organísmica do eu e valor essencial do sujeito.'
+    desc: 'Foco na empatia incondicional, congruência terapêutica e autoatualização organísmica do eu.'
   },
   {
     name: 'Junguiana / Psicologia Analítica',
-    desc: 'Análise de símbolos de sonhos, arquétipos constitutivos do inconsciente coletivo, sombra pessoal e individuação.'
+    desc: 'Análise de símbolos, arquétipos do inconsciente coletivo, sombra pessoal e individuação.'
   }
 ];
 
@@ -36,7 +36,6 @@ export default function OnboardingAbordagem() {
   const { user, setUser } = useApp();
   const router = useRouter();
 
-  // Form states
   const [selectedApproach, setSelectedApproach] = useState('TCC (Terapia Cognitivo-Comportamental)');
   const [description, setDescription] = useState('');
 
@@ -48,11 +47,10 @@ export default function OnboardingAbordagem() {
 
   if (!user) return null;
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Save to profile and redirect to tour
-    setUser({
+    await setUser({
       ...user,
       mainApproach: selectedApproach,
       approachDescription: description
@@ -62,33 +60,29 @@ export default function OnboardingAbordagem() {
   };
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-indigo-650/10 rounded-full blur-[100px] -z-10" />
-
-      <div className="w-full max-w-xl bg-slate-900/30 border border-slate-800 rounded-3xl p-6 lg:p-8 backdrop-blur-xl space-y-6">
-        {/* Progress header */}
+    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen flex items-center justify-center p-5 font-sans">
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-100 shadow-sm p-8 lg:p-10 space-y-7">
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
-            <span>Passo 2 de 3: Linha Teórica</span>
-            <span className="text-indigo-400">66% Concluído</span>
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <span>Passo 2 de 3 · Linha Teórica</span>
+            <span className="text-blue-600">66%</span>
           </div>
-          {/* Progress bar */}
-          <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-            <div className="w-2/3 h-full bg-indigo-600 rounded-full transition-all duration-300" />
+          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-2/3 h-full bg-blue-600 rounded-full transition-all duration-300" />
           </div>
         </div>
 
-        {/* Title */}
-        <div className="space-y-1">
-          <h2 className="text-lg font-bold text-slate-200">Selecione sua principal linha teórica</h2>
-          <p className="text-xs text-slate-400 leading-normal">
-            As análises do copiloto AI se adequarão aos principais teóricos, hipóteses e vocabulário técnico da abordagem escolhida.
+        <div className="space-y-3">
+          <h1 className="page-headline">
+            Sua linha <span className="page-headline-accent">teórica.</span>
+          </h1>
+          <p className="text-sm text-slate-500 leading-relaxed max-w-lg">
+            As análises do copiloto se adequarão aos teóricos e ao vocabulário técnico da abordagem escolhida.
           </p>
         </div>
 
         <form onSubmit={handleNext} className="space-y-5">
-          {/* Cards Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1">
             {APPROACHES.map((ap) => {
               const isSelected = selectedApproach === ap.name;
               return (
@@ -96,43 +90,41 @@ export default function OnboardingAbordagem() {
                   key={ap.name}
                   type="button"
                   onClick={() => setSelectedApproach(ap.name)}
-                  className={`p-4 rounded-2xl border text-left flex flex-col justify-between gap-1.5 transition-all ${
+                  className={`p-4 rounded-2xl border text-left flex flex-col gap-2 transition-all ${
                     isSelected
-                      ? 'border-indigo-500 bg-indigo-500/10 text-indigo-350 shadow shadow-indigo-500/5'
-                      : 'border-slate-855 border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400'
+                      ? 'border-blue-500 bg-blue-50/60 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
-                    <Award className={`w-4 h-4 shrink-0 ${isSelected ? 'text-indigo-400' : 'text-slate-500'}`} />
-                    <h4 className="text-xs font-bold text-slate-200">{ap.name}</h4>
+                    <Award className={`w-4 h-4 shrink-0 ${isSelected ? 'text-blue-600' : 'text-slate-400'}`} />
+                    <h4 className="text-[13px] font-semibold text-slate-800">{ap.name}</h4>
                   </div>
-                  <p className="text-[10px] leading-normal text-slate-400">{ap.desc}</p>
+                  <p className="text-[11.5px] leading-relaxed text-slate-500">{ap.desc}</p>
                 </button>
               );
             })}
           </div>
 
-          {/* Description Textarea */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-350 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-              <span>Deseja especificar nuances ou preferências autorais? (Opcional)</span>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span>Nuances ou autores preferidos (opcional)</span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Utilizo psicanálise de orientação lacaniana, ou TCC com foco em terapia de aceitação e compromisso (ACT)..."
-              rows={2}
-              className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors resize-none leading-relaxed"
+              placeholder="Ex: Psicanálise lacaniana, ou TCC com foco em ACT..."
+              rows={3}
+              className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl p-3.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all resize-none leading-relaxed"
             />
           </div>
 
-          {/* CTAs */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex items-center gap-3 pt-1">
             <button
               type="button"
               onClick={() => router.push('/onboarding/perfil')}
-              className="flex-1 inline-flex items-center justify-center gap-1 px-4 py-3.5 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-5 py-3.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Voltar</span>
@@ -140,7 +132,7 @@ export default function OnboardingAbordagem() {
 
             <button
               type="submit"
-              className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-650/15"
+              className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
             >
               <span>Prosseguir para Tour</span>
               <ArrowRight className="w-4 h-4" />

@@ -5,13 +5,11 @@ import { useRouter } from 'next/navigation';
 import {
   BookOpen,
   Search,
-  Filter,
   ArrowRight,
   Bookmark,
   Sparkles,
   Award,
-  ChevronRight,
-  ExternalLink
+  ChevronRight
 } from 'lucide-react';
 
 interface Article {
@@ -60,7 +58,7 @@ const ARTICLES: Article[] = [
     id: 'art-4',
     title: 'Circularidade e Padrões Familiares na Abordagem Sistêmica',
     excerpt: 'Como mapear o genograma e identificar os ciclos repetitivos que sustentam o sintoma do paciente.',
-    content: 'Na clínica sistêmica, o indivíduo que apresenta o sintoma (chamado de "paciente identificado") expressa, na verdade, uma disfunção de toda a ecologia familiar. Os problemas não são causados por relações lineares de causa e efeito (A causa B), mas sim por causalidades circulares (A afeta B, que realimenta A).\n\n1. **O Ciclo Perseguidor-Distanciador:** O clássico jogo em que um cônjuge exige atenção cobrando agressivamente $\rightarrow$ o outro se afasta para evitar o conflito $\rightarrow$ o primeiro sente-se abandonado e ataca com mais força $\rightarrow$ o segundo se isola. O sintoma é o ciclo em si.\n2. **Triangulação:** Processo em que dois membros em conflito (ex: pais) desviam a tensão para um terceiro (ex: filho), fazendo-o somatizar ou agir com agressividade como forma de manter os pais unidos para "cuidar do problema". Mapear esses triângulos é o primeiro passo para reestabelecer fronteiras geracionais saudáveis.',
+    content: 'Na clínica sistêmica, o indivíduo que apresenta o sintoma (chamado de "paciente identificado") expressa, na verdade, uma disfunção de toda a ecologia familiar. Os problemas não são causados por relações lineares de causa e efeito (A causa B), mas sim por causalidades circulares (A afeta B, que realimenta A).\n\n1. **O Ciclo Perseguidor-Distanciador:** O clássico jogo em que um cônjuge exige atenção cobrando agressivamente → o outro se afasta para evitar o conflito → o primeiro sente-se abandonado e ataca com mais força → o segundo se isola. O sintoma é o ciclo em si.\n2. **Triangulação:** Processo em que dois membros em conflito (ex: pais) desviam a tensão para um terceiro (ex: filho), fazendo-o somatizar ou agir com agressividade como forma de manter os pais unidos para "cuidar do problema". Mapear esses triângulos é o primeiro passo para reestabelecer fronteiras geracionais saudáveis.',
     approaches: ['Sistêmica'],
     themes: ['técnicas', 'desenvolvimento'],
     readingTime: '8 min de leitura',
@@ -75,7 +73,6 @@ export default function ClinicalLibrary() {
   const [themeFilter, setThemeFilter] = useState('All');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
-  // Filter list
   const filteredArticles = useMemo(() => {
     return ARTICLES.filter((art) => {
       const matchesSearch =
@@ -101,7 +98,6 @@ export default function ClinicalLibrary() {
   };
 
   const handleAskAboutTheme = (article: Article) => {
-    // Navigate to new analysis with pre-seeded query
     if (typeof window !== 'undefined') {
       const mockQuery = `Dra, gostaria de aprofundar um caso à luz do artigo "${article.title}". Descreva seu caso aqui relacionando-o com o tema do texto (ex: ${article.excerpt}).`;
       localStorage.setItem('psicoach_temp_query', mockQuery);
@@ -110,41 +106,41 @@ export default function ClinicalLibrary() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <BookOpen className="w-7 h-7 text-indigo-500" />
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="surface-card p-7 lg:p-10 space-y-4">
+        <div className="section-badge">
+          <BookOpen className="w-3 h-3 text-blue-600" />
           <span>Biblioteca Clínica</span>
+        </div>
+        <h1 className="page-headline">
+          Conhecimento <span className="page-headline-accent">aplicado.</span>
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 text-sm leading-relaxed max-w-2xl">
           Explore artigos técnicos, referências bibliográficas e diretrizes clínicas baseadas em evidências para o seu dia a dia.
         </p>
       </div>
 
-      {/* Grid Layout: Articles list + Selected Article view */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-        {/* Left 2 Cols: Search, Filters & Cards */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        {/* Left: Articles list */}
         <div className="xl:col-span-2 space-y-6">
-          {/* Filters Bar */}
-          <div className="p-4 rounded-2xl bg-slate-900/30 border border-slate-800 backdrop-blur-md grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Search */}
+          {/* Filters */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar conceitos clínicos..."
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
+                placeholder="Buscar conceitos..."
+                className="w-full bg-slate-50 border border-slate-200 focus:border-blue-600 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-700 placeholder-slate-400 outline-none transition-colors"
               />
             </div>
 
-            {/* Approach filter */}
             <select
               value={approachFilter}
               onChange={(e) => setApproachFilter(e.target.value)}
-              className="bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none transition-colors"
+              className="bg-slate-50 border border-slate-200 focus:border-blue-600 rounded-xl px-3 py-2 text-xs text-slate-700 outline-none transition-colors"
             >
               <option value="All">Todas as abordagens</option>
               <option value="TCC">TCC</option>
@@ -152,11 +148,10 @@ export default function ClinicalLibrary() {
               <option value="Sistêmica">Sistêmica</option>
             </select>
 
-            {/* Theme filter */}
             <select
               value={themeFilter}
               onChange={(e) => setThemeFilter(e.target.value)}
-              className="bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none transition-colors"
+              className="bg-slate-50 border border-slate-200 focus:border-blue-600 rounded-xl px-3 py-2 text-xs text-slate-700 outline-none transition-colors"
             >
               <option value="All">Todos os temas</option>
               <option value="transtornos">Transtornos</option>
@@ -166,17 +161,16 @@ export default function ClinicalLibrary() {
             </select>
           </div>
 
-          {/* Cards List */}
           <div className="space-y-4">
             {filteredArticles.length === 0 ? (
-              <div className="p-12 rounded-3xl border border-dashed border-slate-800 text-center space-y-3 bg-slate-900/10">
-                <BookOpen className="w-10 h-10 text-slate-600 mx-auto animate-pulse" />
-                <p className="text-sm text-slate-400">Nenhum conceito encontrado na biblioteca.</p>
+              <div className="p-12 rounded-3xl border border-dashed border-slate-200 bg-white text-center space-y-3">
+                <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
+                <p className="text-sm text-slate-500">Nenhum conceito encontrado.</p>
                 <button
                   onClick={handleClearFilters}
-                  className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20"
+                  className="text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors"
                 >
-                  Limpar Filtros
+                  Limpar filtros
                 </button>
               </div>
             ) : (
@@ -184,48 +178,48 @@ export default function ClinicalLibrary() {
                 <div
                   key={art.id}
                   onClick={() => setSelectedArticle(art)}
-                  className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-4 ${
+                  className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-4 ${
                     selectedArticle?.id === art.id
-                      ? 'bg-indigo-950/20 border-indigo-500 shadow-md shadow-indigo-500/5'
-                      : 'bg-slate-900/30 border-slate-800 hover:border-slate-700 hover:bg-slate-900/50'
+                      ? 'bg-blue-50/50 border-blue-300 shadow-sm'
+                      : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-sm'
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[10px] text-slate-500 font-semibold">
                       <span className="flex items-center gap-1">
-                        <Bookmark className="w-3.5 h-3.5 text-indigo-400" />
+                        <Bookmark className="w-3.5 h-3.5 text-blue-600" />
                         <span>{art.readingTime}</span>
                       </span>
                       <div className="flex gap-1">
                         {art.themes.map((t) => (
-                          <span key={t} className="px-2 py-0.5 rounded bg-slate-950 border border-slate-850 text-slate-400 uppercase tracking-wide">
+                          <span key={t} className="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-500 uppercase tracking-wide">
                             {t}
                           </span>
                         ))}
                       </div>
                     </div>
-                    
-                    <h3 className="text-base font-bold text-slate-100 hover:text-indigo-400 transition-colors">
+
+                    <h3 className="text-base font-semibold text-slate-800 hover:text-blue-700 transition-colors">
                       {art.title}
                     </h3>
-                    
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
                       {art.excerpt}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/50 text-[11px]">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
                     <div className="flex gap-1.5 flex-wrap">
                       {art.approaches.map((ap) => (
-                        <span key={ap} className="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-semibold">
+                        <span key={ap} className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-100 text-blue-700 font-semibold">
                           {ap}
                         </span>
                       ))}
                     </div>
 
-                    <span className="text-indigo-400 font-bold group hover:text-indigo-300 flex items-center gap-1 transition-colors">
-                      <span>Ler Artigo</span>
-                      <ChevronRight className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                    <span className="text-blue-700 font-semibold hover:text-blue-600 flex items-center gap-1 transition-colors">
+                      <span>Ler</span>
+                      <ChevronRight className="w-4 h-4" />
                     </span>
                   </div>
                 </div>
@@ -234,35 +228,34 @@ export default function ClinicalLibrary() {
           </div>
         </div>
 
-        {/* Right 1 Col: Selected Article Details Viewer */}
+        {/* Right: Selected article */}
         <div className="space-y-6">
           {!selectedArticle ? (
-            <div className="p-8 rounded-3xl border border-dashed border-slate-800 bg-slate-900/10 text-center h-[450px] flex flex-col items-center justify-center space-y-3">
-              <Award className="w-10 h-10 text-slate-650" />
-              <h3 className="text-sm font-bold text-slate-350">Selecione um artigo</h3>
+            <div className="p-8 rounded-3xl border border-dashed border-slate-200 bg-white text-center h-[450px] flex flex-col items-center justify-center space-y-3">
+              <Award className="w-10 h-10 text-slate-300" />
+              <h3 className="text-sm font-semibold text-slate-700">Selecione um artigo</h3>
               <p className="text-xs text-slate-500 leading-normal max-w-xs">
-                Clique em qualquer artigo da biblioteca para ler o conteúdo integral e acessar referências clínicas.
+                Clique em qualquer artigo da biblioteca para ler o conteúdo integral.
               </p>
             </div>
           ) : (
-            <div className="p-6 rounded-3xl bg-slate-900/35 border border-slate-800 backdrop-blur-xl space-y-6 animate-fade-in">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
               <div className="space-y-3">
-                <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Conteúdo Científico Homologado</span>
+                <span className="text-[10px] font-semibold text-blue-700 uppercase tracking-widest flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Conteúdo Homologado</span>
                 </span>
-                <h2 className="text-lg font-bold text-slate-100 leading-snug">
+                <h2 className="text-lg font-semibold text-slate-800 leading-snug">
                   {selectedArticle.title}
                 </h2>
-                <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                <div className="flex items-center gap-2 text-[10px] text-slate-400">
                   <span>{selectedArticle.readingTime}</span>
                   <span>•</span>
                   <span className="capitalize">{selectedArticle.themes.join(', ')}</span>
                 </div>
               </div>
 
-              {/* Core Content */}
-              <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-4 border-t border-b border-slate-800/80 py-4 max-h-[300px] overflow-y-auto pr-1">
+              <div className="text-xs text-slate-700 leading-relaxed space-y-4 border-t border-b border-slate-100 py-4 max-h-[300px] overflow-y-auto pr-1">
                 {selectedArticle.content.split('\n\n').map((paragraph, idx) => (
                   <p key={idx} className="whitespace-pre-line">
                     {paragraph}
@@ -270,16 +263,15 @@ export default function ClinicalLibrary() {
                 ))}
               </div>
 
-              {/* References */}
               {selectedArticle.references && (
                 <div className="space-y-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Referências de Leitura Recomendadas
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Referências
                   </span>
                   <div className="space-y-1.5">
                     {selectedArticle.references.map((ref, idx) => (
-                      <div key={idx} className="p-2.5 bg-slate-950 rounded-xl text-[10px] text-slate-450 leading-relaxed border border-slate-900 flex gap-2">
-                        <span className="text-indigo-500 font-bold shrink-0 mt-0.5">•</span>
+                      <div key={idx} className="p-2.5 bg-slate-50 rounded-xl text-[10px] text-slate-600 leading-relaxed border border-slate-100 flex gap-2">
+                        <span className="text-blue-600 font-bold shrink-0 mt-0.5">•</span>
                         <span>{ref}</span>
                       </div>
                     ))}
@@ -287,16 +279,14 @@ export default function ClinicalLibrary() {
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="space-y-2 pt-2">
-                <button
-                  onClick={() => handleAskAboutTheme(selectedArticle)}
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl text-xs transition-all duration-200 shadow-md shadow-indigo-500/10 active:scale-98"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>Analisar Caso Sobre Este Tema</span>
-                </button>
-              </div>
+              <button
+                onClick={() => handleAskAboutTheme(selectedArticle)}
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Analisar caso sobre este tema</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
         </div>

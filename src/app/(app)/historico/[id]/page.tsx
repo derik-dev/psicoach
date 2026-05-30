@@ -30,29 +30,24 @@ export default function IndividualCase() {
   const router = useRouter();
   const { cases, updateCase, addChatMessage } = useApp();
 
-  // Find case
   const c = cases.find((item) => item.id === id);
 
-  // Form states
   const [notes, setNotes] = useState('');
   const [newTag, setNewTag] = useState('');
   const [saveNotesSuccess, setSaveNotesSuccess] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // Chat states
   const [chatMessage, setChatMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Load notes once case is loaded
   useEffect(() => {
     if (c) {
       setNotes(c.notes || '');
     }
   }, [c]);
 
-  // Redirect if case not found
   useEffect(() => {
     if (c === undefined && cases.length > 0) {
       router.push('/historico');
@@ -61,7 +56,7 @@ export default function IndividualCase() {
 
   if (!c) {
     return (
-      <div className="flex h-[450px] items-center justify-center text-slate-400">
+      <div className="flex h-[450px] items-center justify-center text-slate-500 text-sm">
         Carregando dados do caso clínico...
       </div>
     );
@@ -98,23 +93,23 @@ Caso: ${c.title}
 Abordagem: ${c.approach_used}
 Data: ${new Date(c.created_at).toLocaleDateString('pt-BR')}
 
-🔍 HIPÓTESE CLÍNICA
+HIPÓTESE CLÍNICA
 ${c.analysis.hypothesis}
 
-🛤️ ABORDAGENS SUGERIDAS
+ABORDAGENS SUGERIDAS
 ${c.analysis.approaches.map((a, i) => `${i + 1}. ${a}`).join('\n')}
 
-❓ PERGUNTAS PARA PRÓXIMA SESSÃO
+PERGUNTAS PARA PRÓXIMA SESSÃO
 ${c.analysis.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
-📚 REFERÊNCIAS TEÓRICAS
+REFERÊNCIAS TEÓRICAS
 ${c.analysis.references.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
-👁️ PONTO CEGO POSSÍVEL
+PONTO CEGO POSSÍVEL
 ${c.analysis.blind_spot}
 
-⚠️ ATENÇÃO E ALERTAS
-${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
+ATENÇÃO E ALERTAS
+${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
     `;
     navigator.clipboard.writeText(text);
     setCopySuccess(true);
@@ -145,7 +140,6 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
       addChatMessage(c.id, 'assistant', botResponse);
       setIsSendingMessage(false);
 
-      // Scroll to bottom
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -154,67 +148,65 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
 
   return (
     <div className="space-y-6">
-      {/* Return button */}
-      <div>
-        <Link
-          href="/historico"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Voltar ao Histórico</span>
-        </Link>
-      </div>
+      {/* Back */}
+      <Link
+        href="/historico"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-600 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Voltar ao Histórico</span>
+      </Link>
 
-      {/* Case Header Details */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900/60 to-slate-950 border border-slate-800 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
+      {/* Case Header */}
+      <div className="surface-card p-7 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 uppercase tracking-wider">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-700 uppercase tracking-wider">
               {c.approach_used}
             </span>
-            <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+            <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
               <Clock className="w-3.5 h-3.5" />
               <span>Criado em {new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
             </div>
           </div>
-          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-slate-100">
+          <h1 className="text-2xl lg:text-3xl font-light tracking-tight text-slate-900">
             {c.title}
           </h1>
-          <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
-            <strong>Relato Inicial:</strong> "{c.input_text.slice(0, 150)}..."
+          <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
+            <strong className="text-slate-700">Relato inicial:</strong> &ldquo;{c.input_text.slice(0, 150)}...&rdquo;
           </p>
         </div>
 
         <button
           onClick={handleCopyText}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-950 border border-slate-800 text-slate-450 hover:text-indigo-400 hover:border-indigo-500/30 rounded-xl text-xs font-semibold transition-all self-start md:self-center"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-200 rounded-xl text-xs font-semibold transition-all self-start md:self-center"
         >
           <Copy className="w-4 h-4" />
-          <span>{copySuccess ? 'Copiado!' : 'Copiar Análise'}</span>
+          <span>{copySuccess ? 'Copiado!' : 'Copiar análise'}</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        {/* Left 2 Cols: Clinical Analysis & Notes */}
+        {/* Left columns */}
         <div className="xl:col-span-2 space-y-6">
-          {/* Notes Card */}
-          <div className="p-5 rounded-3xl bg-slate-900/30 border border-slate-800 space-y-4">
+          {/* Notes */}
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-                <FileEdit className="w-4.5 h-4.5 text-indigo-400" />
-                <span>Minhas Notas & Evolução do Paciente</span>
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                <FileEdit className="w-4 h-4 text-blue-600" />
+                <span>Minhas notas & Evolução</span>
               </h2>
               <button
                 onClick={handleSaveNotes}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-colors"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>Salvar Notas</span>
+                <span>Salvar</span>
               </button>
             </div>
-            
+
             {saveNotesSuccess && (
-              <div className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+              <div className="text-xs font-semibold text-emerald-500 flex items-center gap-1.5">
                 <CheckCircle className="w-4 h-4" />
                 <span>Notas atualizadas com sucesso!</span>
               </div>
@@ -223,28 +215,28 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Digite aqui como o paciente reagiu às intervenções propostas nas últimas sessões, anotações de evolução terapêutica ou insights surgidos..."
+              placeholder="Anotações da evolução terapêutica, reações às intervenções, insights..."
               rows={4}
-              className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 outline-none transition-colors resize-none leading-relaxed"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-blue-600 rounded-xl p-3 text-xs text-slate-700 placeholder-slate-400 outline-none transition-colors resize-none leading-relaxed"
             />
 
-            {/* Tag Editor */}
-            <div className="border-t border-slate-800/80 pt-3.5 space-y-3">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
-                <Tag className="w-4 h-4 text-indigo-400" />
-                <span>TAGS DO CASO</span>
+            {/* Tags */}
+            <div className="border-t border-slate-100 pt-3.5 space-y-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
+                <Tag className="w-3.5 h-3.5 text-blue-600" />
+                <span>Tags do caso</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 {c.tags && c.tags.map((t) => (
                   <span
                     key={t}
-                    className="text-[10px] font-bold text-slate-350 bg-slate-950 border border-slate-850 pl-2.5 pr-1.5 py-1 rounded-lg flex items-center gap-1.5"
+                    className="text-[10px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 pl-2.5 pr-1.5 py-1 rounded-lg flex items-center gap-1.5"
                   >
                     <span>{t}</span>
                     <button
                       onClick={() => handleRemoveTag(t)}
-                      className="text-slate-500 hover:text-rose-400 font-bold px-1 transition-colors"
+                      className="text-slate-400 hover:text-rose-500 font-bold px-1 transition-colors"
                     >
                       ×
                     </button>
@@ -256,12 +248,12 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
                     type="text"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="Adicionar tag..."
-                    className="bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-lg px-2.5 py-1 text-[10px] text-slate-200 outline-none transition-colors w-24"
+                    placeholder="Nova tag..."
+                    className="bg-slate-50 border border-slate-200 focus:border-blue-600 rounded-lg px-2.5 py-1 text-[10px] text-slate-700 outline-none transition-colors w-24"
                   />
                   <button
                     type="submit"
-                    className="p-1.5 bg-slate-800 hover:bg-indigo-600/35 border border-slate-850 hover:border-indigo-500/20 text-indigo-400 rounded-lg flex items-center justify-center"
+                    className="p-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-100 text-blue-700 rounded-lg flex items-center justify-center"
                   >
                     <Plus className="w-3 h-3" />
                   </button>
@@ -270,35 +262,35 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
             </div>
           </div>
 
-          {/* Analysis Result Panels */}
-          <div className="p-6 rounded-3xl bg-slate-900/30 border border-slate-800 space-y-6">
-            <h2 className="text-base font-bold text-slate-200 flex items-center gap-1.5">
-              <Sparkles className="w-4.5 h-4.5 text-indigo-400" />
-              <span>Análise Clínica PsiCoach AI</span>
+          {/* Analysis */}
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
+            <h2 className="text-base font-semibold text-slate-800 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <span>Análise clínica PsiCoach AI</span>
             </h2>
 
             <div className="space-y-5">
               {/* Hypothesis */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 flex items-center gap-2">
-                  <span className="p-1 rounded bg-indigo-500/10 text-indigo-400"><Brain className="w-3.5 h-3.5" /></span>
-                  <span>HIPÓTESE CLÍNICA</span>
+                <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                  <span className="p-1 rounded bg-blue-50 text-blue-600"><Brain className="w-3.5 h-3.5" /></span>
+                  <span>Hipótese clínica</span>
                 </h4>
-                <p className="text-xs leading-relaxed text-slate-350 p-4 bg-slate-950/40 border border-slate-900 rounded-2xl">
+                <p className="text-xs leading-relaxed text-slate-700 p-4 bg-slate-50 border border-slate-100 rounded-2xl italic" style={{ fontFamily: 'Georgia, serif' }}>
                   {c.analysis.hypothesis}
                 </p>
               </div>
 
               {/* Approaches */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 flex items-center gap-2">
-                  <span className="p-1 rounded bg-purple-500/10 text-purple-400"><TrendingUp className="w-3.5 h-3.5" /></span>
-                  <span>INTERVENÇÕES & DIRETRIZES TERAPÊUTICAS</span>
+                <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                  <span className="p-1 rounded bg-blue-50 text-blue-600"><TrendingUp className="w-3.5 h-3.5" /></span>
+                  <span>Intervenções & Diretrizes</span>
                 </h4>
                 <div className="space-y-2">
                   {c.analysis.approaches.map((app, idx) => (
-                    <div key={idx} className="flex gap-3 p-4 bg-slate-950/40 border border-slate-900 rounded-2xl text-xs text-slate-350">
-                      <span className="w-5 h-5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 shrink-0">
+                    <div key={idx} className="flex gap-3 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs text-slate-700">
+                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold shrink-0 text-[10px]">
                         {idx + 1}
                       </span>
                       <p className="leading-relaxed">{app}</p>
@@ -307,16 +299,16 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
                 </div>
               </div>
 
-              {/* Socratic Questions */}
+              {/* Questions */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 flex items-center gap-2">
-                  <span className="p-1 rounded bg-amber-500/10 text-amber-400"><HelpCircle className="w-3.5 h-3.5" /></span>
-                  <span>PERGUNTAS RECOMENDADAS PARA PRÓXIMA SESSÃO</span>
+                <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                  <span className="p-1 rounded bg-blue-50 text-blue-600"><HelpCircle className="w-3.5 h-3.5" /></span>
+                  <span>Perguntas para próxima sessão</span>
                 </h4>
                 <div className="space-y-2">
                   {c.analysis.questions.map((q, idx) => (
-                    <div key={idx} className="p-4 bg-slate-950/40 border border-slate-900 rounded-2xl text-xs text-slate-350 italic">
-                      "{q}"
+                    <div key={idx} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs text-slate-700 italic" style={{ fontFamily: 'Georgia, serif' }}>
+                      &ldquo;{q}&rdquo;
                     </div>
                   ))}
                 </div>
@@ -324,27 +316,27 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
 
               {/* References */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 flex items-center gap-2">
-                  <span className="p-1 rounded bg-emerald-500/10 text-emerald-400"><BookOpen className="w-3.5 h-3.5" /></span>
-                  <span>LITERATURA & EMBASAMENTO CIENTÍFICO</span>
+                <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                  <span className="p-1 rounded bg-blue-50 text-blue-600"><BookOpen className="w-3.5 h-3.5" /></span>
+                  <span>Literatura & Embasamento</span>
                 </h4>
                 <div className="space-y-2">
                   {c.analysis.references.map((ref, idx) => (
-                    <div key={idx} className="p-3 bg-slate-950/40 border border-slate-900 rounded-xl text-xs text-slate-400 leading-normal flex gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <div key={idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600 leading-normal flex gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                       <span>{ref}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Blind Spot */}
+              {/* Blind spot */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 flex items-center gap-2">
-                  <span className="p-1 rounded bg-sky-500/10 text-sky-400"><Eye className="w-3.5 h-3.5" /></span>
-                  <span>PONTO CEGO DO TERAPEUTA</span>
+                <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                  <span className="p-1 rounded bg-blue-50 text-blue-600"><Eye className="w-3.5 h-3.5" /></span>
+                  <span>Ponto cego do terapeuta</span>
                 </h4>
-                <p className="text-xs leading-relaxed text-slate-350 p-4 bg-slate-950/40 border border-slate-900 rounded-2xl border-l-2 border-l-indigo-500">
+                <p className="text-xs leading-relaxed text-slate-700 p-4 bg-blue-50/60 border border-blue-100 rounded-2xl border-l-4 border-l-blue-600">
                   {c.analysis.blind_spot}
                 </p>
               </div>
@@ -352,14 +344,14 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
               {/* Alerts */}
               {c.analysis.alerts && c.analysis.alerts.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-rose-450 flex items-center gap-2">
-                    <span className="p-1 rounded bg-rose-500/10 text-rose-450"><AlertTriangle className="w-3.5 h-3.5" /></span>
-                    <span>SINAIS DE ALERTA & SEGURANÇA</span>
+                  <h4 className="text-[10px] font-semibold text-rose-500 flex items-center gap-2 uppercase tracking-widest">
+                    <span className="p-1 rounded bg-rose-50 text-rose-500"><AlertTriangle className="w-3.5 h-3.5" /></span>
+                    <span>Sinais de alerta & Segurança</span>
                   </h4>
-                  <div className="p-4 bg-rose-950/10 border border-rose-500/20 rounded-2xl space-y-2">
+                  <div className="p-4 bg-rose-50/60 border border-rose-100 rounded-2xl space-y-2">
                     {c.analysis.alerts.map((al, idx) => (
-                      <div key={idx} className="text-xs text-rose-300 leading-relaxed flex gap-2">
-                        <span className="text-rose-400 font-bold">•</span>
+                      <div key={idx} className="text-xs text-rose-700 leading-relaxed flex gap-2">
+                        <span className="text-rose-500 font-bold">•</span>
                         <span>{al}</span>
                       </div>
                     ))}
@@ -370,23 +362,22 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
           </div>
         </div>
 
-        {/* Right 1 Col: Dynamic Clinical Discussion */}
-        <div className="p-5 rounded-3xl bg-slate-900/30 border border-slate-800 space-y-4">
+        {/* Right column - Chat */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 space-y-4">
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <span>Aprofundar Caso Clínico</span>
+            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <span>Aprofundar caso</span>
             </h3>
-            <p className="text-[10px] text-slate-500 leading-relaxed">
-              Faça perguntas complementares ou debata situações de resistência e transferência sobre este caso específico.
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Faça perguntas complementares sobre este caso específico.
             </p>
           </div>
 
-          {/* Messages Area */}
           <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
             {c.messages.length === 0 ? (
-              <p className="text-xs text-slate-500 italic text-center py-8">
-                Nenhuma pergunta complementar feita. Digite sua dúvida no campo abaixo para debater com o copiloto!
+              <p className="text-xs text-slate-400 italic text-center py-8">
+                Nenhuma pergunta feita. Digite sua dúvida no campo abaixo.
               </p>
             ) : (
               c.messages.map((msg) => (
@@ -394,13 +385,13 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
                   key={msg.id}
                   className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-indigo-600/10 border border-indigo-500/20 text-slate-200 ml-auto max-w-[90%]'
-                      : 'bg-slate-950 border border-slate-850 text-slate-350 mr-auto max-w-[90%]'
+                      ? 'bg-blue-50 border border-blue-100 text-slate-700 ml-auto max-w-[90%]'
+                      : 'bg-slate-50 border border-slate-100 text-slate-700 mr-auto max-w-[90%]'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 mb-1 text-[9px] font-bold text-slate-550">
-                    {msg.role === 'user' ? <User className="w-3.5 h-3.5 text-indigo-400" /> : <Bot className="w-3.5 h-3.5 text-purple-400" />}
-                    <span>{msg.role === 'user' ? 'Você (Psicóloga)' : 'PsiCoach AI'}</span>
+                  <div className="flex items-center gap-1.5 mb-1 text-[9px] font-semibold text-slate-500 uppercase tracking-wide">
+                    {msg.role === 'user' ? <User className="w-3 h-3 text-blue-600" /> : <Bot className="w-3 h-3 text-blue-600" />}
+                    <span>{msg.role === 'user' ? 'Você' : 'PsiCoach AI'}</span>
                   </div>
                   <p className="whitespace-pre-line">{msg.content}</p>
                 </div>
@@ -408,31 +399,30 @@ ${c.analysis.alerts.map((a, i) => `- ${a}`).join('\n')}
             )}
 
             {isSendingMessage && (
-              <div className="p-3.5 rounded-2xl text-xs bg-slate-950 border border-slate-850 text-slate-400 mr-auto max-w-[90%] flex gap-2">
-                <Bot className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5 animate-pulse" />
+              <div className="p-3.5 rounded-2xl text-xs bg-slate-50 border border-slate-100 text-slate-500 mr-auto max-w-[90%] flex gap-2">
+                <Bot className="w-4 h-4 text-blue-600 shrink-0 mt-0.5 animate-pulse" />
                 <div className="flex items-center gap-1 py-1">
-                  <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSendMessage} className="flex gap-2 border-t border-slate-800/60 pt-3">
+          <form onSubmit={handleSendMessage} className="flex gap-2 border-t border-slate-100 pt-3">
             <input
               type="text"
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}
-              placeholder="Pergunte sobre intervenções, transferência..."
-              className="flex-1 bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none transition-colors"
+              placeholder="Pergunte sobre intervenções..."
+              className="flex-1 bg-slate-50 border border-slate-200 focus:border-blue-600 rounded-full px-4 py-2 text-xs text-slate-700 outline-none transition-colors"
             />
             <button
               type="submit"
               disabled={!chatMessage.trim() || isSendingMessage}
-              className="p-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white rounded-xl transition-all duration-200 shrink-0"
+              className="p-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 text-white rounded-full transition-all shrink-0"
             >
               <Send className="w-4 h-4" />
             </button>

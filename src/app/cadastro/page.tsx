@@ -4,13 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { Brain, Lock, Mail, User, ShieldCheck, FileText, ArrowRight } from 'lucide-react';
+import { Lock, Mail, User, ShieldCheck, ArrowRight, CheckCircle } from 'lucide-react';
 
 export default function RegisterPage() {
-  const { user, setUser } = useApp();
+  const { user, signUp } = useApp();
   const router = useRouter();
 
-  // Form states
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [crp, setCrp] = useState('');
@@ -19,6 +18,7 @@ export default function RegisterPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -30,7 +30,7 @@ export default function RegisterPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -44,175 +44,195 @@ export default function RegisterPage() {
       return;
     }
 
+    if (password.length < 6) {
+      setError('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
     if (!acceptTerms) {
       setError('Você precisa concordar com os Termos de Uso e Política de Privacidade.');
       return;
     }
 
     setLoading(true);
+    const { error: authError, needsEmailConfirmation } = await signUp(name, email, crp, password);
+    setLoading(false);
 
-    setTimeout(() => {
-      setLoading(false);
-      
-      // Store basic profile in context with onboardingCompleted: false
-      setUser({
-        name,
-        email,
-        crp,
-        onboardingCompleted: false,
-        yearsExperience: '',
-        patientTypes: [],
-        specialties: [],
-        mainApproach: '',
-        approachDescription: '',
-        responseDetail: 'detalhado'
-      });
+    if (authError) {
+      if (authError.includes('already registered') || authError.includes('already been registered')) {
+        setError('Este e-mail já está cadastrado. Tente fazer login.');
+      } else {
+        setError(authError);
+      }
+      return;
+    }
 
+    if (needsEmailConfirmation) {
+      setEmailConfirmationSent(true);
+    } else {
       router.push('/onboarding/perfil');
-    }, 1500);
+    }
   };
 
-  return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 right-1/4 w-[350px] h-[350px] bg-indigo-650/10 rounded-full blur-[110px] -z-10" />
+  if (emailConfirmationSent) {
+    return (
+      <div className="bg-[#FAFBFD] text-slate-900 min-h-screen flex items-center justify-center p-5 font-sans">
+        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-sm p-8 lg:p-10 space-y-6 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+            <CheckCircle className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-slate-800">Confirme seu e-mail</h2>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Enviamos um link de confirmação para <strong className="text-slate-700">{email}</strong>. Clique no link para ativar sua conta.
+            </p>
+          </div>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all"
+          >
+            Ir para o login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-      <div className="w-full max-w-md bg-slate-900/30 border border-slate-800 rounded-3xl p-6 lg:p-8 backdrop-blur-xl space-y-6">
-        {/* Logo */}
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shadow-lg">
-              <Brain className="w-6 h-6 text-indigo-400" />
-            </div>
-            <span className="font-bold text-lg bg-gradient-to-r from-indigo-200 via-purple-300 to-indigo-200 bg-clip-text text-transparent">
-              PsiCoach <span className="text-indigo-400 font-medium">AI</span>
+  return (
+    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen flex items-center justify-center p-5 font-sans">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-sm p-8 lg:p-10 space-y-7">
+        <div className="text-center space-y-4">
+          <Link href="/" className="inline-flex items-center">
+            <span className="text-xl font-extrabold leading-none tracking-normal text-slate-950">
+              PsiCoach<span className="ml-1 text-blue-600">AI</span>
             </span>
           </Link>
-          <h2 className="text-base font-bold text-slate-200 pt-2">Crie sua credencial segura</h2>
-          <p className="text-xs text-slate-500">Cadastre-se grátis para iniciar sua análise de casos.</p>
+          <h1 className="page-headline" style={{ fontSize: 'clamp(28px, 3.6vw, 40px)' }}>
+            Crie sua <span className="page-headline-accent">conta.</span>
+          </h1>
+          <p className="text-sm text-slate-500 leading-relaxed">
+            Cadastre-se grátis e comece a analisar seus primeiros casos.
+          </p>
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-450 rounded-xl text-xs text-center font-semibold animate-fade-in">
+          <div className="px-4 py-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-xs text-center font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nome Completo</label>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">Nome Completo</label>
             <div className="relative">
-              <User className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Dra. Juliana Costa"
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
+                placeholder="Dra. Juliana Costa"
+                className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
           </div>
 
-          {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">E-mail Profissional</label>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">E-mail</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Ex: juliana.psico@gmail.com"
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
+                placeholder="juliana.psico@gmail.com"
+                className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
           </div>
 
-          {/* CRP */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Número CRP (Inscrição no Conselho)</label>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">Número CRP</label>
             <div className="relative">
-              <ShieldCheck className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+              <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 required
                 value={crp}
                 onChange={(e) => setCrp(e.target.value)}
-                placeholder="Ex: 06/112932"
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
+                placeholder="06/112932"
+                className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
           </div>
 
-          {/* Password */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Senha de Acesso</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">Senha</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mín. 6 caracteres"
+                  className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">Confirmar</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repita a senha"
+                  className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Confirm Password */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Confirmar Senha</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repita sua senha"
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Checkbox */}
-          <div className="flex items-start">
+          <div className="flex items-start gap-2 pt-1">
             <input
               id="terms"
               type="checkbox"
               checked={acceptTerms}
               onChange={(e) => setAcceptTerms(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 border-slate-850 rounded focus:ring-indigo-500 bg-slate-950 mt-0.5"
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
             />
-            <label htmlFor="terms" className="ml-2 text-[10px] text-slate-500 cursor-pointer leading-normal">
+            <label htmlFor="terms" className="text-[11px] text-slate-500 cursor-pointer leading-relaxed">
               Concordo com os{' '}
-              <Link href="#" className="text-indigo-400 font-semibold hover:underline">Termos de Serviço</Link> e a{' '}
-              <Link href="#" className="text-indigo-400 font-semibold hover:underline">Política de Privacidade</Link> sob os parâmetros de sigilo e criptografia LGPD do conselho.
+              <Link href="#" className="text-blue-600 font-semibold hover:underline">Termos de Serviço</Link> e a{' '}
+              <Link href="#" className="text-blue-600 font-semibold hover:underline">Política de Privacidade</Link>, em conformidade com a LGPD.
             </label>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-slate-850 disabled:to-slate-850 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-650/15"
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
           >
             {loading ? (
-              <span className="w-4 h-4 border-2 border-indigo-200 border-t-transparent rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>Cadastrar e Iniciar Onboarding</span>
+                <span>Criar conta e iniciar onboarding</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
 
-        <p className="text-[11px] text-slate-500 text-center">
-          Já possui um prontuário cadastrado?{' '}
-          <Link href="/login" className="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Entrar</Link>
+        <p className="text-xs text-slate-500 text-center">
+          Já possui uma conta?{' '}
+          <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500">Entrar</Link>
         </p>
       </div>
     </div>

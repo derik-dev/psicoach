@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { Brain, Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
-  const { user, setUser } = useApp();
+  const { user, signIn } = useApp();
   const router = useRouter();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -35,107 +35,72 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    const { error: authError } = await signIn(email, password);
+    setLoading(false);
 
-    // Simulate database login delay
-    setTimeout(() => {
-      setLoading(false);
-      
-      // Auto-login with mock session
-      setUser({
-        name: 'Dra. Ana Paula Silveira',
-        email: email,
-        crp: '06/120934',
-        onboardingCompleted: true,
-        yearsExperience: '3-5',
-        patientTypes: ['adultos', 'adolescentes'],
-        specialties: ['ansiedade', 'trauma'],
-        mainApproach: 'TCC (Terapia Cognitivo-Comportamental)',
-        approachDescription: '',
-        responseDetail: 'detalhado'
-      });
-      router.push('/dashboard');
-    }, 1200);
+    if (authError) {
+      setError('E-mail ou senha inválidos. Verifique suas credenciais.');
+    }
   };
 
-  const handleDemoLogin = () => {
-    setEmail('dra.ana@psicoach.com.br');
-    setPassword('123456');
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setUser({
-        name: 'Dra. Ana Paula Silveira',
-        email: 'dra.ana@psicoach.com.br',
-        crp: '06/120934',
-        onboardingCompleted: true,
-        yearsExperience: '3-5',
-        patientTypes: ['adultos', 'adolescentes'],
-        specialties: ['ansiedade', 'trauma'],
-        mainApproach: 'TCC (Terapia Cognitivo-Comportamental)',
-        approachDescription: '',
-        responseDetail: 'detalhado'
-      });
-      router.push('/dashboard');
-    }, 800);
+  const handleDemoFill = () => {
+    setEmail('demo@psicoach.com.br');
+    setPassword('demo123456');
   };
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-indigo-650/10 rounded-full blur-[100px] -z-10" />
-      
-      <div className="w-full max-w-md bg-slate-900/30 border border-slate-800 rounded-3xl p-6 lg:p-8 backdrop-blur-xl space-y-6">
-        {/* Logo */}
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shadow-lg">
-              <Brain className="w-6 h-6 text-indigo-400" />
-            </div>
-            <span className="font-bold text-lg bg-gradient-to-r from-indigo-200 via-purple-300 to-indigo-200 bg-clip-text text-transparent">
-              PsiCoach <span className="text-indigo-400 font-medium">AI</span>
+    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen flex items-center justify-center p-5 font-sans">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-sm p-8 lg:p-10 space-y-7">
+        <div className="text-center space-y-4">
+          <Link href="/" className="inline-flex items-center">
+            <span className="text-xl font-extrabold leading-none tracking-normal text-slate-950">
+              PsiCoach<span className="ml-1 text-blue-600">AI</span>
             </span>
           </Link>
-          <h2 className="text-base font-bold text-slate-200 pt-2">Seja bem-vinda de volta</h2>
-          <p className="text-xs text-slate-500">Insira suas credenciais para acessar o prontuário.</p>
+          <h1 className="page-headline" style={{ fontSize: 'clamp(28px, 3.6vw, 40px)' }}>
+            Bem-vinda de <span className="page-headline-accent">volta.</span>
+          </h1>
+          <p className="text-sm text-slate-500 leading-relaxed">
+            Insira suas credenciais para acessar seu copiloto clínico.
+          </p>
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-450 rounded-xl text-xs text-center font-semibold animate-fade-in">
+          <div className="px-4 py-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-xs text-center font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">E-mail Profissional</label>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">E-mail Profissional</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Ex: dra.ana@psicoach.com.br"
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
+                placeholder="dra.ana@psicoach.com.br"
+                className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
           </div>
 
-          {/* Password */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Senha</label>
-              <Link href="#" className="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors font-semibold">Esqueceu a senha?</Link>
+              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">Senha</label>
+              <Link href="#" className="text-[11px] text-blue-600 hover:text-blue-500 font-semibold">Esqueceu?</Link>
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Digite sua senha"
-                className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-650 outline-none transition-colors"
+                className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
           </div>
@@ -143,37 +108,36 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-slate-850 disabled:to-slate-850 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-650/15"
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
           >
             {loading ? (
-              <span className="w-4 h-4 border-2 border-indigo-200 border-t-transparent rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>Entrar no Painel</span>
+                <span>Entrar</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
 
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-slate-850"></div>
-          <span className="flex-shrink mx-3 text-[10px] text-slate-600 font-bold uppercase tracking-wider">Ou teste rápido</span>
-          <div className="flex-grow border-t border-slate-850"></div>
+        <div className="flex items-center gap-3">
+          <div className="flex-grow border-t border-slate-100" />
+          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">Ou preencher demo</span>
+          <div className="flex-grow border-t border-slate-100" />
         </div>
 
-        {/* Demo fast access */}
         <button
-          onClick={handleDemoLogin}
-          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-350 hover:text-slate-100 font-semibold rounded-xl text-xs transition-all"
+          onClick={handleDemoFill}
+          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 font-semibold rounded-xl text-sm transition-all"
         >
-          <Sparkles className="w-4.5 h-4.5 text-indigo-400" />
-          <span>Acesso Rápido de Demonstração</span>
+          <Sparkles className="w-4 h-4 text-blue-600" />
+          <span>Preencher com conta demo</span>
         </button>
 
-        <p className="text-[11px] text-slate-500 text-center">
-          Não tem uma conta cadastrada?{' '}
-          <Link href="/cadastro" className="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Cadastre-se</Link>
+        <p className="text-xs text-slate-500 text-center">
+          Não tem uma conta?{' '}
+          <Link href="/cadastro" className="font-semibold text-blue-600 hover:text-blue-500">Cadastre-se</Link>
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabase/client';
 
 export interface CaseContext {
   sessions_count?: string;
@@ -54,201 +55,210 @@ export interface UserProfile {
 
 interface AppContextType {
   user: UserProfile | null;
-  setUser: (user: UserProfile | null) => void;
+  setUser: (user: UserProfile | null) => Promise<void>;
   cases: ClinicalCase[];
   setCases: React.Dispatch<React.SetStateAction<ClinicalCase[]>>;
   activePlan: 'starter' | 'pro' | 'clinica' | 'free';
   setActivePlan: (plan: 'starter' | 'pro' | 'clinica' | 'free') => void;
   analysesUsed: number;
-  setAnalysesUsed: (used: number) => void;
+  setAnalysesUsed: React.Dispatch<React.SetStateAction<number>>;
   analysesLimit: number | null;
-  addCase: (title: string, input_text: string, approach: string, context: CaseContext, analysis: CaseAnalysis) => ClinicalCase;
-  updateCase: (id: string, updates: Partial<ClinicalCase>) => void;
-  deleteCase: (id: string) => void;
-  addChatMessage: (caseId: string, role: 'user' | 'assistant', content: string) => void;
-  logout: () => void;
+  addCase: (title: string, input_text: string, approach: string, context: CaseContext, analysis: CaseAnalysis) => Promise<ClinicalCase>;
+  updateCase: (id: string, updates: Partial<ClinicalCase>) => Promise<void>;
+  deleteCase: (id: string) => Promise<void>;
+  addChatMessage: (caseId: string, role: 'user' | 'assistant', content: string) => Promise<void>;
+  logout: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (name: string, email: string, crp: string, password: string) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
+  initialized: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Pre-seeded mock cases
-const MOCK_CASES: ClinicalCase[] = [
-  {
-    id: 'case-1',
-    title: 'Paciente Gabriel - Ansiedade Social e Perfeccionismo',
-    input_text: 'Paciente de 24 anos, estudante de engenharia, relata alto sofrimento em situações de exposição social na faculdade. Apresenta comportamento de esquiva ativa (deixa de ir a aulas quando há seminários) e pensamentos automáticos do tipo: "Se eu gaguejar, todos vão achar que sou incompetente" e "Eu preciso ser perfeito no que falo". Na infância, relata cobrança excessiva dos pais por desempenho acadêmico exemplar.',
-    approach_used: 'TCC (Terapia Cognitivo-Comportamental)',
-    context: {
-      sessions_count: '5-10',
-      current_diagnosis: 'F40.1 (Fobia Social)',
-      already_tried: 'Psicoeducação sobre ansiedade e registro de pensamentos disfuncionais.',
-      specific_question: 'Como avançar na reestruturação cognitiva de crenças centrais de desvalia?'
-    },
-    analysis: {
-      hypothesis: 'O paciente apresenta um quadro compatível com Fobia Social estruturado sobre uma base de esquemas de padrões inflexíveis e desvalia. O perfeccionismo atua como uma estratégia compensatória para evitar a confirmação de uma crença de inadequação ("sou incompetente"). A esquiva ativa reforça a crença de incapacidade e impede a habituação da ansiedade.',
-      approaches: [
-        'Reestruturação Cognitiva focada na flexibilização do pensamento dicotômico (tudo ou nada) sobre desempenho.',
-        'Experimentos Comportamentais graduais de exposição (ex: fazer uma pergunta simples na aula, gaguejar intencionalmente em ambiente controlado para testar a catastrofização).',
-        'Questionamento Socrático direcionado à origem das regras e suposições condicionais do paciente ("Se eu não for perfeito, então...").'
-      ],
-      questions: [
-        'O que gaguejar ou falhar significaria sobre você, lá no fundo?',
-        'Quem em sua vida dizia que você precisava ser perfeito para ter valor?',
-        'Como seria a sua vida acadêmica se você se permitisse ser um estudante na média por uma semana?',
-        'Qual o pior cenário que poderia acontecer se você cometesse um erro em um seminário, e como você lidaria com isso?'
-      ],
-      references: [
-        'Beck, J. S. (2021). Terapia Cognitivo-Comportamental: Teoria e Prática (3ª ed.). Porto Alegre: Artmed.',
-        'Clark, D. M., & Wells, A. (1995). A cognitive model of social phobia. In Social phobia: Diagnosis, assessment, and treatment.'
-      ],
-      blind_spot: 'O terapeuta pode cair na armadilha de tentar debater logicamente com o paciente sobre seu desempenho na faculdade (que costuma ser excelente), em vez de focar na carga afetiva da crença de inadequação. O problema não é a competência do paciente, mas a sua autoavaliação punitiva.',
-      alerts: [
-        'Monitorar níveis elevados de ansiedade antes das exposições para evitar ataques de pânico secundários.',
-        'Ficar atento a comportamentos de segurança sutis durante as exposições (ex: decorar o texto inteiro para não errar).'
-      ]
-    },
-    notes: 'Gabriel respondeu muito bem à psicoeducação. O principal desafio atual é que ele racionaliza muito o processo e tem dificuldade de entrar em contato com a vulnerabilidade emocional durante as sessões.',
-    tags: ['ansiedade', 'perfeccionismo', 'esquiva', 'tcc'],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    messages: [
-      {
-        id: 'msg-1',
-        role: 'user',
-        content: 'Como posso trabalhar os comportamentos de segurança sutil que ele usa na exposição?',
-        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 1000 * 60).toISOString()
-      },
-      {
-        id: 'msg-2',
-        role: 'assistant',
-        content: 'Para abordar os comportamentos de segurança sutil (como decorar falas, falar rápido ou evitar contato visual durante a exposição), recomendo as seguintes intervenções:\n\n1. **Identificação e Mapeamento:** Em sessão, peça para ele fazer uma lista de tudo o que ele faz "para garantir que nada dê errado" (ex: "segurar o papel com força para não tremer").\n2. **Experimentos Comportamentais Contrastantes:** Faça uma exposição na própria sessão onde primeiro ele usa todos os comportamentos de segurança e depois repete a exposição abandonando-os deliberadamente (ex: falar segurando as mãos soltas). Pergunte a diferença na ansiedade focada e no foco de atenção (geralmente, sem comportamentos de segurança ele consegue focar mais no ambiente externo e menos em si mesmo).\n3. **Psicoeducação sobre o Efeito Reverso:** Explique que esses comportamentos funcionam como "rodinhas de bicicleta" que mantêm a crença de perigo ativa: "Eu só sobrevivi porque decorei tudo". Abandoná-los é o que gera a verdadeira aprendizagem de segurança.',
-        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 1000 * 60 * 5).toISOString()
-      }
-    ]
-  },
-  {
-    id: 'case-2',
-    title: 'Paciente Marina - Luto Complicado e Sentimento de Culpa',
-    input_text: 'Paciente de 42 anos, casada, perdeu a mãe há 10 meses de forma súbita (infarto). Relata tristeza persistente, perda de interesse em suas atividades de lazer (jardinagem, leitura) e um sentimento paralisante de culpa. Ela repete constantemente: "Eu deveria ter insistido para ela ir ao médico naquela semana" e "Eu fui egoísta por focar no meu trabalho". Evita entrar na antiga casa da mãe e tem crises de choro diárias ao ver fotos.',
-    approach_used: 'Psicanálise',
-    context: {
-      sessions_count: '20-50',
-      current_diagnosis: 'Luto Prolongado (CID-11: 6B42)',
-      already_tried: 'Associação livre sobre a relação materna e elaboração da perda física.',
-      specific_question: 'Como abordar o caráter punitivo do superego manifestado como culpa?'
-    },
-    analysis: {
-      hypothesis: 'A paciente apresenta um processo de luto suspenso/complicado, caracterizado por uma forte identificação melancólica com o objeto perdido. A culpa autoimposta funciona como uma tentativa psíquica de manter o objeto "vivo" e evitar o vazio desorganizador da perda. O superego severo pune o ego com autoacusações ("fui egoísta") que expressam, na verdade, a ambivalência da relação com a mãe (prováveis sentimentos reprimidos de hostilidade ou desejo de independência).',
-      approaches: [
-        'Trabalho de Elaboração da Ambivalência: Permitir que a paciente expresse os sentimentos hostis ou de raiva em relação à mãe, sem o peso da punição moral.',
-        'Investigação do Lugar Ocupado pela Mãe na Economia Psíquica da paciente (idealização vs realidade).',
-        'Simbolização do Vazio: Ajudar o ego a se desinvestir da libido outrora direcionada à mãe, permitindo novos investimentos (substitutos libidinais).'
-      ],
-      questions: [
-        'O que significa para você deixar de se sentir culpada pela morte de sua mãe?',
-        'Quais eram as coisas que a irritavam ou incomodavam na sua relação com ela?',
-        'Parece haver uma regra de que você só pode mostrar amor sofrendo. De onde vem essa ideia?',
-        'Quem você estaria traindo se voltasse a sentir alegria nas suas atividades?'
-      ],
-      references: [
-        'Freud, S. (1917). Luto e Melancolia. In Edição Standard Brasileira das Obras Psicológicas Completas.',
-        'Nasio, J.-D. (2011). A dor de amar. Rio de Janeiro: Zahar.'
-      ],
-      blind_spot: 'O terapeuta pode assumir uma postura puramente confortadora ("você não teve culpa"), o que tende a intensificar a resistência. A culpa tem uma função psíquica ativa para ela e precisa ser compreendida na sua raiz inconsciente, não apenas desmentida racionalmente.',
-      alerts: [
-        'Avaliar riscos de depressão maior severa com ideação de autodepreciação profunda.',
-        'Observar sintomas somáticos associados ao luto (ex: dores crônicas, distúrbios do sono intensos).'
-      ]
-    },
-    notes: 'Marina tem apresentado insights ricos sobre a cobrança de perfeição que a própria mãe exercia sobre ela, o que agora ela projeta na sua autossabotagem e na culpa.',
-    tags: ['luto', 'culpa', 'melancolia', 'psicanalise'],
-    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    messages: []
-  }
-];
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, _setUser] = useState<UserProfile | null>(null);
   const [cases, setCases] = useState<ClinicalCase[]>([]);
   const [activePlan, setActivePlan] = useState<'starter' | 'pro' | 'clinica' | 'free'>('starter');
-  const [analysesUsed, setAnalysesUsed] = useState<number>(2);
+  const [analysesUsed, setAnalysesUsed] = useState<number>(0);
+  const [analysesLimit, setAnalysesLimit] = useState<number | null>(10);
   const [initialized, setInitialized] = useState(false);
 
-  const analysesLimit = activePlan === 'starter' ? 10 : activePlan === 'free' ? 2 : null;
+  const userIdRef = useRef<string | null>(null);
+  const analysesUsedRef = useRef<number>(0);
 
-  // Load from localStorage on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('psicoach_user');
-      const storedCases = localStorage.getItem('psicoach_cases');
-      const storedPlan = localStorage.getItem('psicoach_plan');
-      const storedUsed = localStorage.getItem('psicoach_used');
+    analysesUsedRef.current = analysesUsed;
+  }, [analysesUsed]);
 
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        // Start in mock state but onboarding not completed
-        setUser(null);
-      }
+  const loadUserData = async (userId: string, userEmail: string) => {
+    const [{ data: profile }, { data: sub }, { data: casesData }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('user_id', userId).single(),
+      supabase.from('subscriptions').select('*').eq('user_id', userId).single(),
+      supabase
+        .from('cases')
+        .select('*, messages(*)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false }),
+    ]);
 
-      if (storedCases) {
-        setCases(JSON.parse(storedCases));
-      } else {
-        setCases(MOCK_CASES);
-        localStorage.setItem('psicoach_cases', JSON.stringify(MOCK_CASES));
-      }
-
-      if (storedPlan) {
-        setActivePlan(storedPlan as any);
-      }
-
-      if (storedUsed) {
-        setAnalysesUsed(parseInt(storedUsed, 10));
-      }
-
-      setInitialized(true);
+    if (profile) {
+      _setUser({
+        name: profile.full_name || '',
+        email: userEmail,
+        crp: profile.crp || '',
+        onboardingCompleted: profile.onboarding_completed || false,
+        yearsExperience: profile.years_experience || '',
+        patientTypes: profile.patient_types || [],
+        specialties: profile.specialties || [],
+        mainApproach: profile.main_approach || '',
+        approachDescription: profile.approach_description || '',
+        responseDetail: (profile.response_detail as 'conciso' | 'detalhado') || 'detalhado',
+      });
     }
+
+    if (sub) {
+      setActivePlan(sub.plan as 'starter' | 'pro' | 'clinica' | 'free');
+      setAnalysesUsed(sub.analyses_used || 0);
+      setAnalysesLimit(sub.analyses_limit ?? 10);
+    }
+
+    if (casesData) {
+      setCases(
+        casesData.map((c) => ({
+          id: c.id,
+          title: c.title || '',
+          input_text: c.input_text,
+          approach_used: c.approach_used || '',
+          context: (c.context as CaseContext) || {},
+          analysis: (c.analysis as CaseAnalysis) || { hypothesis: '', approaches: [], questions: [], references: [], blind_spot: '', alerts: [] },
+          notes: c.notes || '',
+          tags: c.tags || [],
+          created_at: c.created_at,
+          updated_at: c.updated_at,
+          messages: ((c.messages as CaseMessage[]) || [])
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
+        }))
+      );
+    }
+  };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        userIdRef.current = session.user.id;
+        loadUserData(session.user.id, session.user.email || '').finally(() => setInitialized(true));
+      } else {
+        setInitialized(true);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        userIdRef.current = session.user.id;
+        if (event === 'SIGNED_IN') {
+          loadUserData(session.user.id, session.user.email || '');
+        }
+      } else {
+        userIdRef.current = null;
+        _setUser(null);
+        setCases([]);
+        setActivePlan('starter');
+        setAnalysesUsed(0);
+        setAnalysesLimit(10);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Save to localStorage when state changes
-  useEffect(() => {
-    if (initialized) {
-      if (user) {
-        localStorage.setItem('psicoach_user', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('psicoach_user');
-      }
-    }
-  }, [user, initialized]);
+  const setUser = async (userOrNull: UserProfile | null) => {
+    _setUser(userOrNull);
+    if (!userOrNull || !userIdRef.current) return;
 
-  useEffect(() => {
-    if (initialized) {
-      localStorage.setItem('psicoach_cases', JSON.stringify(cases));
-    }
-  }, [cases, initialized]);
+    await supabase.from('profiles').upsert(
+      {
+        user_id: userIdRef.current,
+        full_name: userOrNull.name,
+        crp: userOrNull.crp,
+        years_experience: userOrNull.yearsExperience,
+        patient_types: userOrNull.patientTypes,
+        specialties: userOrNull.specialties,
+        main_approach: userOrNull.mainApproach,
+        approach_description: userOrNull.approachDescription,
+        response_detail: userOrNull.responseDetail,
+        onboarding_completed: userOrNull.onboardingCompleted,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    );
+  };
 
-  useEffect(() => {
-    if (initialized) {
-      localStorage.setItem('psicoach_plan', activePlan);
-    }
-  }, [activePlan, initialized]);
+  const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
 
-  useEffect(() => {
-    if (initialized) {
-      localStorage.setItem('psicoach_used', analysesUsed.toString());
-    }
-  }, [analysesUsed, initialized]);
+  const signUp = async (
+    name: string,
+    email: string,
+    crp: string,
+    password: string
+  ): Promise<{ error: string | null; needsEmailConfirmation?: boolean }> => {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return { error: error.message };
+    if (!data.user) return { error: 'Erro inesperado ao criar conta.' };
 
-  const addCase = (
+    await Promise.all([
+      supabase.from('profiles').insert({
+        user_id: data.user.id,
+        full_name: name,
+        crp: crp,
+        onboarding_completed: false,
+      }),
+      supabase.from('subscriptions').insert({
+        user_id: data.user.id,
+        plan: 'starter',
+        analyses_limit: 10,
+        analyses_used: 0,
+      }),
+    ]);
+
+    if (!data.session) {
+      return { error: null, needsEmailConfirmation: true };
+    }
+
+    userIdRef.current = data.user.id;
+    _setUser({
+      name,
+      email,
+      crp,
+      onboardingCompleted: false,
+      yearsExperience: '',
+      patientTypes: [],
+      specialties: [],
+      mainApproach: '',
+      approachDescription: '',
+      responseDetail: 'detalhado',
+    });
+    setActivePlan('starter');
+    setAnalysesUsed(0);
+    setAnalysesLimit(10);
+    setCases([]);
+
+    return { error: null, needsEmailConfirmation: false };
+  };
+
+  const addCase = async (
     title: string,
     input_text: string,
     approach: string,
     context: CaseContext,
     analysis: CaseAnalysis
-  ) => {
+  ): Promise<ClinicalCase> => {
     const newCase: ClinicalCase = {
-      id: `case-${Date.now()}`,
+      id: crypto.randomUUID(),
       title: title || `Caso ${new Date().toLocaleDateString('pt-BR')}`,
       input_text,
       approach_used: approach,
@@ -258,56 +268,103 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tags: [approach.toLowerCase().replace(/[^a-z]/g, '')],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      messages: []
+      messages: [],
     };
 
     setCases((prev) => [newCase, ...prev]);
     setAnalysesUsed((prev) => prev + 1);
+
+    if (userIdRef.current) {
+      const newUsed = analysesUsedRef.current + 1;
+      await Promise.all([
+        supabase.from('cases').insert({
+          id: newCase.id,
+          user_id: userIdRef.current,
+          title: newCase.title,
+          input_text: newCase.input_text,
+          approach_used: newCase.approach_used,
+          context: newCase.context,
+          analysis: newCase.analysis,
+          tags: newCase.tags,
+        }),
+        supabase
+          .from('subscriptions')
+          .update({ analyses_used: newUsed })
+          .eq('user_id', userIdRef.current),
+      ]);
+    }
+
     return newCase;
   };
 
-  const updateCase = (id: string, updates: Partial<ClinicalCase>) => {
+  const updateCase = async (id: string, updates: Partial<ClinicalCase>): Promise<void> => {
     setCases((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c))
     );
+
+    if (userIdRef.current) {
+      const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+      if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+      if (updates.title !== undefined) dbUpdates.title = updates.title;
+      if (updates.context !== undefined) dbUpdates.context = updates.context;
+      if (updates.analysis !== undefined) dbUpdates.analysis = updates.analysis;
+
+      await supabase.from('cases').update(dbUpdates).eq('id', id);
+    }
   };
 
-  const deleteCase = (id: string) => {
+  const deleteCase = async (id: string): Promise<void> => {
     setCases((prev) => prev.filter((c) => c.id !== id));
+    if (userIdRef.current) {
+      await supabase.from('cases').delete().eq('id', id);
+    }
   };
 
-  const addChatMessage = (caseId: string, role: 'user' | 'assistant', content: string) => {
+  const addChatMessage = async (
+    caseId: string,
+    role: 'user' | 'assistant',
+    content: string
+  ): Promise<void> => {
+    const newMsg: CaseMessage = {
+      id: crypto.randomUUID(),
+      role,
+      content,
+      created_at: new Date().toISOString(),
+    };
+
     setCases((prev) =>
       prev.map((c) => {
         if (c.id === caseId) {
-          const newMsg: CaseMessage = {
-            id: `msg-${Date.now()}`,
-            role,
-            content,
-            created_at: new Date().toISOString()
-          };
           return {
             ...c,
             messages: [...c.messages, newMsg],
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           };
         }
         return c;
       })
     );
+
+    if (userIdRef.current) {
+      await supabase.from('messages').insert({
+        id: newMsg.id,
+        case_id: caseId,
+        user_id: userIdRef.current,
+        role,
+        content,
+      });
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    setCases(MOCK_CASES);
+  const logout = async (): Promise<void> => {
+    await supabase.auth.signOut();
+    _setUser(null);
+    setCases([]);
     setActivePlan('starter');
-    setAnalysesUsed(2);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('psicoach_user');
-      localStorage.removeItem('psicoach_plan');
-      localStorage.removeItem('psicoach_used');
-      localStorage.setItem('psicoach_cases', JSON.stringify(MOCK_CASES));
-    }
+    setAnalysesUsed(0);
+    setAnalysesLimit(10);
+    userIdRef.current = null;
   };
 
   return (
@@ -326,10 +383,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateCase,
         deleteCase,
         addChatMessage,
-        logout
+        logout,
+        signIn,
+        signUp,
+        initialized,
       }}
     >
-      {initialized ? children : <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Carregando PsiCoach AI...</div>}
+      {initialized ? (
+        children
+      ) : (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+          Carregando PsiCoach AI...
+        </div>
+      )}
     </AppContext.Provider>
   );
 };
