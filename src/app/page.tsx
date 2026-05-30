@@ -516,7 +516,7 @@ export default function LandingPage() {
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat',
           backgroundColor: '#5b8cf5',
-          minHeight: '520px',
+          minHeight: '780px',
         }}
       >
         {/* Nav pill no topo */}
