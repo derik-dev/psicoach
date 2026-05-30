@@ -12,6 +12,7 @@ import { diagnosticsKnowledge } from './diagnostics';
 import { techniquesKnowledge } from './techniques';
 import { ethicsKnowledge } from './ethics';
 import { saudeMentalABKnowledge } from './saude_mental_ab';
+import { rapsSusKnowledge } from './raps_sus';
 
 /* ─────────────── section extraction ─────────────── */
 
@@ -47,6 +48,7 @@ const ALL_SECTIONS: KnowledgeSection[] = [
   ...parseSections(techniquesKnowledge),
   ...parseSections(ethicsKnowledge),
   ...parseSections(saudeMentalABKnowledge),
+  ...parseSections(rapsSusKnowledge),
 ];
 
 /* ─────────────── keyword maps ─────────────── */
@@ -165,16 +167,16 @@ const KEYWORD_MAP: Record<string, string[]> = {
   autonomia: ['PRINCÍPIOS ÉTICOS APLICADOS À PRÁTICA CLÍNICA'],
   discriminação: ['VEDAÇÕES AO PSICÓLOGO (Art. 2º)', 'PRINCÍPIOS ÉTICOS APLICADOS À PRÁTICA CLÍNICA'],
   // saúde mental na AB / SUS
-  sus: ['POLÍTICA DE SAÚde MENTAL NO SUS', 'SAÚDE MENTAL NA ATENÇÃO BÁSICA (Caderno MS nº 34, 2013)'],
-  caps: ['POLÍTICA DE SAÚDE MENTAL NO SUS', 'INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  sus: ['POLÍTICA DE SAÚde MENTAL NO SUS', 'SAÚDE MENTAL NA ATENÇÃO BÁSICA (Caderno MS nº 34, 2013)', 'REDE DE ATENÇÃO PSICOSSOCIAL (RAPS) NO SUS'],
+  caps: ['POLÍTICA DE SAÚDE MENTAL NO SUS', 'INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS', 'COMPONENTES DA RAPS'],
   nasf: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
-  matricial: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
-  matriciamento: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  matricial: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS', 'CONCEITOS CLÍNICOS E ESTRUTURAIS CRÍTICOS'],
+  matriciamento: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS', 'CONCEITOS CLÍNICOS E ESTRUTURAIS CRÍTICOS'],
   atenção: ['SAÚDE MENTAL NA ATENÇÃO BÁSICA (Caderno MS nº 34, 2013)', 'POLÍTICA DE SAÚDE MENTAL NO SUS'],
   básica: ['SAÚDE MENTAL NA ATENÇÃO BÁSICA (Caderno MS nº 34, 2013)'],
   projeto: ['PROJETO TERAPÊUTICO SINGULAR (PTS)'],
   singular: ['PROJETO TERAPÊUTICO SINGULAR (PTS)'],
-  pts: ['PROJETO TERAPÊUTICO SINGULAR (PTS)'],
+  pts: ['PROJETO TERAPÊUTICO SINGULAR (PTS)', 'CONCEITOS CLÍNICOS E ESTRUTURAIS CRÍTICOS'],
   sofrimento: ['PRINCÍPIOS DO CUIDADO EM SAÚDE MENTAL', 'SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA'],
   psicossocial: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS', 'PROJETO TERAPÊUTICO SINGULAR (PTS)'],
   somatização: ['SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA', 'INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
@@ -194,10 +196,26 @@ const KEYWORD_MAP: Record<string, string[]> = {
   território: ['PRINCÍPIOS DO CUIDADO EM SAÚDE MENTAL', 'SAÚDE MENTAL DE CRIANÇAS E ADOLESCENTES'],
   reforma: ['POLÍTICA DE SAÚDE MENTAL NO SUS'],
   psiquiátrica: ['POLÍTICA DE SAÚDE MENTAL NO SUS'],
-  reabilitação: ['POLÍTICA DE SAÚDE MENTAL NO SUS'],
+  reabilitação: ['POLÍTICA DE SAÚDE MENTAL NO SUS', 'COMPONENTES DA RAPS'],
   genograma: ['ABORDAGEM FAMILIAR EM SAÚDE MENTAL', 'TERAPIA SISTÊMICA / FAMILIAR'],
   ecomapa: ['ABORDAGEM FAMILIAR EM SAÚDE MENTAL'],
   vulnerabilidade: ['SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA', 'SAÚDE MENTAL DE CRIANÇAS E ADOLESCENTES'],
+  // RAPS / SUS avançado
+  raps: ['REDE DE ATENÇÃO PSICOSSOCIAL (RAPS) NO SUS', 'COMPONENTES DA RAPS'],
+  emaesm: ['COMPONENTES DA RAPS'],
+  internação: ['COMPONENTES DA RAPS'],
+  'hospital geral': ['COMPONENTES DA RAPS'],
+  'hospital psiquiátrico': ['COMPONENTES DA RAPS'],
+  'hospital-dia': ['COMPONENTES DA RAPS'],
+  leito: ['COMPONENTES DA RAPS'],
+  leitos: ['COMPONENTES DA RAPS'],
+  mif: ['COMPONENTES DA RAPS'],
+  'de volta para casa': ['COMPONENTES DA RAPS'],
+  pvc: ['COMPONENTES DA RAPS'],
+  srt: ['COMPONENTES DA RAPS'],
+  residencial: ['COMPONENTES DA RAPS'],
+  urgência: ['COMPONENTES DA RAPS'],
+  emergência: ['COMPONENTES DA RAPS'],
 };
 
 /* ─────────────── approach → sections mapping ─────────────── */
