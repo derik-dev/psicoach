@@ -508,6 +508,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
+      <div className="bg-[#f4f6f9]">
       <footer
         className="relative text-white flex flex-col"
         style={{
@@ -551,6 +552,7 @@ export default function LandingPage() {
           <p className="text-white/50 text-xs">© 2026 PsiCoach AI. Todos os direitos reservados.</p>
         </div>
       </footer>
+      </div>
 
     </div>
   );
