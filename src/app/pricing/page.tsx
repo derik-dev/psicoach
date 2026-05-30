@@ -10,13 +10,25 @@ export default function PricingPage() {
   const { activePlan, setActivePlan, user } = useApp();
   const router = useRouter();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [planError, setPlanError] = useState<string | null>(null);
+  const [selectingPlan, setSelectingPlan] = useState<'starter' | 'pro' | 'clinica' | null>(null);
 
-  const handleSelectPlan = (plan: 'starter' | 'pro' | 'clinica') => {
-    setActivePlan(plan);
-    if (user) {
-      router.push('/dashboard');
-    } else {
+  const handleSelectPlan = async (plan: 'starter' | 'pro' | 'clinica') => {
+    if (!user) {
       router.push('/cadastro');
+      return;
+    }
+
+    setSelectingPlan(plan);
+    setPlanError(null);
+
+    try {
+      await setActivePlan(plan);
+      router.push('/dashboard');
+    } catch (err) {
+      setPlanError(err instanceof Error ? err.message : 'Não foi possível salvar o plano.');
+    } finally {
+      setSelectingPlan(null);
     }
   };
 
@@ -90,6 +102,12 @@ export default function PricingPage() {
               <span className="bg-emerald-500 text-white font-extrabold text-[9px] px-1.5 py-0.5 rounded uppercase">-20%</span>
             </button>
           </div>
+
+          {planError && (
+            <div className="mx-auto max-w-xl rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
+              {planError}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
@@ -118,9 +136,10 @@ export default function PricingPage() {
             </div>
             <button
               onClick={() => handleSelectPlan('starter')}
+              disabled={selectingPlan !== null}
               className="w-full py-3 text-sm font-semibold rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-all"
             >
-              Assinar Starter
+              {selectingPlan === 'starter' ? 'Salvando...' : 'Assinar Starter'}
             </button>
           </div>
 
@@ -159,9 +178,10 @@ export default function PricingPage() {
             </div>
             <button
               onClick={() => handleSelectPlan('pro')}
+              disabled={selectingPlan !== null}
               className="w-full py-3 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)]"
             >
-              Assinar Pro
+              {selectingPlan === 'pro' ? 'Salvando...' : 'Assinar Pro'}
             </button>
           </div>
 
@@ -190,9 +210,10 @@ export default function PricingPage() {
             </div>
             <button
               onClick={() => handleSelectPlan('clinica')}
+              disabled={selectingPlan !== null}
               className="w-full py-3 text-sm font-semibold rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-all"
             >
-              Assinar Clínica
+              {selectingPlan === 'clinica' ? 'Salvando...' : 'Assinar Clínica'}
             </button>
           </div>
         </div>

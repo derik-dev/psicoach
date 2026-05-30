@@ -184,7 +184,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <main className="flex-1 p-5 lg:p-8 pt-20 lg:pt-8 max-w-7xl w-full mx-auto">
-          {children}
+          <div key={pathname} className="animate-page-fade">
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -75,11 +75,18 @@ interface AppContextType {
   cases: ClinicalCase[];
   setCases: React.Dispatch<React.SetStateAction<ClinicalCase[]>>;
   activePlan: 'starter' | 'pro' | 'clinica' | 'free';
-  setActivePlan: (plan: 'starter' | 'pro' | 'clinica' | 'free') => void;
+  setActivePlan: (plan: 'starter' | 'pro' | 'clinica' | 'free') => Promise<void>;
   analysesUsed: number;
   setAnalysesUsed: React.Dispatch<React.SetStateAction<number>>;
   analysesLimit: number | null;
-  addCase: (title: string, input_text: string, approach: string, context: CaseContext, analysis: CaseAnalysis) => Promise<ClinicalCase>;
+  addCase: (
+    title: string,
+    input_text: string,
+    approach: string,
+    context: CaseContext,
+    analysis: CaseAnalysis,
+    options?: { incrementUsage?: boolean }
+  ) => Promise<ClinicalCase>;
   updateCase: (id: string, updates: Partial<ClinicalCase>) => Promise<void>;
   deleteCase: (id: string) => Promise<void>;
   addChatMessage: (caseId: string, role: 'user' | 'assistant', content: string) => Promise<void>;
@@ -94,7 +101,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, _setUser] = useState<UserProfile | null>(null);
   const [cases, setCases] = useState<ClinicalCase[]>([]);
-  const [activePlan, setActivePlan] = useState<'starter' | 'pro' | 'clinica' | 'free'>('starter');
+  const [activePlan, _setActivePlan] = useState<'starter' | 'pro' | 'clinica' | 'free'>('starter');
   const [analysesUsed, setAnalysesUsed] = useState<number>(0);
   const [analysesLimit, setAnalysesLimit] = useState<number | null>(10);
   const [initialized, setInitialized] = useState(false);
@@ -133,7 +140,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     if (sub) {
-      setActivePlan(sub.plan as 'starter' | 'pro' | 'clinica' | 'free');
+      _setActivePlan(sub.plan as 'starter' | 'pro' | 'clinica' | 'free');
       setAnalysesUsed(sub.analyses_used || 0);
       setAnalysesLimit(sub.analyses_limit ?? 10);
     }
@@ -178,7 +185,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         userIdRef.current = null;
         _setUser(null);
         setCases([]);
-        setActivePlan('starter');
+        _setActivePlan('starter');
         setAnalysesUsed(0);
         setAnalysesLimit(10);
       }
@@ -189,10 +196,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const setUser = async (userOrNull: UserProfile | null) => {
-    _setUser(userOrNull);
-    if (!userOrNull || !userIdRef.current) return;
+    if (!userOrNull) {
+      _setUser(null);
+      return;
+    }
 
-    await supabase.from('profiles').upsert(
+    if (!userIdRef.current) {
+      throw new Error('Usuário não autenticado. Não foi possível salvar perfil no Supabase.');
+    }
+
+    if (userOrNull.email && userOrNull.email !== user?.email) {
+      const { error: authError } = await supabase.auth.updateUser({
+        email: userOrNull.email,
+        data: {
+          full_name: userOrNull.name,
+          crp: userOrNull.crp,
+        },
+      });
+
+      if (authError) {
+        throw new Error(`Falha ao atualizar usuário no Supabase Auth: ${authError.message}`);
+      }
+    } else {
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          full_name: userOrNull.name,
+          crp: userOrNull.crp,
+        },
+      });
+
+      if (metadataError) {
+        throw new Error(`Falha ao atualizar metadados no Supabase Auth: ${metadataError.message}`);
+      }
+    }
+
+    const { error } = await supabase.from('profiles').upsert(
       {
         user_id: userIdRef.current,
         full_name: userOrNull.name,
@@ -208,6 +246,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       },
       { onConflict: 'user_id' }
     );
+
+    if (error) {
+      throw new Error(`Falha ao salvar perfil no Supabase: ${error.message}`);
+    }
+
+    _setUser(userOrNull);
+  };
+
+  const setActivePlan = async (plan: 'starter' | 'pro' | 'clinica' | 'free'): Promise<void> => {
+    if (!userIdRef.current) {
+      throw new Error('Usuário não autenticado. Não foi possível salvar o plano no Supabase.');
+    }
+
+    const planLimits: Record<typeof plan, number | null> = {
+      free: 0,
+      starter: 10,
+      pro: null,
+      clinica: null,
+    };
+
+    const { error } = await supabase
+      .from('subscriptions')
+      .upsert(
+        {
+          user_id: userIdRef.current,
+          plan,
+          status: plan === 'free' ? 'inactive' : 'active',
+          analyses_limit: planLimits[plan],
+        },
+        { onConflict: 'user_id' }
+      );
+
+    if (error) {
+      throw new Error(`Falha ao salvar assinatura no Supabase: ${error.message}`);
+    }
+
+    _setActivePlan(plan);
+    setAnalysesLimit(planLimits[plan]);
   };
 
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
@@ -248,7 +324,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       approachDescription: '',
       responseDetail: 'detalhado',
     });
-    setActivePlan('starter');
+    _setActivePlan('starter');
     setAnalysesUsed(0);
     setAnalysesLimit(10);
     setCases([]);
@@ -261,8 +337,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     input_text: string,
     approach: string,
     context: CaseContext,
-    analysis: CaseAnalysis
+    analysis: CaseAnalysis,
+    options: { incrementUsage?: boolean } = {}
   ): Promise<ClinicalCase> => {
+    if (!userIdRef.current) {
+      throw new Error('Usuário não autenticado. Não foi possível salvar no Supabase.');
+    }
+
+    const incrementUsage = options.incrementUsage ?? true;
     const newCase: ClinicalCase = {
       id: crypto.randomUUID(),
       title: title || `Caso ${new Date().toLocaleDateString('pt-BR')}`,
@@ -277,54 +359,78 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       messages: [],
     };
 
-    setCases((prev) => [newCase, ...prev]);
-    setAnalysesUsed((prev) => prev + 1);
+    const { error: caseError } = await supabase.from('cases').insert({
+      id: newCase.id,
+      user_id: userIdRef.current,
+      title: newCase.title,
+      input_text: newCase.input_text,
+      approach_used: newCase.approach_used,
+      context: newCase.context,
+      analysis: newCase.analysis,
+      notes: newCase.notes,
+      tags: newCase.tags,
+    });
 
-    if (userIdRef.current) {
-      const newUsed = analysesUsedRef.current + 1;
-      await Promise.all([
-        supabase.from('cases').insert({
-          id: newCase.id,
-          user_id: userIdRef.current,
-          title: newCase.title,
-          input_text: newCase.input_text,
-          approach_used: newCase.approach_used,
-          context: newCase.context,
-          analysis: newCase.analysis,
-          tags: newCase.tags,
-        }),
-        supabase
-          .from('subscriptions')
-          .update({ analyses_used: newUsed })
-          .eq('user_id', userIdRef.current),
-      ]);
+    if (caseError) {
+      throw new Error(`Falha ao salvar caso no Supabase: ${caseError.message}`);
     }
 
+    if (incrementUsage) {
+      const newUsed = analysesUsedRef.current + 1;
+      const { error: subError } = await supabase
+        .from('subscriptions')
+        .update({ analyses_used: newUsed })
+        .eq('user_id', userIdRef.current);
+
+      if (subError) {
+        throw new Error(`Falha ao atualizar uso no Supabase: ${subError.message}`);
+      }
+
+      setAnalysesUsed(newUsed);
+    }
+
+    setCases((prev) => [newCase, ...prev]);
     return newCase;
   };
 
   const updateCase = async (id: string, updates: Partial<ClinicalCase>): Promise<void> => {
-    setCases((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c))
-    );
-
-    if (userIdRef.current) {
-      const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-      if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-      if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
-      if (updates.title !== undefined) dbUpdates.title = updates.title;
-      if (updates.context !== undefined) dbUpdates.context = updates.context;
-      if (updates.analysis !== undefined) dbUpdates.analysis = updates.analysis;
-
-      await supabase.from('cases').update(dbUpdates).eq('id', id);
+    if (!userIdRef.current) {
+      throw new Error('Usuário não autenticado. Não foi possível atualizar no Supabase.');
     }
+
+    const updatedAt = new Date().toISOString();
+    const dbUpdates: Record<string, unknown> = { updated_at: updatedAt };
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.input_text !== undefined) dbUpdates.input_text = updates.input_text;
+    if (updates.approach_used !== undefined) dbUpdates.approach_used = updates.approach_used;
+    if (updates.context !== undefined) dbUpdates.context = updates.context;
+    if (updates.analysis !== undefined) dbUpdates.analysis = updates.analysis;
+
+    const { error } = await supabase.from('cases').update(dbUpdates).eq('id', id);
+
+    if (error) {
+      throw new Error(`Falha ao atualizar caso no Supabase: ${error.message}`);
+    }
+
+    setCases((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...updates, updated_at: updatedAt } : c))
+    );
   };
 
   const deleteCase = async (id: string): Promise<void> => {
-    setCases((prev) => prev.filter((c) => c.id !== id));
-    if (userIdRef.current) {
-      await supabase.from('cases').delete().eq('id', id);
+    if (!userIdRef.current) {
+      throw new Error('Usuário não autenticado. Não foi possível excluir no Supabase.');
     }
+
+    const { error } = await supabase.from('cases').delete().eq('id', id);
+
+    if (error) {
+      throw new Error(`Falha ao excluir caso no Supabase: ${error.message}`);
+    }
+
+    setCases((prev) => prev.filter((c) => c.id !== id));
   };
 
   const addChatMessage = async (
@@ -332,12 +438,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     role: 'user' | 'assistant',
     content: string
   ): Promise<void> => {
+    if (!userIdRef.current) {
+      throw new Error('Usuário não autenticado. Não foi possível salvar mensagem no Supabase.');
+    }
+
     const newMsg: CaseMessage = {
       id: crypto.randomUUID(),
       role,
       content,
       created_at: new Date().toISOString(),
     };
+
+    const { error } = await supabase.from('messages').insert({
+      id: newMsg.id,
+      case_id: caseId,
+      user_id: userIdRef.current,
+      role,
+      content,
+    });
+
+    if (error) {
+      throw new Error(`Falha ao salvar mensagem no Supabase: ${error.message}`);
+    }
 
     setCases((prev) =>
       prev.map((c) => {
@@ -351,23 +473,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return c;
       })
     );
-
-    if (userIdRef.current) {
-      await supabase.from('messages').insert({
-        id: newMsg.id,
-        case_id: caseId,
-        user_id: userIdRef.current,
-        role,
-        content,
-      });
-    }
   };
 
   const logout = async (): Promise<void> => {
     await supabase.auth.signOut();
     _setUser(null);
     setCases([]);
-    setActivePlan('starter');
+    _setActivePlan('starter');
     setAnalysesUsed(0);
     setAnalysesLimit(10);
     userIdRef.current = null;

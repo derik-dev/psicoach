@@ -37,6 +37,17 @@ function deriveAtencao(result: CaseAnalysis): AtencaoNivel {
   return 'baixo';
 }
 
+function createEmptyAnalysis(): CaseAnalysis {
+  return {
+    hypothesis: '',
+    approaches: [],
+    questions: [],
+    references: [],
+    blind_spot: '',
+    alerts: [],
+  };
+}
+
 const ATENCAO_CFG: Record<AtencaoNivel, {
   label: string; sublabel: string;
   color: string; bg: string; border: string; dot: string;
@@ -274,8 +285,8 @@ function AnalysisCard({
 
       {/* ── Modal análise completa ── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdrop-in">
+          <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-modal-in">
             <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
               <h3 className="text-sm font-semibold text-slate-800">
                 {tabs.find(t => t.id === activeTab)?.label || 'Análise completa'}
@@ -302,7 +313,7 @@ function AnalysisCard({
 /* ════════════════════ main page ════════════════════ */
 
 export default function NovaAnalise() {
-  const { user } = useApp();
+  const { user, addCase, updateCase, addChatMessage } = useApp();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>('standard');
@@ -329,6 +340,7 @@ export default function NovaAnalise() {
   const [chatInput, setChatInput]         = useState('');
   const [isChatSending, setIsChatSending] = useState(false);
   const [chatCopyId, setChatCopyId]       = useState<string | null>(null);
+  const [currentChatCaseId, setCurrentChatCaseId] = useState<string | null>(null);
 
   const bottomRef      = useRef<HTMLDivElement>(null);
   const chatBottomRef  = useRef<HTMLDivElement>(null);
@@ -358,21 +370,36 @@ export default function NovaAnalise() {
     setIsAnalyzing(true); setAnalysisResult(null); setErrorMessage(null);
 
     const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
+    const clinicalContext = {
+      sessions_count: sessionsCount,
+      current_diagnosis: currentDiagnosis,
+      already_tried: alreadyTried,
+      specific_question: specificQuestion,
+    };
+
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title, input_text: inputText, approach,
-          context: { sessions_count: sessionsCount, current_diagnosis: currentDiagnosis, already_tried: alreadyTried, specific_question: specificQuestion },
+          context: clinicalContext,
         }),
       });
       const data = await res.json();
       if (!res.ok)          setErrorMessage(data?.error || 'Não foi possível gerar a análise no momento.');
-      else if (data?.analysis) setAnalysisResult(data.analysis as CaseAnalysis);
+      else if (data?.analysis) {
+        const analysis = data.analysis as CaseAnalysis;
+        await addCase(title, inputText, approach, clinicalContext, analysis);
+        setAnalysisResult(analysis);
+      }
       else                  setErrorMessage('Resposta inesperada do servidor de IA.');
-    } catch {
-      setErrorMessage('Falha de comunicação com o servidor de IA.');
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : 'Falha de comunicação ou salvamento com o servidor.'
+      );
     } finally {
       setIsAnalyzing(false);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 200);
@@ -391,7 +418,11 @@ export default function NovaAnalise() {
 
   /* ── chat handlers ── */
 
-  const handleChatReset = () => { setChatMessages([]); setChatInput(''); };
+  const handleChatReset = () => {
+    setChatMessages([]);
+    setChatInput('');
+    setCurrentChatCaseId(null);
+  };
 
   const handleChatSend = async () => {
     const text = chatInput.trim();
@@ -403,17 +434,59 @@ export default function NovaAnalise() {
     setChatInput(''); setIsChatSending(true);
 
     const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
+    const clinicalContext = {
+      sessions_count: sessionsCount,
+      current_diagnosis: currentDiagnosis,
+      already_tried: alreadyTried,
+      specific_question: specificQuestion,
+    };
+
     try {
+      let persistedCaseId = currentChatCaseId;
+
+      if (!persistedCaseId) {
+        const savedCase = await addCase(
+          `Conversa clínica ${new Date().toLocaleDateString('pt-BR')}`,
+          text,
+          approach,
+          clinicalContext,
+          createEmptyAnalysis(),
+          { incrementUsage: false }
+        );
+        persistedCaseId = savedCase.id;
+        setCurrentChatCaseId(savedCase.id);
+      }
+
+      await addChatMessage(persistedCaseId, 'user', text);
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text, approach,
-          context: { sessions_count: sessionsCount, current_diagnosis: currentDiagnosis, already_tried: alreadyTried, specific_question: specificQuestion },
+          context: clinicalContext,
           history: chatMessages.map(m => ({ role: m.role, content: m.text })),
         }),
       });
       const data = await res.json();
+
+      if (res.ok && data?.analysis) {
+        const analysis = data.analysis as CaseAnalysis;
+        await updateCase(persistedCaseId, {
+          input_text: text,
+          approach_used: approach,
+          context: clinicalContext,
+          analysis,
+        });
+        await addChatMessage(
+          persistedCaseId,
+          'assistant',
+          `Aqui está a formulação clínica com base no que você compartilhou:\n\n${buildCopyText(analysis)}`
+        );
+      } else if (res.ok && data?.reply) {
+        await addChatMessage(persistedCaseId, 'assistant', data.reply);
+      }
+
       setChatMessages(prev => {
         const updated = [...prev];
         const idx = updated.findIndex(m => m.id === loadingMsg.id);
@@ -426,11 +499,19 @@ export default function NovaAnalise() {
           updated[idx] = { ...loadingMsg, isLoading: false, text: data?.reply || 'Resposta inesperada do servidor de IA.' };
         return updated;
       });
-    } catch {
+    } catch (err) {
       setChatMessages(prev => {
         const updated = [...prev];
         const idx = updated.findIndex(m => m.id === loadingMsg.id);
-        if (idx !== -1) updated[idx] = { ...loadingMsg, isLoading: false, text: 'Falha de comunicação com o servidor de IA.' };
+        if (idx !== -1) {
+          updated[idx] = {
+            ...loadingMsg,
+            isLoading: false,
+            text: err instanceof Error
+              ? err.message
+              : 'Falha de comunicação ou salvamento com o servidor.',
+          };
+        }
         return updated;
       });
     } finally {

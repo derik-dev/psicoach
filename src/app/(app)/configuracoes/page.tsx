@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { supabase } from '@/lib/supabase/client';
 import {
   Settings,
   User,
@@ -23,6 +24,7 @@ export default function Configs() {
 
   const [activeTab, setActiveTab] = useState<'perfil' | 'assinatura' | 'preferencias' | 'seguranca' | 'privacidade'>('perfil');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -38,26 +40,52 @@ export default function Configs() {
 
   if (!user) return null;
 
-  const handleSavePerfil = (e: React.FormEvent) => {
-    e.preventDefault();
-    setUser({ ...user, name, email, crp, yearsExperience });
+  const showSuccess = () => {
+    setSaveError(null);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
   };
 
-  const handleSavePreferencias = (e: React.FormEvent) => {
+  const handleSavePerfil = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUser({ ...user, mainApproach, approachDescription, responseDetail });
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
+    try {
+      await setUser({ ...user, name, email, crp, yearsExperience });
+      showSuccess();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Não foi possível salvar o perfil.');
+    }
   };
 
-  const handleSaveSeguranca = (e: React.FormEvent) => {
+  const handleSavePreferencias = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrPassword('');
-    setNewPassword('');
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
+    try {
+      await setUser({ ...user, mainApproach, approachDescription, responseDetail });
+      showSuccess();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Não foi possível salvar as preferências.');
+    }
+  };
+
+  const handleSaveSeguranca = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setCurrPassword('');
+      setNewPassword('');
+      showSuccess();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Não foi possível atualizar a senha.');
+    }
+  };
+
+  const handlePlanChange = async (plan: 'starter' | 'pro' | 'clinica') => {
+    try {
+      await setActivePlan(plan);
+      showSuccess();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Não foi possível salvar o plano.');
+    }
   };
 
   const handleExportData = () => {
@@ -123,6 +151,13 @@ export default function Configs() {
             <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               <span>Configurações atualizadas com sucesso!</span>
+            </div>
+          )}
+
+          {saveError && (
+            <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span>{saveError}</span>
             </div>
           )}
 
@@ -316,7 +351,7 @@ export default function Configs() {
                         {activePlan === plan.id ? (
                           <span className="text-[10px] font-semibold text-blue-700">Atual</span>
                         ) : (
-                          <button onClick={() => setActivePlan(plan.id)} className="text-[10px] font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition-colors">
+                          <button onClick={() => handlePlanChange(plan.id)} className="text-[10px] font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition-colors">
                             Assinar
                           </button>
                         )}
