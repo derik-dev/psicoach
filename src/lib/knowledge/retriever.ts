@@ -81,7 +81,6 @@ const KEYWORD_MAP: Record<string, string[]> = {
   sistêmica: ['TERAPIA SISTÊMICA / FAMILIAR'],
   familiar: ['TERAPIA SISTÊMICA / FAMILIAR'],
   família: ['TERAPIA SISTÊMICA / FAMILIAR'],
-  genograma: ['TERAPIA SISTÊMICA / FAMILIAR'],
   jung: ['PSICOLOGIA ANALÍTICA (JUNGUIANA)'],
   junguiana: ['PSICOLOGIA ANALÍTICA (JUNGUIANA)'],
   arquétipo: ['PSICOLOGIA ANALÍTICA (JUNGUIANA)'],
