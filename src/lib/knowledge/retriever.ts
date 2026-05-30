@@ -10,6 +10,7 @@
 import { approachesKnowledge } from './approaches';
 import { diagnosticsKnowledge } from './diagnostics';
 import { techniquesKnowledge } from './techniques';
+import { ethicsKnowledge } from './ethics';
 
 /* ─────────────── section extraction ─────────────── */
 
@@ -43,6 +44,7 @@ const ALL_SECTIONS: KnowledgeSection[] = [
   ...parseSections(approachesKnowledge),
   ...parseSections(diagnosticsKnowledge),
   ...parseSections(techniquesKnowledge),
+  ...parseSections(ethicsKnowledge),
 ];
 
 /* ─────────────── keyword maps ─────────────── */
@@ -113,8 +115,8 @@ const KEYWORD_MAP: Record<string, string[]> = {
   anorexia: ['TRANSTORNOS ALIMENTARES'],
   bulimia: ['TRANSTORNOS ALIMENTARES'],
   bipolar: ['TRANSTORNOS DO HUMOR BIPOLAR — F31.x'],
-  suicid: ['AVALIAÇÃO DE RISCO SUICIDA'],
-  autolesão: ['AVALIAÇÃO DE RISCO SUICIDA'],
+  suicid: ['AVALIAÇÃO DE RISCO SUICIDA', 'NOTIFICAÇÃO COMPULSÓRIA DE VIOLÊNCIA'],
+  autolesão: ['AVALIAÇÃO DE RISCO SUICIDA', 'NOTIFICAÇÃO COMPULSÓRIA DE VIOLÊNCIA'],
   risco: ['AVALIAÇÃO DE RISCO SUICIDA', 'INTERVENÇÕES EM CRISE'],
   // técnicas
   mindfulness: ['MINDFULNESS E PRÁTICAS CONTEMPLATIVAS'],
@@ -134,6 +136,33 @@ const KEYWORD_MAP: Record<string, string[]> = {
   aliança: ['ALIANÇA TERAPÊUTICA'],
   vínculo: ['ALIANÇA TERAPÊUTICA'],
   crise: ['INTERVENÇÕES EM CRISE', 'AVALIAÇÃO DE RISCO SUICIDA'],
+  // ética
+  ética: ['CÓDIGO DE ÉTICA PROFISSIONAL DA/O PSICÓLOGA/O (CFP, 2025)', 'DEVERES DO PSICÓLOGO (Art. 1º)', 'VEDAÇÕES AO PSICÓLOGO (Art. 2º)'],
+  sigilo: ['SIGILO PROFISSIONAL (Arts. 9º a 12º)'],
+  confidencial: ['SIGILO PROFISSIONAL (Arts. 9º a 12º)'],
+  cfp: ['CÓDIGO DE ÉTICA PROFISSIONAL DA/O PSICÓLOGA/O (CFP, 2025)'],
+  crp: ['CÓDIGO DE ÉTICA PROFISSIONAL DA/O PSICÓLOGA/O (CFP, 2025)', 'ESPECIALIDADES RECONHECIDAS PELO CFP (Resolução CFP nº 023/2022)'],
+  notificação: ['NOTIFICAÇÃO COMPULSÓRIA DE VIOLÊNCIA'],
+  notificar: ['NOTIFICAÇÃO COMPULSÓRIA DE VIOLÊNCIA'],
+  violência: ['NOTIFICAÇÃO COMPULSÓRIA DE VIOLÊNCIA', 'VEDAÇÕES AO PSICÓLOGO (Art. 2º)'],
+  laudo: ['DOCUMENTOS PSICOLÓGICOS (Arts. 13º a 17º)'],
+  relatório: ['DOCUMENTOS PSICOLÓGICOS (Arts. 13º a 17º)'],
+  documento: ['DOCUMENTOS PSICOLÓGICOS (Arts. 13º a 17º)'],
+  atestado: ['DOCUMENTOS PSICOLÓGICOS (Arts. 13º a 17º)'],
+  prontuário: ['DOCUMENTOS PSICOLÓGICOS (Arts. 13º a 17º)', 'CONTRATO DE TRABALHO'],
+  honorários: ['REMUNERAÇÃO (Art. 4º)', 'CONTRATO DE TRABALHO'],
+  contrato: ['CONTRATO DE TRABALHO'],
+  menor: ['ATENDIMENTO A CRIANÇAS, ADOLESCENTES E INTERDITOS (Art. 8º)'],
+  criança: ['ATENDIMENTO A CRIANÇAS, ADOLESCENTES E INTERDITOS (Art. 8º)', 'NOTIFICAÇÃO COMPULSÓRIA DE VIOLÊNCIA'],
+  adolescente: ['ATENDIMENTO A CRIANÇAS, ADOLESCENTES E INTERDITOS (Art. 8º)', 'NOTIFICAÇÃO COMPULSÓRIA DE VIOLÊNCIA'],
+  pesquisa: ['PESQUISA E PRODUÇÃO CIENTÍFICA (Arts. 24º a 26º)'],
+  consentimento: ['PESQUISA E PRODUÇÃO CIENTÍFICA (Arts. 24º a 26º)', 'ATENDIMENTO A CRIANÇAS, ADOLESCENTES E INTERDITOS (Art. 8º)'],
+  redes: ['USO DE TECNOLOGIAS E REDES SOCIAIS'],
+  digital: ['USO DE TECNOLOGIAS E REDES SOCIAIS'],
+  online: ['USO DE TECNOLOGIAS E REDES SOCIAIS'],
+  especialidade: ['ESPECIALIDADES RECONHECIDAS PELO CFP (Resolução CFP nº 023/2022)'],
+  autonomia: ['PRINCÍPIOS ÉTICOS APLICADOS À PRÁTICA CLÍNICA'],
+  discriminação: ['VEDAÇÕES AO PSICÓLOGO (Art. 2º)', 'PRINCÍPIOS ÉTICOS APLICADOS À PRÁTICA CLÍNICA'],
 };
 
 /* ─────────────── approach → sections mapping ─────────────── */
