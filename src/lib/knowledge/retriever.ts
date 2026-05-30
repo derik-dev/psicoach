@@ -11,6 +11,7 @@ import { approachesKnowledge } from './approaches';
 import { diagnosticsKnowledge } from './diagnostics';
 import { techniquesKnowledge } from './techniques';
 import { ethicsKnowledge } from './ethics';
+import { saudeMentalABKnowledge } from './saude_mental_ab';
 
 /* ─────────────── section extraction ─────────────── */
 
@@ -45,6 +46,7 @@ const ALL_SECTIONS: KnowledgeSection[] = [
   ...parseSections(diagnosticsKnowledge),
   ...parseSections(techniquesKnowledge),
   ...parseSections(ethicsKnowledge),
+  ...parseSections(saudeMentalABKnowledge),
 ];
 
 /* ─────────────── keyword maps ─────────────── */
@@ -163,6 +165,40 @@ const KEYWORD_MAP: Record<string, string[]> = {
   especialidade: ['ESPECIALIDADES RECONHECIDAS PELO CFP (Resolução CFP nº 023/2022)'],
   autonomia: ['PRINCÍPIOS ÉTICOS APLICADOS À PRÁTICA CLÍNICA'],
   discriminação: ['VEDAÇÕES AO PSICÓLOGO (Art. 2º)', 'PRINCÍPIOS ÉTICOS APLICADOS À PRÁTICA CLÍNICA'],
+  // saúde mental na AB / SUS
+  sus: ['POLÍTICA DE SAÚde MENTAL NO SUS', 'SAÚDE MENTAL NA ATENÇÃO BÁSICA (Caderno MS nº 34, 2013)'],
+  caps: ['POLÍTICA DE SAÚDE MENTAL NO SUS', 'INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  nasf: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  matricial: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  matriciamento: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  atenção: ['SAÚDE MENTAL NA ATENÇÃO BÁSICA (Caderno MS nº 34, 2013)', 'POLÍTICA DE SAÚDE MENTAL NO SUS'],
+  básica: ['SAÚDE MENTAL NA ATENÇÃO BÁSICA (Caderno MS nº 34, 2013)'],
+  projeto: ['PROJETO TERAPÊUTICO SINGULAR (PTS)'],
+  singular: ['PROJETO TERAPÊUTICO SINGULAR (PTS)'],
+  pts: ['PROJETO TERAPÊUTICO SINGULAR (PTS)'],
+  sofrimento: ['PRINCÍPIOS DO CUIDADO EM SAÚDE MENTAL', 'SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA'],
+  psicossocial: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS', 'PROJETO TERAPÊUTICO SINGULAR (PTS)'],
+  somatização: ['SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA', 'INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  reatribuição: ['SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA'],
+  'sem explicação': ['SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA'],
+  acolhimento: ['ACOLHIMENTO E ESCUTA EM SAÚDE MENTAL', 'PRINCÍPIOS DO CUIDADO EM SAÚDE MENTAL'],
+  escuta: ['ACOLHIMENTO E ESCUTA EM SAÚDE MENTAL'],
+  'redução de danos': ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  redução: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  drogas: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS', 'GRUPOS TERAPÊUTICOS EM SAÚDE MENTAL'],
+  álcool: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS', 'GRUPOS TERAPÊUTICOS EM SAÚDE MENTAL'],
+  substancia: ['INTERVENÇÕES PSICOSSOCIAIS AVANÇADAS'],
+  grupo: ['GRUPOS TERAPÊUTICOS EM SAÚDE MENTAL'],
+  grupal: ['GRUPOS TERAPÊUTICOS EM SAÚDE MENTAL'],
+  comunitária: ['TERAPIA COMUNITÁRIA (TC)', 'GRUPOS TERAPÊUTICOS EM SAÚDE MENTAL'],
+  territorio: ['PRINCÍPIOS DO CUIDADO EM SAÚDE MENTAL', 'SAÚDE MENTAL DE CRIANÇAS E ADOLESCENTES'],
+  território: ['PRINCÍPIOS DO CUIDADO EM SAÚDE MENTAL', 'SAÚDE MENTAL DE CRIANÇAS E ADOLESCENTES'],
+  reforma: ['POLÍTICA DE SAÚDE MENTAL NO SUS'],
+  psiquiátrica: ['POLÍTICA DE SAÚDE MENTAL NO SUS'],
+  reabilitação: ['POLÍTICA DE SAÚDE MENTAL NO SUS'],
+  genograma: ['ABORDAGEM FAMILIAR EM SAÚDE MENTAL', 'TERAPIA SISTÊMICA / FAMILIAR'],
+  ecomapa: ['ABORDAGEM FAMILIAR EM SAÚDE MENTAL'],
+  vulnerabilidade: ['SOFRIMENTO MENTAL COMUM NA ATENÇÃO BÁSICA', 'SAÚDE MENTAL DE CRIANÇAS E ADOLESCENTES'],
 };
 
 /* ─────────────── approach → sections mapping ─────────────── */
