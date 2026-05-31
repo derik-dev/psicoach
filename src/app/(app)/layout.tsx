@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const percentage = analysesLimit !== null ? (analysesUsed / analysesLimit) * 100 : 0;
 
   return (
-    <div className="flex min-h-screen bg-[#f4f6f9] text-slate-900 font-sans selection:bg-blue-600/10 selection:text-blue-700">
+    <div className="flex h-screen overflow-hidden bg-[#f4f6f9] text-slate-900 font-sans selection:bg-blue-600/10 selection:text-blue-700">
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-100 px-5 flex items-center justify-between z-30">
         <Link href="/dashboard" className="inline-flex items-center">
@@ -182,7 +182,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-full">
         <main className="flex-1 p-5 lg:p-8 pt-20 lg:pt-8 max-w-7xl w-full mx-auto">
           <div key={pathname} className="animate-page-fade">
             {children}
