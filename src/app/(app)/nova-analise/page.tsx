@@ -134,28 +134,28 @@ function AnalysisCard({
 
       {/* ── NÍVEL 1 — 4 mini cards em linha ── */}
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-3">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-3.5">
           <span className="text-[9px] font-semibold uppercase tracking-widest text-blue-600">Resumo rápido</span>
-          <p className="mt-1.5 text-[11px] leading-snug text-blue-950 line-clamp-2">{resumo}</p>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-blue-950">{resumo}</p>
         </div>
 
-        <div className={`rounded-2xl border p-3 ${cfg.bg} ${cfg.border}`}>
+        <div className={`rounded-2xl border p-3.5 ${cfg.bg} ${cfg.border}`}>
           <span className={`text-[9px] font-semibold uppercase tracking-widest ${cfg.color}`}>Atenção clínica</span>
           <div className="mt-1.5 flex items-center gap-1.5">
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
-            <p className={`text-[11px] font-semibold leading-none ${cfg.color}`}>{cfg.label}</p>
+            <p className={`text-[11px] font-semibold leading-snug ${cfg.color}`}>{cfg.label}</p>
           </div>
           <p className={`mt-1 text-[9px] leading-snug ${cfg.color} opacity-75`}>{cfg.sublabel}</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
           <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-500">Foco inicial</span>
-          <p className="mt-1.5 text-[11px] leading-snug text-slate-700 line-clamp-2">{focoInicial}</p>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-700">{focoInicial}</p>
         </div>
 
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3">
+        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3.5">
           <span className="text-[9px] font-semibold uppercase tracking-widest text-amber-600">Próxima pergunta</span>
-          <p className="mt-1.5 text-[11px] italic leading-snug text-slate-700 line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+          <p className="mt-1.5 text-[11px] italic leading-relaxed text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
             &ldquo;{proxPergunta}&rdquo;
           </p>
         </div>
@@ -168,7 +168,7 @@ function AnalysisCard({
             <Brain className="h-3 w-3 text-blue-600" />
             Hipótese central
           </h4>
-          <p className="text-[11px] italic leading-relaxed text-slate-700 line-clamp-4" style={{ fontFamily: 'Georgia, serif' }}>
+          <p className="text-[11px] italic leading-relaxed text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
             {hipotese}
           </p>
         </div>
@@ -182,7 +182,7 @@ function AnalysisCard({
             {fatores.slice(0, 5).map((f, i) => (
               <li key={i} className="flex gap-1.5 text-[11px] text-slate-600 leading-snug">
                 <span className="mt-1 h-1 w-1 rounded-full bg-blue-400 shrink-0" />
-                <span className="line-clamp-1">{f}</span>
+                <span className="line-clamp-2">{f}</span>
               </li>
             ))}
           </ul>
@@ -199,7 +199,7 @@ function AnalysisCard({
                 <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
                   {i + 1}
                 </span>
-                <span className="line-clamp-2">{p}</span>
+                <span>{p}</span>
               </li>
             ))}
           </ol>
@@ -212,7 +212,7 @@ function AnalysisCard({
           </h4>
           <ul className="space-y-1.5">
             {perguntas.slice(0, 3).map((q, i) => (
-              <li key={i} className="text-[11px] italic leading-snug text-slate-600 line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+              <li key={i} className="text-[11px] italic leading-relaxed text-slate-600" style={{ fontFamily: 'Georgia, serif' }}>
                 &ldquo;{q}&rdquo;
               </li>
             ))}
@@ -240,7 +240,7 @@ function AnalysisCard({
         <div className="min-h-[72px] bg-white p-3.5">
           {activeContent ? (
             <div>
-              <p className="line-clamp-3 text-[12px] leading-relaxed text-slate-600">
+              <p className="line-clamp-5 text-[12px] leading-relaxed text-slate-600">
                 {activeContent}
               </p>
               {activeContent.length > 180 && (
