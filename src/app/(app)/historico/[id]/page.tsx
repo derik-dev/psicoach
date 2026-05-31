@@ -4,8 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { supabase } from '@/lib/supabase/client';
 import {
   ArrowLeft,
+  ArrowRight,
   Sparkles,
   Save,
   CheckCircle,
@@ -136,15 +138,36 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
     setIsSendingMessage(true);
 
     try {
-      // TODO: substituir por endpoint real de follow-up quando a IA estiver integrada.
-      const res = await fetch('/api/analyze', {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setChatError('Sessão expirada. Faça login novamente.');
+        return;
+      }
+
+      const history = c.messages.map(m => ({ role: m.role, content: m.content }));
+
+      const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ case_id: c.id, message: userText, approach: c.approach_used }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          message: userText,
+          approach: c.approach_used,
+          context: c.context,
+          history,
+        }),
       });
+
       const data = await res.json();
+
       if (!res.ok) {
         setChatError(data?.error || 'Não foi possível obter resposta da IA.');
+      } else {
+        const reply: string = data?.reply
+          || (data?.analysis ? 'Análise gerada com sucesso.' : 'Resposta inesperada da IA.');
+        await addChatMessage(c.id, 'assistant', reply);
       }
     } catch {
       setChatError('Falha de comunicação com o servidor de IA.');
@@ -187,13 +210,22 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
           </p>
         </div>
 
-        <button
-          onClick={handleCopyText}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-200 rounded-xl text-xs font-semibold transition-all self-start md:self-center"
-        >
-          <Copy className="w-4 h-4" />
-          <span>{copySuccess ? 'Copiado!' : 'Copiar análise'}</span>
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
+          <Link
+            href={`/nova-analise?case=${c.id}`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 rounded-full text-xs font-semibold transition-all"
+          >
+            <span>Editar caso</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+          <button
+            onClick={handleCopyText}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-200 rounded-xl text-xs font-semibold transition-all"
+          >
+            <Copy className="w-4 h-4" />
+            <span>{copySuccess ? 'Copiado!' : 'Copiar análise'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
