@@ -311,6 +311,150 @@ function AnalysisCard({
   );
 }
 
+/* ══════════════════ shared sub-panels ══════════════════ */
+
+interface ContextPanelProps {
+  contextExpanded: boolean;
+  setContextExpanded: (v: boolean) => void;
+  sessionsCount: string;
+  setSessionsCount: (v: string) => void;
+  currentDiagnosis: string;
+  setCurrentDiagnosis: (v: string) => void;
+  alreadyTried: string;
+  setAlreadyTried: (v: string) => void;
+  specificQuestion: string;
+  setSpecificQuestion: (v: string) => void;
+}
+
+function ContextPanel({
+  contextExpanded, setContextExpanded,
+  sessionsCount, setSessionsCount,
+  currentDiagnosis, setCurrentDiagnosis,
+  alreadyTried, setAlreadyTried,
+  specificQuestion, setSpecificQuestion,
+}: ContextPanelProps) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/40">
+      <button
+        type="button"
+        onClick={() => setContextExpanded(!contextExpanded)}
+        className="flex w-full items-center justify-between bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-50"
+      >
+        <span className="flex items-center gap-2">
+          <FileText className="h-3.5 w-3.5 text-blue-600" />
+          Configurações adicionais
+        </span>
+        {contextExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+      {contextExpanded && (
+        <div className="space-y-3 border-t border-slate-100 bg-white p-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Sessões</label>
+              <select
+                value={sessionsCount}
+                onChange={e => setSessionsCount(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
+              >
+                <option value="1-5">Acolhimento (1-5)</option>
+                <option value="5-10">Aliança (5-10)</option>
+                <option value="10-20">Processamento (10-20)</option>
+                <option value="20-50">Elaboração (20-50)</option>
+                <option value="+50">Longa duração (+50)</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Diagnóstico</label>
+              <input
+                type="text"
+                value={currentDiagnosis}
+                onChange={e => setCurrentDiagnosis(e.target.value)}
+                placeholder="Ex: F41.1"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Já foi trabalhado</label>
+            <input
+              type="text"
+              value={alreadyTried}
+              onChange={e => setAlreadyTried(e.target.value)}
+              placeholder="Ex: Psicoeducação do pânico..."
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Dúvida específica</label>
+            <input
+              type="text"
+              value={specificQuestion}
+              onChange={e => setSpecificQuestion(e.target.value)}
+              placeholder="Ex: Como lidar com a racionalização?"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ApproachPanelProps {
+  useCustomApproach: boolean;
+  setUseCustomApproach: (v: boolean) => void;
+  customApproach: string;
+  setCustomApproach: (v: string) => void;
+  mainApproach: string | undefined;
+}
+
+function ApproachPanel({
+  useCustomApproach, setUseCustomApproach,
+  customApproach, setCustomApproach,
+  mainApproach,
+}: ApproachPanelProps) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-[13px] font-semibold text-slate-800">Diretriz teórica</h4>
+          <p className="text-[10px] text-slate-400">O vocabulário se adapta à escolha.</p>
+        </div>
+        <label className="flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={useCustomApproach}
+            onChange={e => setUseCustomApproach(e.target.checked)}
+            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-xs font-semibold text-blue-600">Mudar</span>
+        </label>
+      </div>
+      <div className="mt-2">
+        {!useCustomApproach ? (
+          <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 p-2.5 text-xs font-medium text-blue-700">
+            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+            <span>Padrão: {mainApproach || 'Não definida'}</span>
+          </div>
+        ) : (
+          <select
+            value={customApproach}
+            onChange={e => setCustomApproach(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-blue-400"
+          >
+            <option value="TCC (Terapia Cognitivo-Comportamental)">TCC</option>
+            <option value="Psicanálise">Psicanálise</option>
+            <option value="Humanista / Fenomenologia">Humanista</option>
+            <option value="Sistêmica / Terapia Familiar">Sistêmica</option>
+            <option value="Gestalt-terapia">Gestalt</option>
+            <option value="Junguiana / Psicologia Analítica">Junguiana</option>
+          </select>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ════════════════════ main page ════════════════════ */
 
 export default function NovaAnalise() {
@@ -573,115 +717,6 @@ export default function NovaAnalise() {
 
   void router;
 
-  /* ── shared sub-panels ── */
-
-  const ContextPanel = () => (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/40">
-      <button
-        type="button"
-        onClick={() => setContextExpanded(!contextExpanded)}
-        className="flex w-full items-center justify-between bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-50"
-      >
-        <span className="flex items-center gap-2">
-          <FileText className="h-3.5 w-3.5 text-blue-600" />
-          Configurações adicionais
-        </span>
-        {contextExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-      </button>
-      {contextExpanded && (
-        <div className="space-y-3 border-t border-slate-100 bg-white p-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Sessões</label>
-              <select
-                value={sessionsCount}
-                onChange={e => setSessionsCount(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-              >
-                <option value="1-5">Acolhimento (1-5)</option>
-                <option value="5-10">Aliança (5-10)</option>
-                <option value="10-20">Processamento (10-20)</option>
-                <option value="20-50">Elaboração (20-50)</option>
-                <option value="+50">Longa duração (+50)</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Diagnóstico</label>
-              <input
-                type="text"
-                value={currentDiagnosis}
-                onChange={e => setCurrentDiagnosis(e.target.value)}
-                placeholder="Ex: F41.1"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Já foi trabalhado</label>
-            <input
-              type="text"
-              value={alreadyTried}
-              onChange={e => setAlreadyTried(e.target.value)}
-              placeholder="Ex: Psicoeducação do pânico..."
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Dúvida específica</label>
-            <input
-              type="text"
-              value={specificQuestion}
-              onChange={e => setSpecificQuestion(e.target.value)}
-              placeholder="Ex: Como lidar com a racionalização?"
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  const ApproachPanel = () => (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="text-[13px] font-semibold text-slate-800">Diretriz teórica</h4>
-          <p className="text-[10px] text-slate-400">O vocabulário se adapta à escolha.</p>
-        </div>
-        <label className="flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
-            checked={useCustomApproach}
-            onChange={e => setUseCustomApproach(e.target.checked)}
-            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-          />
-          <span className="text-xs font-semibold text-blue-600">Mudar</span>
-        </label>
-      </div>
-      <div className="mt-2">
-        {!useCustomApproach ? (
-          <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 p-2.5 text-xs font-medium text-blue-700">
-            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>Padrão: {user?.mainApproach || 'Não definida'}</span>
-          </div>
-        ) : (
-          <select
-            value={customApproach}
-            onChange={e => setCustomApproach(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-blue-400"
-          >
-            <option value="TCC (Terapia Cognitivo-Comportamental)">TCC</option>
-            <option value="Psicanálise">Psicanálise</option>
-            <option value="Humanista / Fenomenologia">Humanista</option>
-            <option value="Sistêmica / Terapia Familiar">Sistêmica</option>
-            <option value="Gestalt-terapia">Gestalt</option>
-            <option value="Junguiana / Psicologia Analítica">Junguiana</option>
-          </select>
-        )}
-      </div>
-    </div>
-  );
-
   /* ══════════════════════════ render ══════════════════════════ */
   return (
     <div className="space-y-4">
@@ -774,8 +809,18 @@ export default function NovaAnalise() {
                 )}
               </div>
 
-              <ContextPanel />
-              <ApproachPanel />
+              <ContextPanel
+                contextExpanded={contextExpanded} setContextExpanded={setContextExpanded}
+                sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
+                currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
+                alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
+                specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
+              />
+              <ApproachPanel
+                useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
+                customApproach={customApproach} setCustomApproach={setCustomApproach}
+                mainApproach={user?.mainApproach}
+              />
 
               {/* Aviso anonimização */}
               <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
@@ -880,8 +925,18 @@ export default function NovaAnalise() {
                 <p className="text-[12px] font-semibold text-slate-800">Modo conversação</p>
               </div>
             </div>
-            <ContextPanel />
-            <ApproachPanel />
+            <ContextPanel
+              contextExpanded={contextExpanded} setContextExpanded={setContextExpanded}
+              sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
+              currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
+              alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
+              specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
+            />
+            <ApproachPanel
+              useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
+              customApproach={customApproach} setCustomApproach={setCustomApproach}
+              mainApproach={user?.mainApproach}
+            />
             <button
               onClick={handleChatReset}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
