@@ -6,8 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Lock, Mail, User, ShieldCheck, ArrowRight, CheckCircle } from 'lucide-react';
 
+<<<<<<< HEAD
 export default function RegisterPage() {
   const { user, signUp } = useApp();
+=======
+
+export default function RegisterPage() {
+  const { user, signUp, signInWithGoogle } = useApp();
+>>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
   const router = useRouter();
 
   const [name, setName] = useState('');
@@ -18,6 +24,10 @@ export default function RegisterPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+<<<<<<< HEAD
+=======
+  const [googleLoading, setGoogleLoading] = useState(false);
+>>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   React.useEffect(() => {

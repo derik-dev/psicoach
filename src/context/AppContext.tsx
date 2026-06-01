@@ -92,6 +92,10 @@ interface AppContextType {
   addChatMessage: (caseId: string, role: 'user' | 'assistant', content: string) => Promise<void>;
   logout: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+<<<<<<< HEAD
+=======
+  signInWithGoogle: () => Promise<{ error: string | null }>;
+>>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
   signUp: (name: string, email: string, crp: string, password: string) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
   initialized: boolean;
 }
@@ -292,6 +296,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { error: null };
   };
 
+<<<<<<< HEAD
+=======
+  const signInWithGoogle = async (): Promise<{ error: string | null }> => {
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+>>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
   const signUp = async (
     name: string,
     email: string,
@@ -503,6 +520,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addChatMessage,
         logout,
         signIn,
+<<<<<<< HEAD
+=======
+        signInWithGoogle,
+>>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
         signUp,
         initialized,
       }}
@@ -510,8 +531,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       {initialized ? (
         children
       ) : (
+<<<<<<< HEAD
         <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
           Carregando PsiCoach AI...
+=======
+        <div
+          className="min-h-screen flex flex-col items-center justify-center gap-6"
+          style={{ background: 'var(--bg-dark-obsidian)' }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="24" r="22" stroke="rgba(177,140,242,0.25)" strokeWidth="2" />
+              <circle cx="24" cy="24" r="14" fill="rgba(177,140,242,0.08)" />
+              <path
+                d="M24 14c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10"
+                stroke="#b18cf2"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                style={{ transformOrigin: '24px 24px', animation: 'spin 1s linear infinite' }}
+              />
+              <circle cx="24" cy="24" r="3" fill="#b18cf2" opacity="0.7" />
+            </svg>
+            <p
+              className="text-sm tracking-widest uppercase"
+              style={{ color: 'var(--text-mauve)', fontFamily: 'var(--font-sans)', letterSpacing: '0.2em' }}
+            >
+              PsiCoach AI
+            </p>
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+>>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
         </div>
       )}
     </AppContext.Provider>
