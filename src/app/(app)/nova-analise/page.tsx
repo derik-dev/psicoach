@@ -8,7 +8,7 @@ import {
   Brain, Sparkles, ChevronDown, ChevronUp, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
   CheckCircle, MessageSquare, LayoutTemplate, Send, User, Bot, Plus,
-  Target, ChevronRight, X, Shield, Zap,
+  Target, ChevronRight, X, Shield, Zap, Check,
 } from 'lucide-react';
 
 /* ─────────────────────────── types ─────────────────────────── */
@@ -73,6 +73,39 @@ const ATENCAO_CFG: Record<AtencaoNivel, {
   },
 };
 
+const APPROACH_OPTIONS = [
+  {
+    value: 'TCC (Terapia Cognitivo-Comportamental)',
+    label: 'TCC',
+    description: 'Pensamentos, crenças e experimentos comportamentais',
+  },
+  {
+    value: 'Psicanálise',
+    label: 'Psicanálise',
+    description: 'Inconsciente, transferência e elaboração',
+  },
+  {
+    value: 'Humanista / Fenomenologia',
+    label: 'Humanista',
+    description: 'Experiência vivida, vínculo e autenticidade',
+  },
+  {
+    value: 'Sistêmica / Terapia Familiar',
+    label: 'Sistêmica',
+    description: 'Relações, padrões familiares e contexto',
+  },
+  {
+    value: 'Gestalt-terapia',
+    label: 'Gestalt',
+    description: 'Awareness, contato e aqui-agora',
+  },
+  {
+    value: 'Junguiana / Psicologia Analítica',
+    label: 'Junguiana',
+    description: 'Símbolos, arquétipos e individuação',
+  },
+] as const;
+
 /* ══════════════════════ AnalysisCard ══════════════════════ */
 
 type TabId = 'sintese' | 'formulacao' | 'risco' | 'intervencoes' | 'prontuario' | 'referencias';
@@ -86,6 +119,7 @@ function AnalysisCard({
 }) {
   const [activeTab, setActiveTab] = useState<TabId>('sintese');
   const [modalOpen, setModalOpen] = useState(false);
+  const [questionsModalOpen, setQuestionsModalOpen] = useState(false);
 
   const nivel = deriveAtencao(result);
   const cfg = ATENCAO_CFG[nivel];
@@ -272,6 +306,7 @@ function AnalysisCard({
           <Zap className="w-3 h-3" /> Gerar evolução
         </button>
         <button
+          onClick={() => setQuestionsModalOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
         >
           <HelpCircle className="w-3 h-3" /> Gerar perguntas
@@ -307,6 +342,41 @@ function AnalysisCard({
           </div>
         </div>
       )}
+
+      {/* ── Modal perguntas clínicas ── */}
+      {questionsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdrop-in">
+          <div className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-modal-in">
+            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-amber-600" />
+                <h3 className="text-sm font-semibold text-slate-800">Perguntas clínicas</h3>
+              </div>
+              <button
+                onClick={() => setQuestionsModalOpen(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="mb-4 text-[11px] text-slate-400">Perguntas sugeridas para explorar com o paciente na próxima sessão.</p>
+              <ol className="space-y-3">
+                {(result.perguntas_clinicas || result.questions || []).map((q, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700">
+                      {i + 1}
+                    </span>
+                    <p className="text-[13px] italic leading-relaxed text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
+                      &ldquo;{q}&rdquo;
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -314,8 +384,6 @@ function AnalysisCard({
 /* ══════════════════ shared sub-panels ══════════════════ */
 
 interface ContextPanelProps {
-  contextExpanded: boolean;
-  setContextExpanded: (v: boolean) => void;
   sessionsCount: string;
   setSessionsCount: (v: string) => void;
   currentDiagnosis: string;
@@ -327,7 +395,6 @@ interface ContextPanelProps {
 }
 
 function ContextPanel({
-  contextExpanded, setContextExpanded,
   sessionsCount, setSessionsCount,
   currentDiagnosis, setCurrentDiagnosis,
   alreadyTried, setAlreadyTried,
@@ -335,22 +402,16 @@ function ContextPanel({
 }: ContextPanelProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/40">
-      <button
-        type="button"
-        onClick={() => setContextExpanded(!contextExpanded)}
-        className="flex w-full items-center justify-between bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-50"
-      >
+      <div className="flex w-full items-center bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
         <span className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-blue-600" />
           Configurações adicionais
         </span>
-        {contextExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-      </button>
-      {contextExpanded && (
-        <div className="space-y-3 border-t border-slate-100 bg-white p-4">
+      </div>
+      <div className="space-y-3 border-t border-slate-100 bg-white p-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Sessões</label>
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Sessões <span className="normal-case font-normal">(opcional)</span></label>
               <select
                 value={sessionsCount}
                 onChange={e => setSessionsCount(e.target.value)}
@@ -364,7 +425,7 @@ function ContextPanel({
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Diagnóstico</label>
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Diagnóstico <span className="normal-case font-normal">(opcional)</span></label>
               <input
                 type="text"
                 value={currentDiagnosis}
@@ -375,7 +436,7 @@ function ContextPanel({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Já foi trabalhado</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Já foi trabalhado <span className="normal-case font-normal">(opcional)</span></label>
             <input
               type="text"
               value={alreadyTried}
@@ -385,7 +446,7 @@ function ContextPanel({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Dúvida específica</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Dúvida específica <span className="normal-case font-normal">(opcional)</span></label>
             <input
               type="text"
               value={specificQuestion}
@@ -395,7 +456,6 @@ function ContextPanel({
             />
           </div>
         </div>
-      )}
     </div>
   );
 }
@@ -413,6 +473,16 @@ function ApproachPanel({
   customApproach, setCustomApproach,
   mainApproach,
 }: ApproachPanelProps) {
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const selectedApproach = APPROACH_OPTIONS.find(option => option.value === customApproach);
+
+  const handleToggleCustom = (checked: boolean) => {
+    setUseCustomApproach(checked);
+    if (checked && !customApproach) {
+      setCustomApproach(mainApproach || APPROACH_OPTIONS[0].value);
+    }
+  };
+
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
       <div className="flex items-center justify-between">
@@ -424,7 +494,7 @@ function ApproachPanel({
           <input
             type="checkbox"
             checked={useCustomApproach}
-            onChange={e => setUseCustomApproach(e.target.checked)}
+            onChange={e => handleToggleCustom(e.target.checked)}
             className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-xs font-semibold text-blue-600">Mudar</span>
@@ -437,18 +507,78 @@ function ApproachPanel({
             <span>Padrão: {mainApproach || 'Não definida'}</span>
           </div>
         ) : (
-          <select
-            value={customApproach}
-            onChange={e => setCustomApproach(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-blue-400"
+          <div
+            className="relative"
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                setIsSelectorOpen(false);
+              }
+            }}
           >
-            <option value="TCC (Terapia Cognitivo-Comportamental)">TCC</option>
-            <option value="Psicanálise">Psicanálise</option>
-            <option value="Humanista / Fenomenologia">Humanista</option>
-            <option value="Sistêmica / Terapia Familiar">Sistêmica</option>
-            <option value="Gestalt-terapia">Gestalt</option>
-            <option value="Junguiana / Psicologia Analítica">Junguiana</option>
-          </select>
+            <button
+              type="button"
+              onClick={() => setIsSelectorOpen(open => !open)}
+              className={`flex w-full items-center justify-between rounded-xl border bg-white px-3 py-2.5 text-left transition-all ${
+                isSelectorOpen
+                  ? 'border-blue-300 shadow-[0_0_0_3px_rgba(37,99,235,0.10)]'
+                  : 'border-slate-200 hover:border-blue-200 hover:bg-blue-50/30'
+              }`}
+              aria-haspopup="listbox"
+              aria-expanded={isSelectorOpen}
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-semibold text-slate-800">
+                  {selectedApproach?.label || 'Escolha uma abordagem'}
+                </span>
+                <span className="mt-0.5 block truncate text-[10px] text-slate-400">
+                  {selectedApproach?.description || 'Selecione o referencial para esta análise'}
+                </span>
+              </span>
+              <ChevronDown className={`ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform ${isSelectorOpen ? 'rotate-180 text-blue-600' : ''}`} />
+            </button>
+
+            {isSelectorOpen && (
+              <div
+                role="listbox"
+                className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
+              >
+                {APPROACH_OPTIONS.map((option) => {
+                  const selected = customApproach === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onClick={() => {
+                        setCustomApproach(option.value);
+                        setIsSelectorOpen(false);
+                      }}
+                      className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                        selected
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                    >
+                      <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                        selected ? 'border-blue-500 bg-blue-600 text-white' : 'border-slate-200 bg-white text-transparent'
+                      }`}>
+                        <Check className="h-2.5 w-2.5" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold leading-tight">{option.label}</span>
+                        <span className={`mt-0.5 block text-[10px] leading-snug ${
+                          selected ? 'text-blue-500' : 'text-slate-400'
+                        }`}>
+                          {option.description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -470,7 +600,6 @@ export default function NovaAnalise() {
   const [specificQuestion, setSpecificQuestion] = useState('');
   const [customApproach, setCustomApproach] = useState('');
   const [useCustomApproach, setUseCustomApproach] = useState(false);
-  const [contextExpanded, setContextExpanded] = useState(false);
 
   /* standard mode */
   const [title, setTitle]                   = useState('');
@@ -759,10 +888,10 @@ export default function NovaAnalise() {
 
       {/* ══════════════ STANDARD MODE ══════════════ */}
       {mode === 'standard' && (
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[2fr_3fr]">
+        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[3fr_4fr]">
 
           {/* ── Coluna esquerda — Entrada do caso ── */}
-          <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+          <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm lg:p-5">
             {/* Section header */}
             <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -798,7 +927,7 @@ export default function NovaAnalise() {
                 </div>
                 <textarea
                   required
-                  rows={6}
+                  rows={3}
                   value={inputText}
                   onChange={e => setInputText(e.target.value)}
                   placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
@@ -810,7 +939,7 @@ export default function NovaAnalise() {
               </div>
 
               <ContextPanel
-                contextExpanded={contextExpanded} setContextExpanded={setContextExpanded}
+
                 sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
                 currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
                 alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
@@ -926,7 +1055,6 @@ export default function NovaAnalise() {
               </div>
             </div>
             <ContextPanel
-              contextExpanded={contextExpanded} setContextExpanded={setContextExpanded}
               sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
               currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
               alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}

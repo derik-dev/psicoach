@@ -4,24 +4,19 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import {
-  Brain,
-  ArrowRight,
-  ArrowLeft,
-  Layers,
-  ShieldCheck,
-  Zap
+  Brain, ArrowRight, ArrowLeft, Layers, ShieldCheck, Zap, AlertCircle,
 } from 'lucide-react';
 
 export default function OnboardingTour() {
   const { user, setUser } = useApp();
   const router = useRouter();
 
-  const [slide, setSlide] = useState(0);
+  const [slide, setSlide]       = useState(0);
+  const [saving, setSaving]     = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    }
+    if (!user) router.push('/login');
   }, [user, router]);
 
   if (!user) return null;
@@ -31,20 +26,20 @@ export default function OnboardingTour() {
       title: 'Como funciona a Análise Clínica?',
       desc: 'Você descreve o relato do caso, falas emblemáticas e sintomas. A IA cruza tudo isso com a literatura e a sua abordagem teórica preferida.',
       icon: Brain,
-      badge: 'Passo 1 · Descrever'
+      badge: 'Passo 1 · Descrever',
     },
     {
       title: 'Consulte intervenções e referências',
       desc: 'A resposta vem estruturada: hipótese diagnóstica, sugestões práticas, perguntas para a sessão e embasamento bibliográfico.',
       icon: Layers,
-      badge: 'Passo 2 · Revisar'
+      badge: 'Passo 2 · Revisar',
     },
     {
       title: 'Aprofunde em chat livre sobre o caso',
       desc: 'Após a análise, abra um chat contextual contínuo. Detalhe teorias, sugira experimentos ou debata resistências.',
       icon: Zap,
-      badge: 'Passo 3 · Aprofundar'
-    }
+      badge: 'Passo 3 · Aprofundar',
+    },
   ];
 
   const current = slides[slide];
@@ -53,21 +48,28 @@ export default function OnboardingTour() {
   const handleNext = async () => {
     if (slide < slides.length - 1) {
       setSlide(slide + 1);
-    } else {
-      await setUser({
-        ...user,
-        onboardingCompleted: true
-      });
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await setUser({ ...user, onboardingCompleted: true });
       router.push('/nova-analise');
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível finalizar o onboarding. Verifique sua conexão e tente novamente.'
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleBack = () => {
-    if (slide > 0) {
-      setSlide(slide - 1);
-    } else {
-      router.push('/onboarding/abordagem');
-    }
+    if (slide > 0) setSlide(slide - 1);
+    else router.push('/onboarding/abordagem');
   };
 
   return (
@@ -89,6 +91,13 @@ export default function OnboardingTour() {
           </h1>
         </div>
 
+        {saveError && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+            <p className="text-sm text-rose-700">{saveError}</p>
+          </div>
+        )}
+
         <div className="p-7 rounded-3xl bg-slate-50 border border-slate-100 text-center min-h-[300px] flex flex-col items-center justify-center space-y-5">
           <span className="section-badge">{current.badge}</span>
 
@@ -98,9 +107,7 @@ export default function OnboardingTour() {
 
           <div className="space-y-2 max-w-md">
             <h3 className="text-base font-semibold text-slate-800">{current.title}</h3>
-            <p className="text-[13px] text-slate-500 leading-relaxed">
-              {current.desc}
-            </p>
+            <p className="text-[13px] text-slate-500 leading-relaxed">{current.desc}</p>
           </div>
 
           <div className="flex items-center justify-center gap-1.5 pt-1">
@@ -126,7 +133,8 @@ export default function OnboardingTour() {
           <button
             type="button"
             onClick={handleBack}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-5 py-3.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold transition-all"
+            disabled={saving}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-5 py-3.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 text-slate-600 rounded-xl text-sm font-semibold transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Voltar</span>
@@ -135,10 +143,14 @@ export default function OnboardingTour() {
           <button
             type="button"
             onClick={handleNext}
-            className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5"
+            disabled={saving}
+            className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:shadow-none"
           >
-            <span>{slide === slides.length - 1 ? 'Iniciar Primeira Análise' : 'Próximo Passo'}</span>
-            <ArrowRight className="w-4 h-4" />
+            {saving ? (
+              <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Salvando...</>
+            ) : (
+              <><span>{slide === slides.length - 1 ? 'Iniciar Primeira Análise' : 'Próximo Passo'}</span><ArrowRight className="w-4 h-4" /></>
+            )}
           </button>
         </div>
       </div>
