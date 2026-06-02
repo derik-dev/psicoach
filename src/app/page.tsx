@@ -475,10 +475,11 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-3 flex-1">
                 {[
-                  'Vantagem 1',
-                  'Vantagem 2',
-                  'Vantagem 3',
-                  'Vantagem 4',
+                  'Até 15 análises clínicas por mês',
+                  'Mapa clínico completo com hipótese e plano imediato',
+                  'Perguntas clínicas prontas para a sessão',
+                  'Histórico de casos salvo',
+                  'Diretriz teórica personalizável',
                 ].map(item => (
                   <li key={item} className="flex items-start gap-2.5 text-[13px] text-slate-600">
                     <Check className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
@@ -512,10 +513,11 @@ export default function LandingPage() {
               <ul className="space-y-3 flex-1">
                 {[
                   'Tudo do Starter',
-                  'Vantagem 2',
-                  'Vantagem 3',
-                  'Vantagem 4',
-                  'Vantagem 5',
+                  'Até 40 análises por mês',
+                  'Análise de risco e proteção detalhada',
+                  'Gerar nota de evolução automática',
+                  'Gerar roteiro de perguntas',
+                  'Biblioteca clínica completa',
                 ].map(item => (
                   <li key={item} className="flex items-start gap-2.5 text-[13px] text-white/90">
                     <Check className="w-4 h-4 text-blue-300 shrink-0 mt-0.5" />
@@ -544,11 +546,11 @@ export default function LandingPage() {
               <ul className="space-y-3 flex-1">
                 {[
                   'Tudo do Plus',
-                  'Vantagem 2',
-                  'Vantagem 3',
-                  'Vantagem 4',
-                  'Vantagem 5',
-                  'Vantagem 6',
+                  'Análises ilimitadas',
+                  'Múltiplas psicólogas na mesma conta',
+                  'Painel gestor da clínica',
+                  'Referências bibliográficas por caso',
+                  'Suporte prioritário',
                 ].map(item => (
                   <li key={item} className="flex items-start gap-2.5 text-[13px] text-slate-600">
                     <Check className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
