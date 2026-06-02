@@ -8,7 +8,7 @@ import {
   Brain, Sparkles, ChevronDown, ChevronUp, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
   CheckCircle, MessageSquare, LayoutTemplate, Send, User, Bot, Plus,
-  Target, ChevronRight, X, Shield, Zap, Check,
+  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square,
 } from 'lucide-react';
 
 /* ─────────────────────────── types ─────────────────────────── */
@@ -616,6 +616,12 @@ export default function NovaAnalise() {
   const [chatCopyId, setChatCopyId]       = useState<string | null>(null);
   const [currentChatCaseId, setCurrentChatCaseId] = useState<string | null>(null);
 
+  /* audio recording */
+  const [isRecording, setIsRecording]     = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef   = useRef<Blob[]>([]);
+
   const bottomRef      = useRef<HTMLDivElement>(null);
   const chatBottomRef  = useRef<HTMLDivElement>(null);
   const chatInputRef   = useRef<HTMLTextAreaElement>(null);
@@ -836,6 +842,61 @@ export default function NovaAnalise() {
 
   const handleChatKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend(); }
+  };
+
+  /* ── audio recording handlers ── */
+
+  const transcribeAudio = async (blob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+
+      const form = new FormData();
+      form.append('audio', blob, 'recording.webm');
+
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { Authorization: headers['Authorization'] },
+        body: form,
+      });
+      const data = await res.json();
+      if (res.ok && data.text) {
+        setChatInput(prev => prev ? `${prev} ${data.text}` : data.text);
+        chatInputRef.current?.focus();
+      }
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        transcribeAudio(blob);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch {
+      // permission denied or unavailable — silently ignore
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
   };
 
   const handleChatCopy = (msgId: string, result: CaseAnalysis) => {
@@ -1158,7 +1219,7 @@ export default function NovaAnalise() {
 
             {/* Chat input */}
             <div className="border-t border-slate-100 p-4">
-              <div className="flex items-end gap-3">
+              <div className="flex items-end gap-2">
                 <textarea
                   ref={chatInputRef}
                   rows={2}
@@ -1168,6 +1229,27 @@ export default function NovaAnalise() {
                   placeholder="Descreva o caso ou faça uma pergunta ao copiloto..."
                   className="flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
+                {/* Mic button */}
+                <button
+                  type="button"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isTranscribing || isChatSending}
+                  title={isRecording ? 'Parar gravação' : 'Gravar áudio'}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${
+                    isRecording
+                      ? 'animate-pulse bg-rose-500 text-white shadow-[0_8px_20px_rgba(239,68,68,0.35)]'
+                      : 'border border-slate-200 bg-slate-50 text-slate-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600'
+                  } disabled:cursor-not-allowed disabled:opacity-40`}
+                >
+                  {isTranscribing ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : isRecording ? (
+                    <Square className="h-4 w-4 fill-current" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </button>
+                {/* Send button */}
                 <button
                   onClick={handleChatSend}
                   disabled={!chatInput.trim() || isChatSending}
