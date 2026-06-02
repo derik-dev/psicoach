@@ -1240,47 +1240,49 @@ export default function NovaAnalise() {
               customApproach={customApproach} setCustomApproach={setCustomApproach}
               mainApproach={user?.mainApproach}
             />
-            <div className="flex gap-2">
+            <button
+              onClick={handleChatReset}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
+            >
+              <Plus className="h-4 w-4" /> Nova conversa
+            </button>
+
+            {/* Carregar caso do histórico */}
+            <div className="relative">
               <button
-                onClick={handleChatReset}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
+                onClick={() => setIsHistoryOpen(v => !v)}
+                className={`inline-flex w-full items-center justify-between gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all ${isHistoryOpen ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
               >
-                <Plus className="h-4 w-4" /> Nova conversa
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setIsHistoryOpen(v => !v)}
-                  title="Carregar caso do histórico"
-                  className={`inline-flex h-full items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${isHistoryOpen ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
-                >
+                <span className="flex items-center gap-2">
                   <History className="h-4 w-4" />
-                  <ChevronDown className={`h-3 w-3 transition-transform ${isHistoryOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isHistoryOpen && (
-                  <div className="absolute right-0 top-full z-20 mt-1.5 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                    <p className="border-b border-slate-100 px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Histórico de casos</p>
-                    {cases.length === 0 ? (
-                      <p className="px-3.5 py-4 text-center text-[12px] text-slate-400">Nenhum caso salvo ainda.</p>
-                    ) : (
-                      <ul className="max-h-60 overflow-y-auto">
-                        {cases.slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(c => (
-                          <li key={c.id}>
-                            <button
-                              onClick={() => handleLoadCase(c)}
-                              className="flex w-full flex-col gap-0.5 px-3.5 py-2.5 text-left transition-colors hover:bg-blue-50"
-                            >
-                              <span className="truncate text-[13px] font-semibold text-slate-800">{c.title}</span>
-                              <span className="text-[11px] text-slate-400">
-                                {new Date(c.created_at).toLocaleDateString('pt-BR')} · {c.messages.length} mensagens
-                              </span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </div>
+                  Carregar caso do histórico
+                </span>
+                <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isHistoryOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isHistoryOpen && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                  <p className="border-b border-slate-100 px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Selecione um caso</p>
+                  {cases.length === 0 ? (
+                    <p className="px-3.5 py-4 text-center text-[12px] text-slate-400">Nenhum caso salvo ainda.</p>
+                  ) : (
+                    <ul className="max-h-64 overflow-y-auto">
+                      {cases.slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(c => (
+                        <li key={c.id}>
+                          <button
+                            onClick={() => handleLoadCase(c)}
+                            className="flex w-full flex-col gap-0.5 px-3.5 py-3 text-left transition-colors hover:bg-blue-50"
+                          >
+                            <span className="truncate text-[13px] font-semibold text-slate-800">{c.title}</span>
+                            <span className="text-[11px] text-slate-400">
+                              {new Date(c.created_at).toLocaleDateString('pt-BR')} · {c.messages.length} mensagens
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-600">Dica</p>
