@@ -8,7 +8,7 @@ import {
   Brain, Sparkles, ChevronDown, ChevronUp, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
   CheckCircle, MessageSquare, LayoutTemplate, Send, User, Bot, Plus,
-  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square,
+  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload,
 } from 'lucide-react';
 
 /* ─────────────────────────── types ─────────────────────────── */
@@ -622,6 +622,7 @@ export default function NovaAnalise() {
   const mediaRecorderRef  = useRef<MediaRecorder | null>(null);
   const audioChunksRef    = useRef<Blob[]>([]);
   const onTranscribedRef  = useRef<((text: string) => void) | null>(null);
+  const audioFileRef      = useRef<HTMLInputElement>(null);
 
   /* audio mode */
   const [audioTranscript, setAudioTranscript] = useState('');
@@ -905,6 +906,29 @@ export default function NovaAnalise() {
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
+  };
+
+  const handleAudioFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setIsTranscribing(true);
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const form = new FormData();
+      form.append('audio', file, file.name);
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { Authorization: headers['Authorization'] },
+        body: form,
+      });
+      const data = await res.json();
+      if (res.ok && data.text)
+        setAudioTranscript(prev => prev ? `${prev} ${data.text}` : data.text);
+    } finally {
+      setIsTranscribing(false);
+    }
   };
 
   /* ── audio mode handlers ── */
@@ -1359,34 +1383,58 @@ export default function NovaAnalise() {
             </div>
 
             <div className="space-y-4">
-              {/* Record button */}
-              <div className="flex flex-col items-center gap-3 py-4">
-                <button
-                  type="button"
-                  onClick={isRecording ? stopRecording : () => startRecording(text =>
-                    setAudioTranscript(prev => prev ? `${prev} ${text}` : text)
-                  )}
-                  disabled={isTranscribing || isAudioAnalyzing}
-                  className={`relative flex h-20 w-20 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
-                    isRecording
-                      ? 'bg-rose-500 text-white shadow-[0_0_0_12px_rgba(239,68,68,0.15)]'
-                      : 'bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.32)] hover:bg-blue-500 hover:-translate-y-0.5'
-                  }`}
-                >
-                  {isRecording && (
-                    <span className="absolute inset-0 animate-ping rounded-full bg-rose-400 opacity-30" />
-                  )}
-                  {isTranscribing ? (
-                    <span className="h-7 w-7 animate-spin rounded-full border-[3px] border-white border-t-transparent" />
-                  ) : isRecording ? (
-                    <Square className="h-7 w-7 fill-current" />
-                  ) : (
-                    <Mic className="h-7 w-7" />
-                  )}
-                </button>
-                <p className="text-[12px] font-medium text-slate-500">
-                  {isTranscribing ? 'Transcrevendo...' : isRecording ? 'Gravando — clique para parar' : 'Clique para gravar'}
-                </p>
+              {/* Gravar + Upload */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Record */}
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 py-5">
+                  <button
+                    type="button"
+                    onClick={isRecording ? stopRecording : () => startRecording(text =>
+                      setAudioTranscript(prev => prev ? `${prev} ${text}` : text)
+                    )}
+                    disabled={isTranscribing || isAudioAnalyzing}
+                    className={`relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
+                      isRecording
+                        ? 'bg-rose-500 text-white shadow-[0_0_0_8px_rgba(239,68,68,0.15)]'
+                        : 'bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.32)] hover:bg-blue-500 hover:-translate-y-0.5'
+                    }`}
+                  >
+                    {isRecording && <span className="absolute inset-0 animate-ping rounded-full bg-rose-400 opacity-30" />}
+                    {isTranscribing ? (
+                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : isRecording ? (
+                      <Square className="h-5 w-5 fill-current" />
+                    ) : (
+                      <Mic className="h-5 w-5" />
+                    )}
+                  </button>
+                  <p className="text-center text-[11px] font-medium text-slate-500 leading-snug">
+                    {isTranscribing ? 'Transcrevendo...' : isRecording ? 'Gravando...\nclique para parar' : 'Gravar agora'}
+                  </p>
+                </div>
+
+                {/* Upload */}
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 py-5">
+                  <input
+                    ref={audioFileRef}
+                    type="file"
+                    accept="audio/mp3,audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg,audio/flac,audio/m4a,audio/*"
+                    className="hidden"
+                    onChange={handleAudioFileChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => audioFileRef.current?.click()}
+                    disabled={isRecording || isTranscribing || isAudioAnalyzing}
+                    className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-slate-400 transition-all hover:border-blue-400 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Upload className="h-5 w-5" />
+                  </button>
+                  <p className="text-center text-[11px] font-medium text-slate-500 leading-snug">
+                    Enviar arquivo<br />
+                    <span className="font-normal text-slate-400">mp3, wav, m4a…</span>
+                  </p>
+                </div>
               </div>
 
               {/* Transcript textarea */}
@@ -1411,12 +1459,6 @@ export default function NovaAnalise() {
                 )}
               </div>
 
-              <ContextPanel
-                sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
-                currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
-                alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
-                specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
-              />
               <ApproachPanel
                 useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
                 customApproach={customApproach} setCustomApproach={setCustomApproach}
