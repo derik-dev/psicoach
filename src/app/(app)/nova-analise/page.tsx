@@ -1235,12 +1235,6 @@ export default function NovaAnalise() {
               alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
               specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
             />
-            <ApproachPanel
-              useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
-              customApproach={customApproach} setCustomApproach={setCustomApproach}
-              mainApproach={user?.mainApproach}
-            />
-
             {/* Carregar caso do histórico */}
             <div className="relative">
               <button
@@ -1279,6 +1273,11 @@ export default function NovaAnalise() {
               )}
             </div>
 
+            <ApproachPanel
+              useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
+              customApproach={customApproach} setCustomApproach={setCustomApproach}
+              mainApproach={user?.mainApproach}
+            />
             <button
               onClick={handleChatReset}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
