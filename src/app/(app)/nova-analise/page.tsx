@@ -664,6 +664,7 @@ export default function NovaAnalise() {
   const [currentChatCaseId, setCurrentChatCaseId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [loadedCaseAnalysis, setLoadedCaseAnalysis] = useState<CaseAnalysis | null>(null);
+  const [loadedCaseTitle, setLoadedCaseTitle] = useState<string | null>(null);
 
   /* audio recording (shared between chat and audio mode) */
   const [isRecording, setIsRecording]       = useState(false);
@@ -784,6 +785,7 @@ export default function NovaAnalise() {
     setChatInput('');
     setCurrentChatCaseId(null);
     setLoadedCaseAnalysis(null);
+    setLoadedCaseTitle(null);
   };
 
   const handleLoadCase = (c: ClinicalCase) => {
@@ -805,6 +807,7 @@ export default function NovaAnalise() {
       setUseCustomApproach(c.approach_used !== (user?.mainApproach ?? ''));
     }
     setLoadedCaseAnalysis(c.analysis ?? null);
+    setLoadedCaseTitle(c.title);
     setIsHistoryOpen(false);
   };
 
@@ -1359,6 +1362,13 @@ export default function NovaAnalise() {
             className="flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm"
             style={{ height: 'calc(100vh - 220px)', minHeight: '520px' }}
           >
+            {loadedCaseTitle && (
+              <div className="flex items-center gap-2.5 border-b border-slate-100 px-5 py-3">
+                <History className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                <span className="text-[11px] font-semibold text-slate-500">Caso carregado:</span>
+                <span className="truncate text-[12px] font-semibold text-slate-800">{loadedCaseTitle}</span>
+              </div>
+            )}
             <div className="flex-1 space-y-5 overflow-y-auto p-5">
               {chatMessages.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center p-8 text-center">
