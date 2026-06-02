@@ -616,6 +616,7 @@ export default function NovaAnalise() {
   const [chatCopyId, setChatCopyId]       = useState<string | null>(null);
   const [currentChatCaseId, setCurrentChatCaseId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [loadedCaseAnalysis, setLoadedCaseAnalysis] = useState<CaseAnalysis | null>(null);
 
   /* audio recording (shared between chat and audio mode) */
   const [isRecording, setIsRecording]       = useState(false);
@@ -735,6 +736,7 @@ export default function NovaAnalise() {
     setChatMessages([]);
     setChatInput('');
     setCurrentChatCaseId(null);
+    setLoadedCaseAnalysis(null);
   };
 
   const handleLoadCase = (c: ClinicalCase) => {
@@ -755,6 +757,7 @@ export default function NovaAnalise() {
       setCustomApproach(c.approach_used);
       setUseCustomApproach(c.approach_used !== (user?.mainApproach ?? ''));
     }
+    setLoadedCaseAnalysis(c.analysis ?? null);
     setIsHistoryOpen(false);
   };
 
@@ -812,6 +815,7 @@ export default function NovaAnalise() {
           message: text, approach,
           context: clinicalContext,
           history: chatMessages.map(m => ({ role: m.role, content: m.text })),
+          caseAnalysis: loadedCaseAnalysis ?? undefined,
           profile: {
             yearsExperience: user?.yearsExperience,
             patientTypes: user?.patientTypes,

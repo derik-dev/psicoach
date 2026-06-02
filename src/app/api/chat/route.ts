@@ -8,7 +8,7 @@ import {
   JSON_SCHEMA_INSTRUCTIONS,
   TherapistProfile,
 } from '@/lib/groq';
-import { CaseContext } from '@/context/AppContext';
+import { CaseContext, CaseAnalysis } from '@/context/AppContext';
 import { getAuthenticatedUser } from '@/lib/supabase/server';
 
 interface HistoryMessage {
@@ -42,12 +42,14 @@ export async function POST(req: NextRequest) {
       approach,
       context,
       history = [],
+      caseAnalysis,
       profile,
     }: {
       message: string;
       approach: string;
       context: CaseContext;
       history: HistoryMessage[];
+      caseAnalysis?: CaseAnalysis;
       profile?: Omit<TherapistProfile, 'approach'>;
     } = body;
 
@@ -65,11 +67,23 @@ export async function POST(req: NextRequest) {
 
     const wantsFullAnalysis = isAnalysisRequest(message);
 
+    const caseContext = caseAnalysis
+      ? [
+          '\n\n--- RESUMO CLÍNICO DO CASO EM SUPERVISÃO ---',
+          caseAnalysis.hypothesis ? `Hipótese diagnóstica: ${caseAnalysis.hypothesis}` : '',
+          caseAnalysis.approaches?.length ? `Abordagens sugeridas: ${caseAnalysis.approaches.join('; ')}` : '',
+          caseAnalysis.blind_spot ? `Ponto cego identificado: ${caseAnalysis.blind_spot}` : '',
+          caseAnalysis.alerts?.length ? `Alertas de risco: ${caseAnalysis.alerts.join('; ')}` : '',
+          '--- FIM DO RESUMO ---',
+          'Use essas informações como base de conhecimento para aprofundar a supervisão. Não repita o resumo ao responder — utilize-o para contextualizar suas respostas.',
+        ].filter(Boolean).join('\n')
+      : '';
+
     const systemContent = wantsFullAnalysis
-      ? buildSystemPrompt(therapistProfile, message) +
+      ? buildSystemPrompt(therapistProfile, message) + caseContext +
         '\n\nO terapeuta descreveu um caso clínico. Gere a formulação completa.' +
         '\n\n' + JSON_SCHEMA_INSTRUCTIONS
-      : buildSystemPrompt(therapistProfile, message) +
+      : buildSystemPrompt(therapistProfile, message) + caseContext +
         '\n\nVocê está em modo conversacional. O terapeuta pode estar fazendo uma pergunta, pedindo esclarecimento ou aprofundando um ponto específico.' +
         '\nResponda de forma direta, técnica e acolhedora em texto livre (sem JSON). Máximo 3 parágrafos.';
 
