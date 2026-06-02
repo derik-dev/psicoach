@@ -461,14 +461,14 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch max-w-2xl mx-auto w-full">
 
             {/* Starter */}
             <div className="bg-white rounded-3xl p-8 flex flex-col gap-6 shadow-sm border border-slate-100">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Starter</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;49</span>
+                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;67</span>
                   <span className="text-slate-400 text-sm mb-1">/mês</span>
                 </div>
                 <p className="text-[12px] text-slate-400 mt-1">Para quem está começando</p>
@@ -494,7 +494,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Plus — destaque */}
+            {/* Pro — destaque */}
             <div className="relative bg-blue-600 rounded-3xl p-8 flex flex-col gap-6 shadow-[0_24px_60px_rgba(37,99,235,0.30)]">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-900 shadow">
@@ -502,9 +502,9 @@ export default function LandingPage() {
                 </span>
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-200 mb-1">Plus</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-200 mb-1">Pro</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-white">R$&nbsp;97</span>
+                  <span className="text-4xl font-extrabold text-white">R$&nbsp;120</span>
                   <span className="text-blue-300 text-sm mb-1">/mês</span>
                 </div>
                 <p className="text-[12px] text-blue-300 mt-1">Para clínicos em crescimento</p>
@@ -527,40 +527,7 @@ export default function LandingPage() {
                 href="/cadastro"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all shadow-md"
               >
-                Assinar Plus <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* Pro */}
-            <div className="bg-white rounded-3xl p-8 flex flex-col gap-6 shadow-sm border border-slate-100">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Pro</p>
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;197</span>
-                  <span className="text-slate-400 text-sm mb-1">/mês</span>
-                </div>
-                <p className="text-[12px] text-slate-400 mt-1">Para clínicas e equipes</p>
-              </div>
-              <ul className="space-y-3 flex-1">
-                {[
-                  'Tudo do Plus',
-                  'Vantagem 2',
-                  'Vantagem 3',
-                  'Vantagem 4',
-                  'Vantagem 5',
-                  'Vantagem 6',
-                ].map(item => (
-                  <li key={item} className="flex items-start gap-2.5 text-[13px] text-slate-600">
-                    <Check className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/cadastro"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-all"
-              >
-                Assinar Pro
+                Assinar Pro <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
