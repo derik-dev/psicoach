@@ -505,7 +505,7 @@ export default function LandingPage() {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-200 mb-1">Plus</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-white">R$&nbsp;120</span>
+                  <span className="text-4xl font-extrabold text-white">R$&nbsp;157</span>
                   <span className="text-blue-300 text-sm mb-1">/mês</span>
                 </div>
                 <p className="text-[12px] text-blue-300 mt-1">Para clínicos em crescimento</p>
