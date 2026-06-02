@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { ArrowRight, Star, Users, AlertCircle } from 'lucide-react';
+import { ArrowRight, Star, Users, AlertCircle, ShieldCheck } from 'lucide-react';
 
 const SPECIALTIES = [
   'Ansiedade e Pânico',
@@ -20,6 +20,8 @@ export default function OnboardingPerfil() {
   const { user, setUser } = useApp();
   const router = useRouter();
 
+  const [crp, setCrp]                                 = useState('');
+  const [gender, setGender]                           = useState('');
   const [experience, setExperience]                   = useState('1-2');
   const [selectedPatients, setSelectedPatients]       = useState<string[]>([]);
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
@@ -28,6 +30,8 @@ export default function OnboardingPerfil() {
 
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
+    if (user.crp)                    setCrp(user.crp);
+    if (user.gender)                 setGender(user.gender);
     if (user.yearsExperience)       setExperience(user.yearsExperience);
     if (user.patientTypes?.length)  setSelectedPatients(user.patientTypes);
     if (user.specialties?.length)   setSelectedSpecialties(user.specialties);
@@ -53,6 +57,8 @@ export default function OnboardingPerfil() {
     try {
       await setUser({
         ...user,
+        crp,
+        gender,
         yearsExperience: experience,
         patientTypes: selectedPatients,
         specialties: selectedSpecialties,
@@ -99,6 +105,41 @@ export default function OnboardingPerfil() {
         )}
 
         <form onSubmit={handleNext} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              <span>Número CRP</span>
+            </label>
+            <div className="relative">
+              <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={crp}
+                onChange={e => setCrp(e.target.value)}
+                placeholder="06/112932"
+                className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>Gênero</span>
+            </label>
+            <select
+              value={gender}
+              onChange={e => setGender(e.target.value)}
+              className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all"
+            >
+              <option value="">Prefiro não informar</option>
+              <option value="feminino">Feminino</option>
+              <option value="masculino">Masculino</option>
+              <option value="nao-binario">Não-binário</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+
           <div className="space-y-2">
             <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
               <Star className="w-3.5 h-3.5 text-blue-600" />

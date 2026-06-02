@@ -60,6 +60,7 @@ export interface UserProfile {
   name: string;
   email: string;
   crp: string;
+  gender: string;
   onboardingCompleted: boolean;
   yearsExperience: string;
   patientTypes: string[];
@@ -92,11 +93,8 @@ interface AppContextType {
   addChatMessage: (caseId: string, role: 'user' | 'assistant', content: string) => Promise<void>;
   logout: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-<<<<<<< HEAD
-=======
   signInWithGoogle: () => Promise<{ error: string | null }>;
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
-  signUp: (name: string, email: string, crp: string, password: string) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
+  signUp: (name: string, email: string, password: string) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
   initialized: boolean;
 }
 
@@ -133,6 +131,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         name: profile.full_name || '',
         email: userEmail,
         crp: profile.crp || '',
+        gender: profile.gender || '',
         onboardingCompleted: profile.onboarding_completed || false,
         yearsExperience: profile.years_experience || '',
         patientTypes: profile.patient_types || [],
@@ -196,7 +195,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setUser = async (userOrNull: UserProfile | null) => {
@@ -239,6 +237,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         user_id: userIdRef.current,
         full_name: userOrNull.name,
         crp: userOrNull.crp,
+        gender: userOrNull.gender,
         years_experience: userOrNull.yearsExperience,
         patient_types: userOrNull.patientTypes,
         specialties: userOrNull.specialties,
@@ -296,8 +295,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { error: null };
   };
 
-<<<<<<< HEAD
-=======
   const signInWithGoogle = async (): Promise<{ error: string | null }> => {
     const redirectTo = `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
@@ -308,17 +305,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { error: null };
   };
 
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
   const signUp = async (
     name: string,
     email: string,
-    crp: string,
     password: string
   ): Promise<{ error: string | null; needsEmailConfirmation?: boolean }> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name, crp } },
+      options: { data: { full_name: name } },
     });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'Erro inesperado ao criar conta.' };
@@ -332,7 +327,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     _setUser({
       name,
       email,
-      crp,
+      crp: '',
+      gender: '',
       onboardingCompleted: false,
       yearsExperience: '',
       patientTypes: [],
@@ -520,10 +516,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addChatMessage,
         logout,
         signIn,
-<<<<<<< HEAD
-=======
         signInWithGoogle,
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
         signUp,
         initialized,
       }}
@@ -531,10 +524,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       {initialized ? (
         children
       ) : (
-<<<<<<< HEAD
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
-          Carregando PsiCoach AI...
-=======
         <div
           className="min-h-screen flex flex-col items-center justify-center gap-6"
           style={{ background: 'var(--bg-dark-obsidian)' }}
@@ -560,7 +549,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             </p>
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
         </div>
       )}
     </AppContext.Provider>
