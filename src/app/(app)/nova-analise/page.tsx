@@ -334,7 +334,7 @@ function AnalysisCard({
         return (
           <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-backdrop-in"
-            style={{ background: 'rgba(15,23,42,0.6)' }}
+            style={{ background: 'transparent' }}
             onClick={() => setModalOpen(false)}
           >
             <div
