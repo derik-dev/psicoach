@@ -745,6 +745,16 @@ export default function NovaAnalise() {
     }));
     setChatMessages(mapped);
     setCurrentChatCaseId(c.id);
+    // fill context fields
+    if (c.context.sessions_count)  setSessionsCount(c.context.sessions_count);
+    if (c.context.current_diagnosis) setCurrentDiagnosis(c.context.current_diagnosis);
+    if (c.context.already_tried)   setAlreadyTried(c.context.already_tried);
+    if (c.context.specific_question) setSpecificQuestion(c.context.specific_question);
+    // fill approach
+    if (c.approach_used) {
+      setCustomApproach(c.approach_used);
+      setUseCustomApproach(c.approach_used !== (user?.mainApproach ?? ''));
+    }
     setIsHistoryOpen(false);
   };
 
