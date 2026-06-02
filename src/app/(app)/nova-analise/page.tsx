@@ -1204,7 +1204,7 @@ export default function NovaAnalise() {
 
       {/* ══════════════ CHAT MODE ══════════════ */}
       {mode === 'chat' && (
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[320px_1fr]">
+        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[380px_1fr]">
 
           {/* Left: config panel */}
           <div className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
