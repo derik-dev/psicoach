@@ -13,7 +13,7 @@ import {
 
 /* ─────────────────────────── types ─────────────────────────── */
 
-type Mode = 'standard' | 'chat';
+type Mode = 'standard' | 'chat' | 'audio';
 type AtencaoNivel = 'baixo' | 'moderado' | 'alto';
 
 interface ChatMessage {
@@ -616,11 +616,19 @@ export default function NovaAnalise() {
   const [chatCopyId, setChatCopyId]       = useState<string | null>(null);
   const [currentChatCaseId, setCurrentChatCaseId] = useState<string | null>(null);
 
-  /* audio recording */
-  const [isRecording, setIsRecording]     = useState(false);
+  /* audio recording (shared between chat and audio mode) */
+  const [isRecording, setIsRecording]       = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef   = useRef<Blob[]>([]);
+  const mediaRecorderRef  = useRef<MediaRecorder | null>(null);
+  const audioChunksRef    = useRef<Blob[]>([]);
+  const onTranscribedRef  = useRef<((text: string) => void) | null>(null);
+
+  /* audio mode */
+  const [audioTranscript, setAudioTranscript] = useState('');
+  const [audioResult, setAudioResult]         = useState<CaseAnalysis | null>(null);
+  const [audioError, setAudioError]           = useState<string | null>(null);
+  const [isAudioAnalyzing, setIsAudioAnalyzing] = useState(false);
+  const [audioCopySuccess, setAudioCopySuccess] = useState(false);
 
   const bottomRef      = useRef<HTMLDivElement>(null);
   const chatBottomRef  = useRef<HTMLDivElement>(null);
@@ -862,18 +870,18 @@ export default function NovaAnalise() {
       });
       const data = await res.json();
       if (res.ok && data.text) {
-        setChatInput(prev => prev ? `${prev} ${data.text}` : data.text);
-        chatInputRef.current?.focus();
+        onTranscribedRef.current?.(data.text);
       }
     } finally {
       setIsTranscribing(false);
     }
   };
 
-  const startRecording = async () => {
+  const startRecording = async (onText: (text: string) => void) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
+      onTranscribedRef.current = onText;
       const recorder = new MediaRecorder(stream);
 
       recorder.ondataavailable = (e) => {
@@ -897,6 +905,66 @@ export default function NovaAnalise() {
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
+  };
+
+  /* ── audio mode handlers ── */
+
+  const handleAudioReset = () => {
+    setAudioTranscript('');
+    setAudioResult(null);
+    setAudioError(null);
+  };
+
+  const handleAudioAnalyze = async () => {
+    if (!audioTranscript.trim() || audioTranscript.trim().length < 10) return;
+    setIsAudioAnalyzing(true);
+    setAudioResult(null);
+    setAudioError(null);
+
+    const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
+    const clinicalContext = {
+      sessions_count: sessionsCount,
+      current_diagnosis: currentDiagnosis,
+      already_tried: alreadyTried,
+      specific_question: specificQuestion,
+    };
+
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) { setAudioError('Sessão expirada. Faça login novamente.'); return; }
+
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          input_text: audioTranscript, approach,
+          context: clinicalContext,
+          profile: {
+            yearsExperience: user?.yearsExperience,
+            patientTypes: user?.patientTypes,
+            specialties: user?.specialties,
+            approachDescription: user?.approachDescription,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) setAudioError(data?.error || 'Não foi possível gerar a análise.');
+      else if (data?.analysis) {
+        await addCase('Análise por áudio', audioTranscript, approach, clinicalContext, data.analysis as CaseAnalysis);
+        setAudioResult(data.analysis as CaseAnalysis);
+      } else setAudioError('Resposta inesperada do servidor de IA.');
+    } catch (err) {
+      setAudioError(err instanceof Error ? err.message : 'Falha de comunicação com o servidor.');
+    } finally {
+      setIsAudioAnalyzing(false);
+    }
+  };
+
+  const handleAudioCopy = () => {
+    if (!audioResult) return;
+    navigator.clipboard.writeText(buildCopyText(audioResult));
+    setAudioCopySuccess(true);
+    setTimeout(() => setAudioCopySuccess(false), 2000);
   };
 
   const handleChatCopy = (msgId: string, result: CaseAnalysis) => {
@@ -944,12 +1012,22 @@ export default function NovaAnalise() {
           >
             <MessageSquare className="h-4 w-4" /> Chat
           </button>
+          <button
+            onClick={() => setMode('audio')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+              mode === 'audio'
+                ? 'border border-slate-200 bg-white text-blue-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Mic className="h-4 w-4" /> Áudio
+          </button>
         </div>
       </div>
 
       {/* ══════════════ STANDARD MODE ══════════════ */}
       {mode === 'standard' && (
-        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[3fr_4fr]">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_4fr]">
 
           {/* ── Coluna esquerda — Entrada do caso ── */}
           <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm lg:p-5">
@@ -1043,9 +1121,9 @@ export default function NovaAnalise() {
           </div>
 
           {/* ── Coluna direita — Resultado ── */}
-          <div className="xl:sticky xl:top-6">
+          <div className="flex h-full flex-col xl:sticky xl:top-6">
             {errorMessage ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
+              <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
                   <AlertTriangle className="h-7 w-7" />
                 </div>
@@ -1055,7 +1133,7 @@ export default function NovaAnalise() {
               </div>
 
             ) : !isAnalyzing && !analysisResult ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
+              <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
                   <Brain className="h-7 w-7" />
                 </div>
@@ -1066,7 +1144,7 @@ export default function NovaAnalise() {
               </div>
 
             ) : isAnalyzing ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+              <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
                 <div className="relative mb-5">
                   <div className="absolute -inset-4 animate-ping rounded-full bg-blue-100 blur-2xl" />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white">
@@ -1232,7 +1310,7 @@ export default function NovaAnalise() {
                 {/* Mic button */}
                 <button
                   type="button"
-                  onClick={isRecording ? stopRecording : startRecording}
+                  onClick={isRecording ? stopRecording : () => startRecording(text => { setChatInput(prev => prev ? `${prev} ${text}` : text); chatInputRef.current?.focus(); })}
                   disabled={isTranscribing || isChatSending}
                   title={isRecording ? 'Parar gravação' : 'Gravar áudio'}
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${
@@ -1263,6 +1341,160 @@ export default function NovaAnalise() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════ AUDIO MODE ══════════════ */}
+      {mode === 'audio' && (
+        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[3fr_4fr]">
+
+          {/* ── Coluna esquerda — Gravação ── */}
+          <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm lg:p-5">
+            <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <Mic className="h-3.5 w-3.5" />
+              </div>
+              <h2 className="text-[13px] font-semibold text-slate-800">Entrada por áudio</h2>
+            </div>
+
+            <div className="space-y-4">
+              {/* Record button */}
+              <div className="flex flex-col items-center gap-3 py-4">
+                <button
+                  type="button"
+                  onClick={isRecording ? stopRecording : () => startRecording(text =>
+                    setAudioTranscript(prev => prev ? `${prev} ${text}` : text)
+                  )}
+                  disabled={isTranscribing || isAudioAnalyzing}
+                  className={`relative flex h-20 w-20 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
+                    isRecording
+                      ? 'bg-rose-500 text-white shadow-[0_0_0_12px_rgba(239,68,68,0.15)]'
+                      : 'bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.32)] hover:bg-blue-500 hover:-translate-y-0.5'
+                  }`}
+                >
+                  {isRecording && (
+                    <span className="absolute inset-0 animate-ping rounded-full bg-rose-400 opacity-30" />
+                  )}
+                  {isTranscribing ? (
+                    <span className="h-7 w-7 animate-spin rounded-full border-[3px] border-white border-t-transparent" />
+                  ) : isRecording ? (
+                    <Square className="h-7 w-7 fill-current" />
+                  ) : (
+                    <Mic className="h-7 w-7" />
+                  )}
+                </button>
+                <p className="text-[12px] font-medium text-slate-500">
+                  {isTranscribing ? 'Transcrevendo...' : isRecording ? 'Gravando — clique para parar' : 'Clique para gravar'}
+                </p>
+              </div>
+
+              {/* Transcript textarea */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                    Transcrição <span className="normal-case font-normal">(editável)</span>
+                  </label>
+                  <span className={`text-[10px] font-medium ${audioTranscript.length >= 200 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {audioTranscript.length} car.
+                  </span>
+                </div>
+                <textarea
+                  rows={5}
+                  value={audioTranscript}
+                  onChange={e => setAudioTranscript(e.target.value)}
+                  placeholder="O texto transcrito aparecerá aqui. Você também pode digitar ou editar livremente."
+                  className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+                {audioTranscript.length > 0 && audioTranscript.length < 200 && (
+                  <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
+                )}
+              </div>
+
+              <ContextPanel
+                sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
+                currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
+                alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
+                specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
+              />
+              <ApproachPanel
+                useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
+                customApproach={customApproach} setCustomApproach={setCustomApproach}
+                mainApproach={user?.mainApproach}
+              />
+
+              <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                <Shield className="h-3 w-3 shrink-0 text-slate-400" />
+                <p className="text-[10px] text-slate-500">Use apenas dados anonimizados.</p>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleAudioReset}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <RotateCcw className="h-4 w-4" /> Limpar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAudioAnalyze}
+                  disabled={audioTranscript.trim().length < 10 || isAudioAnalyzing || isRecording || isTranscribing}
+                  className="inline-flex flex-[2] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+                >
+                  {isAudioAnalyzing ? (
+                    <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Processando...</>
+                  ) : (
+                    <><Play className="h-4 w-4 fill-current" /> Gerar análise</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Coluna direita — Resultado ── */}
+          <div className="xl:sticky xl:top-6">
+            {audioError ? (
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+                  <AlertTriangle className="h-7 w-7" />
+                </div>
+                <h3 className="text-base font-semibold text-rose-700">Análise indisponível</h3>
+                <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-rose-600">{audioError}</p>
+              </div>
+            ) : !isAudioAnalyzing && !audioResult ? (
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
+                  <Mic className="h-7 w-7" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-800">Grave o relato clínico</h3>
+                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-slate-500">
+                  Clique no botão de microfone, descreva o caso em voz alta e depois clique em <strong className="text-slate-700">Gerar análise</strong>.
+                </p>
+              </div>
+            ) : isAudioAnalyzing ? (
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+                <div className="relative mb-5">
+                  <div className="absolute -inset-4 animate-ping rounded-full bg-blue-100 blur-2xl" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                    <Brain className="h-8 w-8 animate-pulse" />
+                  </div>
+                </div>
+                <span className="section-badge">Processando</span>
+                <h3 className="mt-3 text-base font-semibold text-slate-800">Tecendo formulações clínicas...</h3>
+                <div className="mt-5 h-1 w-40 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full w-[70%] animate-pulse rounded-full bg-blue-600" />
+                </div>
+              </div>
+            ) : audioResult ? (
+              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+                <AnalysisCard
+                  result={audioResult}
+                  onCopy={handleAudioCopy}
+                  copySuccess={audioCopySuccess}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       )}
