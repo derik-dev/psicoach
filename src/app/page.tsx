@@ -76,6 +76,7 @@ export default function LandingPage() {
             <a href="#" className="transition-colors hover:text-slate-950">Início</a>
             <a href="#abordagens" className="transition-colors hover:text-slate-950">Biblioteca Clínica</a>
             <a href="#diferenciais" className="transition-colors hover:text-slate-950">Recursos</a>
+            <a href="#precos" className="transition-colors hover:text-slate-950">Preços</a>
             <a href="#depoimentos" className="transition-colors hover:text-slate-950">Depoimentos</a>
           </nav>
 
@@ -440,6 +441,130 @@ export default function LandingPage() {
             ))}
           </div>
 
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="precos" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
+        <div className="max-w-5xl mx-auto space-y-14">
+
+          <div className="text-center space-y-4 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 shadow-sm">
+              <Sparkles className="w-3 h-3 text-blue-500" />
+              <span>Planos</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl text-slate-800 tracking-tight leading-tight font-light">
+              Escolha o plano <span className="font-semibold">ideal para você</span>
+            </h2>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-lg mx-auto">
+              Comece gratuitamente e evolua conforme sua prática cresce. Cancele quando quiser, sem burocracia.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+
+            {/* Starter */}
+            <div className="bg-white rounded-3xl p-8 flex flex-col gap-6 shadow-sm border border-slate-100">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Starter</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;49</span>
+                  <span className="text-slate-400 text-sm mb-1">/mês</span>
+                </div>
+                <p className="text-[12px] text-slate-400 mt-1">Para quem está começando</p>
+              </div>
+              <ul className="space-y-3 flex-1">
+                {[
+                  'Vantagem 1',
+                  'Vantagem 2',
+                  'Vantagem 3',
+                  'Vantagem 4',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-[13px] text-slate-600">
+                    <Check className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/cadastro"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all"
+              >
+                Começar agora
+              </Link>
+            </div>
+
+            {/* Plus — destaque */}
+            <div className="relative bg-blue-600 rounded-3xl p-8 flex flex-col gap-6 shadow-[0_24px_60px_rgba(37,99,235,0.30)]">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-900 shadow">
+                  <Star className="w-2.5 h-2.5" /> Mais popular
+                </span>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-200 mb-1">Plus</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-extrabold text-white">R$&nbsp;97</span>
+                  <span className="text-blue-300 text-sm mb-1">/mês</span>
+                </div>
+                <p className="text-[12px] text-blue-300 mt-1">Para clínicos em crescimento</p>
+              </div>
+              <ul className="space-y-3 flex-1">
+                {[
+                  'Tudo do Starter',
+                  'Vantagem 2',
+                  'Vantagem 3',
+                  'Vantagem 4',
+                  'Vantagem 5',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-[13px] text-white/90">
+                    <Check className="w-4 h-4 text-blue-300 shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/cadastro"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all shadow-md"
+              >
+                Assinar Plus <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Pro */}
+            <div className="bg-white rounded-3xl p-8 flex flex-col gap-6 shadow-sm border border-slate-100">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Pro</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;197</span>
+                  <span className="text-slate-400 text-sm mb-1">/mês</span>
+                </div>
+                <p className="text-[12px] text-slate-400 mt-1">Para clínicas e equipes</p>
+              </div>
+              <ul className="space-y-3 flex-1">
+                {[
+                  'Tudo do Plus',
+                  'Vantagem 2',
+                  'Vantagem 3',
+                  'Vantagem 4',
+                  'Vantagem 5',
+                  'Vantagem 6',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-[13px] text-slate-600">
+                    <Check className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/cadastro"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-all"
+              >
+                Assinar Pro
+              </Link>
+            </div>
+
+          </div>
         </div>
       </section>
 
