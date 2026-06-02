@@ -7,7 +7,7 @@ import { useApp } from '@/context/AppContext';
 import { Check, Sparkles, Coins } from 'lucide-react';
 
 export default function PricingPage() {
-  const { activePlan, setActivePlan, user } = useApp();
+  const { setActivePlan, user } = useApp();
   const router = useRouter();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [planError, setPlanError] = useState<string | null>(null);

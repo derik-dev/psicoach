@@ -5,7 +5,7 @@ import { useApp, CaseAnalysis, ClinicalCase } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
-  Brain, Sparkles, ChevronDown, ChevronUp, Play, RotateCcw, Copy,
+  Brain, Sparkles, ChevronDown, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
   CheckCircle, MessageSquare, LayoutTemplate, Send, User, Bot, Plus,
   Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, History,

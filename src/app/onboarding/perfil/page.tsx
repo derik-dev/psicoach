@@ -20,21 +20,16 @@ export default function OnboardingPerfil() {
   const { user, setUser } = useApp();
   const router = useRouter();
 
-  const [crp, setCrp]                                 = useState('');
-  const [gender, setGender]                           = useState('');
-  const [experience, setExperience]                   = useState('1-2');
-  const [selectedPatients, setSelectedPatients]       = useState<string[]>([]);
-  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [crp, setCrp]                                 = useState(user?.crp || '');
+  const [gender, setGender]                           = useState(user?.gender || '');
+  const [experience, setExperience]                   = useState(user?.yearsExperience || '1-2');
+  const [selectedPatients, setSelectedPatients]       = useState<string[]>(user?.patientTypes || []);
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(user?.specialties || []);
   const [saving, setSaving]                           = useState(false);
   const [saveError, setSaveError]                     = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
-    if (user.crp)                    setCrp(user.crp);
-    if (user.gender)                 setGender(user.gender);
-    if (user.yearsExperience)       setExperience(user.yearsExperience);
-    if (user.patientTypes?.length)  setSelectedPatients(user.patientTypes);
-    if (user.specialties?.length)   setSelectedSpecialties(user.specialties);
   }, [user, router]);
 
   if (!user) return null;

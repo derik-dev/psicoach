@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
@@ -34,21 +34,15 @@ export default function IndividualCase() {
 
   const c = cases.find((item) => item.id === id);
 
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(c?.notes || '');
   const [newTag, setNewTag] = useState('');
   const [saveNotesSuccess, setSaveNotesSuccess] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-
   const [chatMessage, setChatMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (c) {
-      setNotes(c.notes || '');
-    }
-  }, [c]);
 
   if (!c) {
     return (
@@ -124,8 +118,6 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
   };
-
-  const [chatError, setChatError] = useState<string | null>(null);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

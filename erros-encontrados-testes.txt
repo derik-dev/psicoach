@@ -1,0 +1,116 @@
+ERROS ENCONTRADOS NOS TESTES - PSICOACH AI
+
+Data do teste: 02/06/2026
+
+1. BLOQUEIO PRINCIPAL - ONBOARDING
+
+Ao criar uma conta e tentar completar o primeiro passo do onboarding, a tela nao consegue salvar o perfil.
+
+Erro exibido:
+Falha ao salvar perfil no Supabase: Could not find the 'gender' column of 'profiles' in the schema cache
+
+Impacto:
+A usuaria fica presa em /onboarding/perfil.
+Por causa disso, nao consegue acessar corretamente:
+- Dashboard
+- Nova Analise
+- Historico
+- Biblioteca
+- Configuracoes
+- Geracao de analise clinica
+- Fluxos internos autenticados
+
+Causa provavel:
+O frontend envia o campo gender para a tabela profiles, mas a tabela profiles no Supabase nao possui essa coluna ou o schema cache ainda nao reconhece essa coluna.
+
+
+2. LINT FALHANDO
+
+O comando npm run lint falhou.
+
+Arquivos com erro:
+
+scripts/extract-pdf.js
+- Usa require(), mas a regra atual do ESLint proibe importacao nesse estilo.
+
+src/app/(app)/dashboard/page.tsx
+- setState chamado diretamente dentro de useEffect.
+- Aspas nao escapadas em texto JSX.
+
+src/app/(app)/historico/[id]/page.tsx
+- setState chamado diretamente dentro de useEffect.
+- useState chamado condicionalmente, o que viola as regras de hooks do React.
+
+src/app/onboarding/abordagem/page.tsx
+- setState chamado diretamente dentro de useEffect.
+
+src/app/onboarding/perfil/page.tsx
+- setState chamado diretamente dentro de useEffect.
+
+src/app/page.tsx
+- Aspas nao escapadas em texto JSX.
+
+
+3. WARNINGS DE LINT
+
+src/app/(app)/nova-analise/page.tsx
+- ChevronUp importado mas nao usado.
+
+src/app/page.tsx
+- Alguns icones importados mas nao usados:
+  ShieldCheck
+  Clock
+  BookOpen
+  MessageSquare
+  ChevronRight
+
+src/app/pricing/page.tsx
+- activePlan atribuido mas nao usado.
+
+
+4. WARNING NO BUILD
+
+O comando npm run build passou, mas mostrou um warning do Next.js.
+
+Warning:
+Next.js inferred your workspace root, but it may not be correct.
+
+Detalhe:
+O Next detectou mais de um package-lock.json e escolheu C:\Users\NATALIA como raiz do workspace, apesar do projeto estar em:
+C:\Users\NATALIA\Downloads\psicoach
+
+Impacto possivel:
+Pode causar comportamento inesperado em build, cache, resolucao de dependencias ou configuracao do Turbopack.
+
+Sugestao:
+Configurar turbopack.root no next.config.ts ou remover o package-lock.json extra fora do projeto, se ele nao for necessario.
+
+
+5. TESTES QUE FICARAM BLOQUEADOS
+
+Como o onboarding nao salva o perfil por causa do erro da coluna gender, nao foi possivel testar completamente como usuaria final:
+- Dashboard apos onboarding completo
+- Criacao de nova analise
+- Salvamento de caso
+- Historico de casos autenticado
+- Biblioteca dentro da area logada
+- Configuracoes dentro da area logada
+- Logout pelo sidebar
+
+
+6. TESTES QUE PASSARAM
+
+- Home carrega corretamente.
+- CTA "Testar agora" leva para cadastro.
+- Formulario da landing preserva o rascunho em ?draft=...
+- Login carrega corretamente.
+- Botao "Preencher com conta demo" nao aparece mais.
+- Login vazio e bloqueado pela validacao nativa.
+- Login invalido mostra erro amigavel.
+- Cadastro valida senha divergente.
+- Cadastro valida senha curta.
+- Cadastro exige aceite dos termos.
+- Cadastro valido cria sessao e abre o onboarding.
+- Google OAuth inicia e redireciona para Google.
+- APIs /api/analyze, /api/chat e /api/transcribe retornam 401 sem sessao.
+- npm run build passou.

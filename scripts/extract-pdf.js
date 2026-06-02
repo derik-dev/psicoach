@@ -1,6 +1,6 @@
 // Script para extrair texto de PDF usando pdfjs-dist
 // Uso: node scripts/extract-pdf.js <caminho-do-pdf>
-
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
 

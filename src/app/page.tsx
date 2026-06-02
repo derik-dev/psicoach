@@ -7,20 +7,15 @@ import { useRouter } from 'next/navigation';
 import {
   Brain,
   Sparkles,
-  ShieldCheck,
   Check,
   ArrowRight,
   ArrowUp,
   HelpCircle,
-  Clock,
-  BookOpen,
   Users,
   Sparkle,
-  MessageSquare,
   Lock,
   Search,
   ArrowUpRight,
-  ChevronRight,
   ChevronDown,
   Star,
   Sun
@@ -394,7 +389,7 @@ export default function LandingPage() {
           <div className="bg-white rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row">
             <div className="flex-1 p-10 flex flex-col justify-center gap-6">
               <p className="text-xl sm:text-2xl font-semibold text-slate-800 leading-snug">
-                "O PsiCoach virou meu parceiro de raciocínio clínico. Entro em cada sessão com muito mais clareza e segurança nas intervenções."
+                &ldquo;O PsiCoach virou meu parceiro de raciocínio clínico. Entro em cada sessão com muito mais clareza e segurança nas intervenções.&rdquo;
               </p>
               <p className="text-[13px] text-slate-400 leading-relaxed">
                 A profundidade técnica das análises é incrível. A coerência teórica nas respostas me traz insights que eu não conseguiria em grupos de WhatsApp ou supervisão esporádica.

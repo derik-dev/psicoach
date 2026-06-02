@@ -27,14 +27,7 @@ const CLINICAL_TIPS = [
 
 export default function Dashboard() {
   const { user, cases, activePlan, analysesUsed, analysesLimit } = useApp();
-  const [tipIndex, setTipIndex] = React.useState(0);
-
-  React.useEffect(() => {
-    if (user) {
-      const day = new Date().getDate();
-      setTipIndex(day % CLINICAL_TIPS.length);
-    }
-  }, [user]);
+  const [tipIndex, setTipIndex] = React.useState(() => new Date().getDate() % CLINICAL_TIPS.length);
 
   if (!user) return null;
 
@@ -168,7 +161,7 @@ export default function Dashboard() {
               </button>
             </div>
             <p className="text-[13px] leading-relaxed text-slate-600 italic relative" style={{ fontFamily: 'Georgia, serif' }}>
-              "{CLINICAL_TIPS[tipIndex]}"
+              &ldquo;{CLINICAL_TIPS[tipIndex]}&rdquo;
             </p>
             <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-[10px] text-slate-400 font-medium uppercase tracking-wider">
               <span>PsiCoach AI</span>

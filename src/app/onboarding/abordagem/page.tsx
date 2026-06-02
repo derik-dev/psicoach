@@ -36,15 +36,13 @@ export default function OnboardingAbordagem() {
   const { user, setUser } = useApp();
   const router = useRouter();
 
-  const [selectedApproach, setSelectedApproach] = useState('TCC (Terapia Cognitivo-Comportamental)');
-  const [description, setDescription]           = useState('');
+  const [selectedApproach, setSelectedApproach] = useState(user?.mainApproach || 'TCC (Terapia Cognitivo-Comportamental)');
+  const [description, setDescription]           = useState(user?.approachDescription || '');
   const [saving, setSaving]                     = useState(false);
   const [saveError, setSaveError]               = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
-    if (user.mainApproach)          setSelectedApproach(user.mainApproach);
-    if (user.approachDescription)   setDescription(user.approachDescription);
   }, [user, router]);
 
   if (!user) return null;
