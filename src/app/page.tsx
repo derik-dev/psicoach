@@ -468,7 +468,7 @@ export default function LandingPage() {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Starter</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;67</span>
+                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;97</span>
                   <span className="text-slate-400 text-sm mb-1">/mês</span>
                 </div>
                 <p className="text-[12px] text-slate-400 mt-1">Para quem está começando</p>
@@ -504,7 +504,7 @@ export default function LandingPage() {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-200 mb-1">Plus</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-white">R$&nbsp;97</span>
+                  <span className="text-4xl font-extrabold text-white">R$&nbsp;120</span>
                   <span className="text-blue-300 text-sm mb-1">/mês</span>
                 </div>
                 <p className="text-[12px] text-blue-300 mt-1">Para clínicos em crescimento</p>
@@ -536,7 +536,7 @@ export default function LandingPage() {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Pro</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;120</span>
+                  <span className="text-4xl font-extrabold text-slate-800">R$&nbsp;207</span>
                   <span className="text-slate-400 text-sm mb-1">/mês</span>
                 </div>
                 <p className="text-[12px] text-slate-400 mt-1">Para clínicas e equipes</p>
