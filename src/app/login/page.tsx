@@ -4,27 +4,17 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-<<<<<<< HEAD
-import { Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
-
-export default function LoginPage() {
-  const { user, signIn } = useApp();
-=======
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const { user, signIn, signInWithGoogle } = useApp();
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-<<<<<<< HEAD
-=======
   const [googleLoading, setGoogleLoading] = useState(false);
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
 
   React.useEffect(() => {
     if (user) {
@@ -54,11 +44,6 @@ export default function LoginPage() {
     }
   };
 
-<<<<<<< HEAD
-  const handleDemoFill = () => {
-    setEmail('demo@psicoach.com.br');
-    setPassword('demo123456');
-=======
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     const { error } = await signInWithGoogle();
@@ -66,7 +51,6 @@ export default function LoginPage() {
       setError('Não foi possível iniciar login com Google. Tente novamente.');
       setGoogleLoading(false);
     }
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
   };
 
   return (
@@ -144,22 +128,11 @@ export default function LoginPage() {
 
         <div className="flex items-center gap-3">
           <div className="flex-grow border-t border-slate-100" />
-<<<<<<< HEAD
-          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">Ou preencher demo</span>
-=======
           <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">Ou continue com</span>
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
           <div className="flex-grow border-t border-slate-100" />
         </div>
 
         <button
-<<<<<<< HEAD
-          onClick={handleDemoFill}
-          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 font-semibold rounded-xl text-sm transition-all"
-        >
-          <Sparkles className="w-4 h-4 text-blue-600" />
-          <span>Preencher com conta demo</span>
-=======
           onClick={handleGoogleLogin}
           disabled={googleLoading}
           className="w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed text-slate-700 font-semibold rounded-xl text-sm transition-all"
@@ -175,7 +148,6 @@ export default function LoginPage() {
             </svg>
           )}
           <span>Entrar com Google</span>
->>>>>>> e70404a (chore: initial commit — projeto PsiCoach AI)
         </button>
 
         <p className="text-xs text-slate-500 text-center">

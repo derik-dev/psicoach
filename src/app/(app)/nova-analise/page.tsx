@@ -320,28 +320,75 @@ function AnalysisCard({
       </div>
 
       {/* ── Modal análise completa ── */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdrop-in">
-          <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-modal-in">
-            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
-              <h3 className="text-sm font-semibold text-slate-800">
-                {tabs.find(t => t.id === activeTab)?.label || 'Análise completa'}
-              </h3>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-6">
-              <p className="text-[13px] leading-relaxed text-slate-700 whitespace-pre-line">
-                {activeContent}
-              </p>
+      {modalOpen && (() => {
+        const tabMeta: Record<TabId, { icon: React.ReactNode; accent: string; bg: string; border: string }> = {
+          sintese:      { icon: <Brain className="w-4 h-4" />,         accent: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100' },
+          formulacao:   { icon: <FileText className="w-4 h-4" />,      accent: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
+          risco:        { icon: <AlertTriangle className="w-4 h-4" />, accent: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-100' },
+          intervencoes: { icon: <Zap className="w-4 h-4" />,           accent: 'text-emerald-600',bg: 'bg-emerald-50',border: 'border-emerald-100' },
+          prontuario:   { icon: <BookOpen className="w-4 h-4" />,      accent: 'text-slate-600',  bg: 'bg-slate-50',  border: 'border-slate-200' },
+          referencias:  { icon: <BookOpen className="w-4 h-4" />,      accent: 'text-slate-600',  bg: 'bg-slate-50',  border: 'border-slate-200' },
+        };
+        const meta = tabMeta[activeTab] ?? tabMeta.sintese;
+        const activeLabel = tabs.find(t => t.id === activeTab)?.label || 'Análise completa';
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-backdrop-in"
+            style={{ background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setModalOpen(false)}
+          >
+            <div
+              className="relative w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[82vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl animate-modal-in overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className={`flex items-center justify-between px-6 py-4 ${meta.bg} border-b ${meta.border}`}>
+                <div className="flex items-center gap-2.5">
+                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${meta.bg} ${meta.accent} ring-1 ${meta.border}`}>
+                    {meta.icon}
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Análise completa</p>
+                    <h3 className={`text-sm font-bold ${meta.accent}`}>{activeLabel}</h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/70 text-slate-500 hover:bg-white hover:text-slate-800 transition-colors shadow-sm"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                <p className="text-[14px] leading-7 text-slate-700 whitespace-pre-line">
+                  {activeContent}
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between border-t border-slate-100 bg-white px-6 py-3">
+                <div className="flex gap-1.5">
+                  {tabs.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setActiveTab(t.id)}
+                      className={`h-1.5 rounded-full transition-all ${t.id === activeTab ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-200 hover:bg-slate-300'}`}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(activeContent)}
+                  className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+                >
+                  <Copy className="w-3 h-3" /> Copiar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Modal perguntas clínicas ── */}
       {questionsModalOpen && (
