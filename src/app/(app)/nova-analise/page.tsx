@@ -1240,12 +1240,6 @@ export default function NovaAnalise() {
               customApproach={customApproach} setCustomApproach={setCustomApproach}
               mainApproach={user?.mainApproach}
             />
-            <button
-              onClick={handleChatReset}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
-            >
-              <Plus className="h-4 w-4" /> Nova conversa
-            </button>
 
             {/* Carregar caso do histórico */}
             <div className="relative">
@@ -1284,6 +1278,13 @@ export default function NovaAnalise() {
                 </div>
               )}
             </div>
+
+            <button
+              onClick={handleChatReset}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
+            >
+              <Plus className="h-4 w-4" /> Nova conversa
+            </button>
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-600">Dica</p>
               <p className="mt-1.5 text-[11px] leading-relaxed text-blue-700">
