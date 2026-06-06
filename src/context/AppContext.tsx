@@ -525,25 +525,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         children
       ) : (
         <div
-          className="min-h-screen flex flex-col items-center justify-center gap-6"
-          style={{ background: 'var(--bg-dark-obsidian)' }}
+          className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white"
         >
           <div className="flex flex-col items-center gap-3">
             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="24" cy="24" r="22" stroke="rgba(177,140,242,0.25)" strokeWidth="2" />
-              <circle cx="24" cy="24" r="14" fill="rgba(177,140,242,0.08)" />
+              <circle cx="24" cy="24" r="22" stroke="rgba(37,99,235,0.2)" strokeWidth="2" />
+              <circle cx="24" cy="24" r="14" fill="rgba(37,99,235,0.07)" />
               <path
                 d="M24 14c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10"
-                stroke="#b18cf2"
+                stroke="#2563eb"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 style={{ transformOrigin: '24px 24px', animation: 'spin 1s linear infinite' }}
               />
-              <circle cx="24" cy="24" r="3" fill="#b18cf2" opacity="0.7" />
+              <circle cx="24" cy="24" r="3" fill="#2563eb" opacity="0.7" />
             </svg>
             <p
-              className="text-sm tracking-widest uppercase"
-              style={{ color: 'var(--text-mauve)', fontFamily: 'var(--font-sans)', letterSpacing: '0.2em' }}
+              className="text-sm tracking-widest uppercase text-blue-600"
+              style={{ letterSpacing: '0.2em' }}
             >
               PsiCoach AI
             </p>
