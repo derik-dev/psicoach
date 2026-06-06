@@ -13,7 +13,6 @@ import {
   Menu,
   X,
   Sparkles,
-  Lock
 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -107,16 +106,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               );
             })}
 
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-[13px] font-medium mt-3 ${
-                pathname === '/admin' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <Lock className="w-4 h-4" />
-              <span>Painel Admin</span>
-            </Link>
           </nav>
 
           {/* Usage card */}
