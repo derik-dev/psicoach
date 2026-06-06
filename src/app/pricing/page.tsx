@@ -11,9 +11,9 @@ export default function PricingPage() {
   const router = useRouter();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [planError, setPlanError] = useState<string | null>(null);
-  const [selectingPlan, setSelectingPlan] = useState<'starter' | 'pro' | 'clinica' | null>(null);
+  const [selectingPlan, setSelectingPlan] = useState<'starter' | 'plus' | 'pro' | null>(null);
 
-  const handleSelectPlan = async (plan: 'starter' | 'pro' | 'clinica') => {
+  const handleSelectPlan = async (plan: 'starter' | 'plus' | 'pro') => {
     if (!user) {
       router.push('/cadastro');
       return;
@@ -33,18 +33,21 @@ export default function PricingPage() {
   };
 
   const starterPrice = billingPeriod === 'monthly' ? 97 : Math.round(97 * 0.8);
-  const proPrice = billingPeriod === 'monthly' ? 197 : Math.round(197 * 0.8);
-  const clinicaPrice = billingPeriod === 'monthly' ? 397 : Math.round(397 * 0.8);
+  const plusPrice = billingPeriod === 'monthly' ? 157 : Math.round(157 * 0.8);
+  const proPrice = billingPeriod === 'monthly' ? 207 : Math.round(207 * 0.8);
 
   const features = [
-    { name: 'Análises de Caso Clínico por Mês', starter: '10', pro: 'Ilimitado', clinica: 'Ilimitado' },
-    { name: 'Chat Complementar Livre de Aprofundamento', starter: 'Básico', pro: 'Avançado', clinica: 'Avançado' },
-    { name: 'Sugestões de Intervenção Prática', starter: 'Sim', pro: 'Sim', clinica: 'Sim' },
-    { name: 'Questionamento Socrático', starter: 'Sim', pro: 'Sim', clinica: 'Sim' },
-    { name: 'Referências Bibliográficas com Autores', starter: 'Não', pro: 'Sim', clinica: 'Sim' },
-    { name: 'Anotações Clínicas & Editor de Tags', starter: 'Sim', pro: 'Sim', clinica: 'Sim' },
-    { name: 'Painel Gestor Unificado (Multi-psicólogas)', starter: 'Não', pro: 'Não', clinica: 'Até 5 contas' },
-    { name: 'Conformidade Criptografada LGPD', starter: 'Sim', pro: 'Sim', clinica: 'Sim' }
+    { name: 'Análises por Mês', starter: '15', plus: '40', pro: 'Ilimitado' },
+    { name: 'Mapa clínico com hipótese e plano imediato', starter: 'Sim', plus: 'Sim', pro: 'Sim' },
+    { name: 'Perguntas clínicas prontas para sessão', starter: 'Sim', plus: 'Sim', pro: 'Sim' },
+    { name: 'Histórico de casos salvo', starter: 'Sim', plus: 'Sim', pro: 'Sim' },
+    { name: 'Diretriz teórica personalizável', starter: 'Sim', plus: 'Sim', pro: 'Sim' },
+    { name: 'Análise de risco e proteção detalhada', starter: 'Não', plus: 'Sim', pro: 'Sim' },
+    { name: 'Nota de evolução automática', starter: 'Não', plus: 'Sim', pro: 'Sim' },
+    { name: 'Roteiro de perguntas clínicas', starter: 'Não', plus: 'Sim', pro: 'Sim' },
+    { name: 'Referências bibliográficas por caso', starter: 'Não', plus: 'Não', pro: 'Sim' },
+    { name: 'Múltiplas psicólogas na mesma conta', starter: 'Não', plus: 'Não', pro: 'Sim' },
+    { name: 'Conformidade LGPD', starter: 'Sim', plus: 'Sim', pro: 'Sim' },
   ];
 
   return (
@@ -115,20 +118,23 @@ export default function PricingPage() {
           <div className="p-7 rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col justify-between gap-6">
             <div className="space-y-5">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Início Clínico</span>
-                <h3 className="text-lg font-semibold text-slate-800">PsiCoach Starter</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Para quem está começando</span>
+                <h3 className="text-lg font-semibold text-slate-800">Starter</h3>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {starterPrice}</span>
                 <span className="text-xs text-slate-400">/ mês</span>
               </div>
-              <p className="text-[13px] text-slate-500 leading-relaxed">
-                Ideal para recém-formadas que querem experimentar e obter suporte nos primeiros casos complexos.
-              </p>
               <ul className="space-y-2.5 pt-2">
-                {['10 análises clínicas por mês', 'Anotações & evolução clínica', 'Conformidade LGPD'].map((it) => (
-                  <li key={it} className="text-[13px] text-slate-600 flex items-center gap-2">
-                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                {[
+                  'Até 15 análises clínicas por mês',
+                  'Mapa clínico com hipótese e plano imediato',
+                  'Perguntas clínicas prontas para a sessão',
+                  'Histórico de casos salvo',
+                  'Diretriz teórica personalizável',
+                ].map((it) => (
+                  <li key={it} className="text-[13px] text-slate-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                     <span>{it}</span>
                   </li>
                 ))}
@@ -139,81 +145,87 @@ export default function PricingPage() {
               disabled={selectingPlan !== null}
               className="w-full py-3 text-sm font-semibold rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-all"
             >
-              {selectingPlan === 'starter' ? 'Salvando...' : 'Assinar Starter'}
+              {selectingPlan === 'starter' ? 'Salvando...' : 'Começar agora'}
             </button>
           </div>
 
-          {/* Pro - highlighted */}
+          {/* Plus - highlighted */}
           <div className="p-7 rounded-3xl bg-white border-2 border-blue-500 shadow-[0_24px_48px_rgba(37,99,235,0.18)] flex flex-col justify-between gap-6 relative md:-mt-4">
             <div className="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-bl-xl rounded-tr-3xl">Mais Popular</div>
             <div className="space-y-5">
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Maturidade Clínica</span>
+                  <span>Para clínicos em crescimento</span>
                 </span>
-                <h3 className="text-lg font-semibold text-slate-900">PsiCoach Pro</h3>
+                <h3 className="text-lg font-semibold text-slate-900">Plus</h3>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {proPrice}</span>
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {plusPrice}</span>
                 <span className="text-xs text-slate-400">/ mês</span>
               </div>
-              <p className="text-[13px] text-slate-500 leading-relaxed">
-                Análises ilimitadas e referências bibliográficas robustas para profissionais com agenda cheia.
-              </p>
               <ul className="space-y-2.5 pt-2">
-                <li className="text-[13px] text-slate-700 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <strong className="font-semibold">Análises ilimitadas</strong>
-                </li>
                 <li className="text-[13px] text-slate-600 flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Chat avançado de aprofundamento</span>
+                  <span>Tudo do Starter</span>
                 </li>
-                <li className="text-[13px] text-slate-600 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Referências completas com autores</span>
-                </li>
-              </ul>
-            </div>
-            <button
-              onClick={() => handleSelectPlan('pro')}
-              disabled={selectingPlan !== null}
-              className="w-full py-3 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)]"
-            >
-              {selectingPlan === 'pro' ? 'Salvando...' : 'Assinar Pro'}
-            </button>
-          </div>
-
-          {/* Clínica */}
-          <div className="p-7 rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col justify-between gap-6">
-            <div className="space-y-5">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Times e Espaços</span>
-                <h3 className="text-lg font-semibold text-slate-800">PsiCoach Clínica</h3>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {clinicaPrice}</span>
-                <span className="text-xs text-slate-400">/ mês</span>
-              </div>
-              <p className="text-[13px] text-slate-500 leading-relaxed">
-                Painel gestor multi-usuárias para clínicas, consultórios coletivos ou parcerias de pós-graduação.
-              </p>
-              <ul className="space-y-2.5 pt-2">
-                {['Contas para até 5 psicólogas', 'Painel do gestor administrativo', 'Suporte prioritário via WhatsApp'].map((it) => (
-                  <li key={it} className="text-[13px] text-slate-600 flex items-center gap-2">
-                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                {[
+                  'Até 40 análises por mês',
+                  'Análise de risco e proteção detalhada',
+                  'Gerar nota de evolução automática',
+                  'Gerar roteiro de perguntas',
+                ].map((it) => (
+                  <li key={it} className="text-[13px] text-slate-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                     <span>{it}</span>
                   </li>
                 ))}
               </ul>
             </div>
             <button
-              onClick={() => handleSelectPlan('clinica')}
+              onClick={() => handleSelectPlan('plus')}
+              disabled={selectingPlan !== null}
+              className="w-full py-3 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)]"
+            >
+              {selectingPlan === 'plus' ? 'Salvando...' : 'Assinar Plus →'}
+            </button>
+          </div>
+
+          {/* Pro */}
+          <div className="p-7 rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col justify-between gap-6">
+            <div className="space-y-5">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Para clínicas e equipes</span>
+                <h3 className="text-lg font-semibold text-slate-800">Pro</h3>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {proPrice}</span>
+                <span className="text-xs text-slate-400">/ mês</span>
+              </div>
+              <ul className="space-y-2.5 pt-2">
+                <li className="text-[13px] text-slate-600 flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>Tudo do Plus</span>
+                </li>
+                {[
+                  'Análises ilimitadas',
+                  'Múltiplas psicólogas na mesma conta',
+                  'Referências bibliográficas por caso',
+                  'Suporte prioritário',
+                ].map((it) => (
+                  <li key={it} className="text-[13px] text-slate-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <span>{it}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              onClick={() => handleSelectPlan('pro')}
               disabled={selectingPlan !== null}
               className="w-full py-3 text-sm font-semibold rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-all"
             >
-              {selectingPlan === 'clinica' ? 'Salvando...' : 'Assinar Clínica'}
+              {selectingPlan === 'pro' ? 'Salvando...' : 'Assinar Pro'}
             </button>
           </div>
         </div>
@@ -230,8 +242,8 @@ export default function PricingPage() {
                 <tr className="text-slate-500 border-b border-slate-100 font-semibold uppercase tracking-wider text-[10px]">
                   <th className="p-5">Funcionalidade</th>
                   <th className="p-5 text-center">Starter</th>
+                  <th className="p-5 text-center text-blue-600">Plus</th>
                   <th className="p-5 text-center">Pro</th>
-                  <th className="p-5 text-center">Clínica</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -239,8 +251,8 @@ export default function PricingPage() {
                   <tr key={idx} className="hover:bg-slate-50/50">
                     <td className="p-5 font-medium text-slate-700">{feat.name}</td>
                     <td className="p-5 text-center text-slate-500">{feat.starter}</td>
-                    <td className="p-5 text-center font-semibold text-blue-700">{feat.pro}</td>
-                    <td className="p-5 text-center text-slate-500">{feat.clinica}</td>
+                    <td className="p-5 text-center font-semibold text-blue-700">{feat.plus}</td>
+                    <td className="p-5 text-center text-slate-500">{feat.pro}</td>
                   </tr>
                 ))}
               </tbody>

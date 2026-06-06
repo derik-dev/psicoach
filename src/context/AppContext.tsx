@@ -70,13 +70,27 @@ export interface UserProfile {
   responseDetail: 'conciso' | 'detalhado';
 }
 
+export type PlanType = 'free' | 'starter' | 'plus' | 'pro' | 'clinica';
+
+export function planCanAccess(plan: PlanType, feature: 'risco' | 'prontuario' | 'perguntas_roteiro' | 'referencias'): boolean {
+  const plusPlans: PlanType[] = ['plus', 'pro', 'clinica'];
+  const proPlans: PlanType[] = ['pro', 'clinica'];
+  if (feature === 'referencias') return proPlans.includes(plan);
+  return plusPlans.includes(plan);
+}
+
+export function planUpgradeLabel(feature: 'risco' | 'prontuario' | 'perguntas_roteiro' | 'referencias'): string {
+  if (feature === 'referencias') return 'Plus Pro';
+  return 'Plano Plus';
+}
+
 interface AppContextType {
   user: UserProfile | null;
   setUser: (user: UserProfile | null) => Promise<void>;
   cases: ClinicalCase[];
   setCases: React.Dispatch<React.SetStateAction<ClinicalCase[]>>;
-  activePlan: 'starter' | 'pro' | 'clinica' | 'free';
-  setActivePlan: (plan: 'starter' | 'pro' | 'clinica' | 'free') => Promise<void>;
+  activePlan: PlanType;
+  setActivePlan: (plan: PlanType) => Promise<void>;
   analysesUsed: number;
   setAnalysesUsed: React.Dispatch<React.SetStateAction<number>>;
   analysesLimit: number | null;
@@ -103,9 +117,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, _setUser] = useState<UserProfile | null>(null);
   const [cases, setCases] = useState<ClinicalCase[]>([]);
-  const [activePlan, _setActivePlan] = useState<'starter' | 'pro' | 'clinica' | 'free'>('starter');
+  const [activePlan, _setActivePlan] = useState<PlanType>('starter');
   const [analysesUsed, setAnalysesUsed] = useState<number>(0);
-  const [analysesLimit, setAnalysesLimit] = useState<number | null>(10);
+  const [analysesLimit, setAnalysesLimit] = useState<number | null>(15);
   const [initialized, setInitialized] = useState(false);
 
   const userIdRef = useRef<string | null>(null);
@@ -143,9 +157,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     if (sub) {
-      _setActivePlan(sub.plan as 'starter' | 'pro' | 'clinica' | 'free');
+      _setActivePlan(sub.plan as PlanType);
       setAnalysesUsed(sub.analyses_used || 0);
-      setAnalysesLimit(sub.analyses_limit ?? 10);
+      setAnalysesLimit(sub.analyses_limit ?? 15);
     }
 
     if (casesData) {
@@ -190,7 +204,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCases([]);
         _setActivePlan('starter');
         setAnalysesUsed(0);
-        setAnalysesLimit(10);
+        setAnalysesLimit(15);
       }
     });
 
@@ -257,14 +271,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     _setUser(userOrNull);
   };
 
-  const setActivePlan = async (plan: 'starter' | 'pro' | 'clinica' | 'free'): Promise<void> => {
+  const setActivePlan = async (plan: PlanType): Promise<void> => {
     if (!userIdRef.current) {
       throw new Error('Usuário não autenticado. Não foi possível salvar o plano no Supabase.');
     }
 
-    const planLimits: Record<typeof plan, number | null> = {
+    const planLimits: Record<PlanType, number | null> = {
       free: 0,
-      starter: 10,
+      starter: 15,
+      plus: 40,
       pro: null,
       clinica: null,
     };
@@ -339,7 +354,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     _setActivePlan('starter');
     setAnalysesUsed(0);
-    setAnalysesLimit(10);
+    setAnalysesLimit(15);
     setCases([]);
 
     return { error: null, needsEmailConfirmation: false };
@@ -494,7 +509,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCases([]);
     _setActivePlan('starter');
     setAnalysesUsed(0);
-    setAnalysesLimit(10);
+    setAnalysesLimit(15);
     userIdRef.current = null;
   };
 

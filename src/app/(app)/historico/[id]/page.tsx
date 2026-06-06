@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useApp } from '@/context/AppContext';
+import { useApp, planCanAccess } from '@/context/AppContext';
 import { supabase } from '@/lib/supabase/client';
 import {
   ArrowLeft,
@@ -24,13 +24,14 @@ import {
   AlertTriangle,
   FileEdit,
   Tag,
-  Clock
+  Clock,
+  Lock,
 } from 'lucide-react';
 
 export default function IndividualCase() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
-  const { cases, updateCase, addChatMessage } = useApp();
+  const { cases, updateCase, addChatMessage, activePlan } = useApp();
 
   const c = cases.find((item) => item.id === id);
 
@@ -348,20 +349,31 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
                 </div>
               </div>
 
-              {/* References */}
+              {/* References — Pro+ */}
               <div className="space-y-2">
                 <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
                   <span className="p-1 rounded bg-blue-50 text-blue-600"><BookOpen className="w-3.5 h-3.5" /></span>
                   <span>Literatura & Embasamento</span>
+                  {!planCanAccess(activePlan, 'referencias') && <Lock className="w-3 h-3 text-slate-400" />}
                 </h4>
-                <div className="space-y-2">
-                  {c.analysis.references.map((ref, idx) => (
-                    <div key={idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600 leading-normal flex gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{ref}</span>
+                {planCanAccess(activePlan, 'referencias') ? (
+                  <div className="space-y-2">
+                    {c.analysis.references.map((ref, idx) => (
+                      <div key={idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600 leading-normal flex gap-2">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{ref}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-2xl flex items-center gap-3">
+                    <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500">Referências bibliográficas disponíveis no <span className="font-semibold">Plano Pro</span>.</p>
+                      <a href="/pricing" className="text-[10px] font-semibold text-blue-600 hover:underline">Fazer upgrade →</a>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Blind spot */}
@@ -375,21 +387,32 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
                 </p>
               </div>
 
-              {/* Alerts */}
+              {/* Alerts — Plus+ */}
               {c.analysis.alerts && c.analysis.alerts.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-[10px] font-semibold text-rose-500 flex items-center gap-2 uppercase tracking-widest">
                     <span className="p-1 rounded bg-rose-50 text-rose-500"><AlertTriangle className="w-3.5 h-3.5" /></span>
                     <span>Sinais de alerta & Segurança</span>
+                    {!planCanAccess(activePlan, 'risco') && <Lock className="w-3 h-3 text-slate-400" />}
                   </h4>
-                  <div className="p-4 bg-rose-50/60 border border-rose-100 rounded-2xl space-y-2">
-                    {c.analysis.alerts.map((al, idx) => (
-                      <div key={idx} className="text-xs text-rose-700 leading-relaxed flex gap-2">
-                        <span className="text-rose-500 font-bold">•</span>
-                        <span>{al}</span>
+                  {planCanAccess(activePlan, 'risco') ? (
+                    <div className="p-4 bg-rose-50/60 border border-rose-100 rounded-2xl space-y-2">
+                      {c.analysis.alerts.map((al, idx) => (
+                        <div key={idx} className="text-xs text-rose-700 leading-relaxed flex gap-2">
+                          <span className="text-rose-500 font-bold">•</span>
+                          <span>{al}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-2xl flex items-center gap-3">
+                      <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-500">Análise de risco detalhada disponível no <span className="font-semibold">Plano Plus</span>.</p>
+                        <a href="/pricing" className="text-[10px] font-semibold text-blue-600 hover:underline">Fazer upgrade →</a>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -79,7 +79,7 @@ export default function Configs() {
     }
   };
 
-  const handlePlanChange = async (plan: 'starter' | 'pro' | 'clinica') => {
+  const handlePlanChange = async (plan: 'starter' | 'plus' | 'pro') => {
     try {
       await setActivePlan(plan);
       showSuccess();
@@ -308,11 +308,11 @@ export default function Configs() {
                     )}
                   </div>
                   <p className="text-xs text-slate-500">
-                    {activePlan === 'starter' ? 'Limite de 10 análises mensais' : 'Análises clínicas ilimitadas'}
+                    {activePlan === 'starter' ? 'Limite de 15 análises mensais' : activePlan === 'plus' ? 'Limite de 40 análises mensais' : 'Análises clínicas ilimitadas'}
                   </p>
                 </div>
                 <div className="text-left md:text-right">
-                  <span className="text-2xl font-light text-slate-900 tracking-tight">{activePlan === 'starter' ? 'R$ 97' : activePlan === 'pro' ? 'R$ 197' : 'R$ 397'}<span className="text-xs text-slate-400">/mês</span></span>
+                  <span className="text-2xl font-light text-slate-900 tracking-tight">{activePlan === 'starter' ? 'R$ 97' : activePlan === 'plus' ? 'R$ 157' : 'R$ 207'}<span className="text-xs text-slate-400">/mês</span></span>
                   <p className="text-[10px] text-slate-400 flex items-center md:justify-end gap-1 mt-0.5">
                     <Clock className="w-3 h-3" />
                     <span>Renova em 15/06/2026</span>
@@ -324,9 +324,9 @@ export default function Configs() {
                 <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Mudar ou contratar plano</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   {([
-                    { id: 'starter' as const, name: 'Starter', desc: '10 análises/mês, respostas padrão.', price: 'R$97', popular: false },
-                    { id: 'pro' as const, name: 'Pro', desc: 'Análises ilimitadas + chat avançado.', price: 'R$197', popular: true },
-                    { id: 'clinica' as const, name: 'Clínica', desc: 'Até 5 psicólogas + painel gestor.', price: 'R$397', popular: false }
+                    { id: 'starter' as const, name: 'Starter', desc: '15 análises/mês + mapa clínico completo.', price: 'R$97', popular: false },
+                    { id: 'plus' as const, name: 'Plus', desc: '40 análises/mês + risco, evolução e perguntas.', price: 'R$157', popular: true },
+                    { id: 'pro' as const, name: 'Pro', desc: 'Ilimitado + referências e múltiplas contas.', price: 'R$207', popular: false },
                   ]).map((plan) => (
                     <div
                       key={plan.id}

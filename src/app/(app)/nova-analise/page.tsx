@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useApp, CaseAnalysis, ClinicalCase } from '@/context/AppContext';
+import { useApp, CaseAnalysis, ClinicalCase, planCanAccess } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
   Brain, Sparkles, ChevronDown, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
   CheckCircle, MessageSquare, LayoutTemplate, Send, User, Bot, Plus,
-  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, History,
+  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, History, Lock,
 } from 'lucide-react';
 
 /* ─────────────────────────── types ─────────────────────────── */
@@ -117,9 +117,28 @@ function AnalysisCard({
   onCopy: () => void;
   copySuccess: boolean;
 }) {
+  const { activePlan } = useApp();
   const [activeTab, setActiveTab] = useState<TabId>('sintese');
   const [modalOpen, setModalOpen] = useState(false);
   const [questionsModalOpen, setQuestionsModalOpen] = useState(false);
+
+  const tabGate: Partial<Record<TabId, 'risco' | 'prontuario' | 'referencias'>> = {
+    risco: 'risco',
+    prontuario: 'prontuario',
+    referencias: 'referencias',
+  };
+
+  function isTabLocked(tabId: TabId): boolean {
+    const gate = tabGate[tabId];
+    if (!gate) return false;
+    return !planCanAccess(activePlan, gate);
+  }
+
+  const upgradeLabel: Partial<Record<TabId, string>> = {
+    risco: 'Plano Plus',
+    prontuario: 'Plano Plus',
+    referencias: 'Plano Pro',
+  };
 
   const nivel = deriveAtencao(result);
   const cfg = ATENCAO_CFG[nivel];
@@ -257,22 +276,38 @@ function AnalysisCard({
       {/* ── NÍVEL 3 — Abas compactas ── */}
       <div className="overflow-hidden rounded-2xl border border-slate-200">
         <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`shrink-0 border-b-2 px-3 py-2 text-[10px] font-semibold transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-600 bg-white text-blue-600'
-                  : 'border-transparent text-slate-500 hover:bg-white/60 hover:text-slate-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const locked = isTabLocked(tab.id);
+            return (
+              <button
+                key={tab.id}
+                onClick={() => !locked && setActiveTab(tab.id)}
+                className={`shrink-0 border-b-2 px-3 py-2 text-[10px] font-semibold transition-colors flex items-center gap-1 ${
+                  locked
+                    ? 'border-transparent text-slate-400 cursor-not-allowed'
+                    : activeTab === tab.id
+                    ? 'border-blue-600 bg-white text-blue-600'
+                    : 'border-transparent text-slate-500 hover:bg-white/60 hover:text-slate-700'
+                }`}
+              >
+                {tab.label}
+                {locked && <Lock className="w-2.5 h-2.5 shrink-0" />}
+              </button>
+            );
+          })}
         </div>
         <div className="min-h-[72px] bg-white p-3.5">
-          {activeContent ? (
+          {isTabLocked(activeTab) ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-4">
+              <Lock className="w-5 h-5 text-slate-300" />
+              <p className="text-[11px] text-slate-500 text-center">
+                Disponível no <span className="font-semibold">{upgradeLabel[activeTab]}</span>
+              </p>
+              <a href="/pricing" className="text-[10px] font-semibold text-blue-600 hover:underline">
+                Fazer upgrade →
+              </a>
+            </div>
+          ) : activeContent ? (
             <div>
               <p className="line-clamp-5 text-[12px] leading-relaxed text-slate-600">
                 {activeContent}
@@ -300,17 +335,29 @@ function AnalysisCard({
         >
           <Copy className="w-3 h-3" /> Copiar síntese
         </button>
-        <button
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-        >
-          <Zap className="w-3 h-3" /> Gerar evolução
-        </button>
-        <button
-          onClick={() => setQuestionsModalOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-        >
-          <HelpCircle className="w-3 h-3" /> Gerar perguntas
-        </button>
+        {planCanAccess(activePlan, 'prontuario') ? (
+          <button
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          >
+            <Zap className="w-3 h-3" /> Gerar evolução
+          </button>
+        ) : (
+          <a href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-400 cursor-not-allowed">
+            <Lock className="w-3 h-3" /> Gerar evolução
+          </a>
+        )}
+        {planCanAccess(activePlan, 'perguntas_roteiro') ? (
+          <button
+            onClick={() => setQuestionsModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          >
+            <HelpCircle className="w-3 h-3" /> Gerar perguntas
+          </button>
+        ) : (
+          <a href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-400 cursor-not-allowed">
+            <Lock className="w-3 h-3" /> Gerar perguntas
+          </a>
+        )}
         <button
           onClick={() => setModalOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
