@@ -24,12 +24,13 @@ No test suite is configured.
 - **Framework:** Next.js App Router (TypeScript, `@/*` → `./src/*`)
 - **UI:** React 19, Tailwind CSS v4, Lucide React
 - **Backend/DB:** Supabase (PostgreSQL + Auth)
-- **AI:** Groq SDK (`src/lib/groq.ts`) — Llama-3.3-70B model
-- **Env vars required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GROQ_API_KEY`
+- **AI:** Groq SDK (`src/lib/groq.ts`) — `llama-3.3-70b-versatile` for analysis, `whisper-large-v3` for audio transcription
+- **Error monitoring:** Sentry (`@sentry/nextjs`) — configured in `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`; `next.config.ts` wraps the config with `withSentryConfig()`
+- **Env vars required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GROQ_API_KEY`, `SENTRY_AUTH_TOKEN` (for source map upload)
 
 ### Route Groups
 - `src/app/(app)/` — authenticated routes: `dashboard`, `nova-analise`, `historico/[id]`, `biblioteca`, `configuracoes`, `admin`
-- `src/app/api/` — two API routes: `analyze/route.ts` (main AI endpoint) and `chat/route.ts`
+- `src/app/api/` — three API routes: `analyze/route.ts` (main AI endpoint), `chat/route.ts`, and `transcribe/route.ts` (audio → text via Groq Whisper, accepts multipart `audio` field, returns `{ text: string }`)
 - `src/app/onboarding/` — three-step first-time setup flow (perfil → abordagem → tour)
 - `src/app/auth/callback/` — Google OAuth redirect handler
 - Public routes: `/`, `/login`, `/cadastro`, `/pricing`
@@ -47,7 +48,7 @@ nova-analise page → POST /api/analyze
   → frontend saves case to Supabase + updates AppContext
 ```
 
-**Chat API (`/api/chat`)** auto-detects intent: messages ≥80 chars containing clinical keywords trigger a full structured analysis (max_tokens=2048); shorter/conversational messages get a free-text reply (max_tokens=512, temp=0.65). Uses last 10 messages as context window.
+**Chat API (`/api/chat`)** auto-detects intent: messages ≥80 chars containing clinical keywords trigger a full structured analysis (max_tokens=2048) and return `{ analysis: CaseAnalysis }`; shorter/conversational messages return a free-text `{ reply: string }` (max_tokens=512, temp=0.65). Uses last 10 messages as context window.
 
 ### Clinical Knowledge Base (`src/lib/knowledge/`)
 Seven modules: `approaches.ts`, `diagnostics.ts`, `techniques.ts`, `ethics.ts`, `saude_mental_ab.ts`, `raps_sus.ts`. `retriever.ts` maps 200+ clinical keywords to knowledge sections and injects up to 5 relevant sections per request. Always includes the therapist's selected approach. This is core product logic — changes here affect all AI output quality.

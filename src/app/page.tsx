@@ -18,7 +18,8 @@ import {
   ArrowUpRight,
   ChevronDown,
   Star,
-  Sun
+  Sun,
+  LogIn
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -83,6 +84,13 @@ export default function LandingPage() {
             >
               <Sun className="h-4 w-4" />
             </button>
+            <Link
+              href="/login"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white/90 px-4 text-[11px] font-bold text-blue-700 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md active:translate-y-0"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Entrar
+            </Link>
             <Link
               href="/cadastro"
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-[11px] font-bold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0"
