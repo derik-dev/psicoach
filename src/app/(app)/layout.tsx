@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   PlusCircle,
   FolderHeart,
-  BookOpen,
   Settings,
   LogOut,
   Menu,
@@ -39,8 +38,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Nova Análise', href: '/nova-analise', icon: PlusCircle, highlight: true },
     { name: 'Histórico', href: '/historico', icon: FolderHeart },
-    { name: 'Biblioteca', href: '/biblioteca', icon: BookOpen },
-    { name: 'Configurações', href: '/configuracoes', icon: Settings }
+{ name: 'Configurações', href: '/configuracoes', icon: Settings }
   ];
 
   const handleLogout = async () => {
