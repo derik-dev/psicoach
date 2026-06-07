@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { startCheckout } from '@/lib/stripe/client';
+import { isPaidPlan } from '@/lib/stripe/config';
 import {
   Brain, ArrowRight, ArrowLeft, Layers, ShieldCheck, Zap, AlertCircle,
 } from 'lucide-react';
@@ -55,7 +57,13 @@ export default function OnboardingTour() {
     setSaveError(null);
     try {
       await setUser({ ...user, onboardingCompleted: true });
-      router.push('/nova-analise');
+      const pendingPlan = localStorage.getItem('pendingPlan');
+      if (pendingPlan && isPaidPlan(pendingPlan)) {
+        localStorage.removeItem('pendingPlan');
+        await startCheckout(pendingPlan);
+      } else {
+        router.push('/nova-analise');
+      }
     } catch (err) {
       setSaveError(
         err instanceof Error
