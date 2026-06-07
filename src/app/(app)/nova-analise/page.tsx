@@ -682,7 +682,7 @@ function ApproachPanel({
 /* ════════════════════ main page ════════════════════ */
 
 export default function NovaAnalise() {
-  const { user, cases, addCase, updateCase, addChatMessage } = useApp();
+  const { user, cases, addCase, updateCase, addChatMessage, setAnalysesUsed } = useApp();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>('standard');
@@ -799,7 +799,8 @@ export default function NovaAnalise() {
       if (!res.ok)          setErrorMessage(data?.error || 'Não foi possível gerar a análise no momento.');
       else if (data?.analysis) {
         const analysis = data.analysis as CaseAnalysis;
-        await addCase(title, inputText, approach, clinicalContext, analysis);
+        await addCase(title, inputText, approach, clinicalContext, analysis, { incrementUsage: false });
+        if (typeof data.analysesUsed === 'number') setAnalysesUsed(data.analysesUsed);
         setAnalysisResult(analysis);
       }
       else                  setErrorMessage('Resposta inesperada do servidor de IA.');
@@ -1097,7 +1098,8 @@ export default function NovaAnalise() {
       const data = await res.json();
       if (!res.ok) setAudioError(data?.error || 'Não foi possível gerar a análise.');
       else if (data?.analysis) {
-        await addCase('Análise por áudio', audioTranscript, approach, clinicalContext, data.analysis as CaseAnalysis);
+        await addCase('Análise por áudio', audioTranscript, approach, clinicalContext, data.analysis as CaseAnalysis, { incrementUsage: false });
+        if (typeof data.analysesUsed === 'number') setAnalysesUsed(data.analysesUsed);
         setAudioResult(data.analysis as CaseAnalysis);
       } else setAudioError('Resposta inesperada do servidor de IA.');
     } catch (err) {

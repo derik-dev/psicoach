@@ -10,6 +10,7 @@ import {
 } from '@/lib/groq';
 import { CaseContext, CaseAnalysis } from '@/context/AppContext';
 import { getAuthenticatedUser } from '@/lib/supabase/server';
+import { getSubscriptionAccess } from '@/lib/subscriptions/server';
 
 interface HistoryMessage {
   role: 'user' | 'assistant';
@@ -36,6 +37,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const access = await getSubscriptionAccess(user.id);
+    if (!access.hasAccess) {
+      return Response.json({ error: 'Assine um plano para usar o assistente clínico.' }, { status: 402 });
+    }
+
     const body = await req.json();
     const {
       message,

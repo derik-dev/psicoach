@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/supabase/server';
 import { groq } from '@/lib/groq';
+import { getSubscriptionAccess } from '@/lib/subscriptions/server';
 
 export async function POST(req: NextRequest) {
-  const { error } = await getAuthenticatedUser(req);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+  const { user, error } = await getAuthenticatedUser(req);
+  if (!user) return NextResponse.json({ error }, { status: 401 });
+
+  try {
+    const access = await getSubscriptionAccess(user.id);
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: 'Assine um plano para transcrever áudios.' }, { status: 402 });
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Falha ao consultar assinatura.';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   let formData: FormData;
   try {

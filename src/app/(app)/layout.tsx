@@ -13,6 +13,8 @@ import {
   Menu,
   X,
   Sparkles,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +22,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('psicoach-dark') === 'true';
+    }
+    return false;
+  });
+
+  const toggleDark = () => {
+    setDarkMode((prev) => {
+      localStorage.setItem('psicoach-dark', String(!prev));
+      return !prev;
+    });
+  };
 
   React.useEffect(() => {
     if (!user) {
@@ -49,7 +64,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const percentage = analysesLimit !== null ? (analysesUsed / analysesLimit) * 100 : 0;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f6f9] text-slate-900 font-sans selection:bg-blue-600/10 selection:text-blue-700">
+    <div className={`flex h-screen overflow-hidden font-sans selection:bg-blue-600/10 selection:text-blue-700 ${darkMode ? 'app-dark' : 'bg-[#f4f6f9] text-slate-900'}`}>
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-100 px-5 flex items-center justify-between z-30">
         <Link href="/dashboard" className="inline-flex items-center">
@@ -71,7 +86,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         lg:translate-x-0 lg:static lg:h-screen lg:flex
         ${mobileMenuOpen ? 'translate-x-0 pt-20' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="m-4 lg:my-4 lg:ml-4 w-[calc(100%-2rem)] lg:w-60 bg-white rounded-3xl border border-slate-100 shadow-sm p-5 flex flex-col h-[calc(100vh-2rem)]">
+        <div className={`m-4 lg:my-4 lg:ml-4 w-[calc(100%-2rem)] lg:w-60 rounded-3xl border shadow-sm p-5 flex flex-col h-[calc(100vh-2rem)] ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
           {/* Logo */}
           <div className="hidden lg:flex items-center mb-7 px-2">
             <span className="text-lg font-extrabold leading-none tracking-normal text-slate-950">
@@ -109,7 +124,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Usage card */}
-          <div className="mt-4 mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <div className={`mt-4 mb-4 p-4 rounded-2xl border ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Plano <span className="text-blue-600 capitalize">{activePlan}</span>
@@ -145,6 +160,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             )}
           </div>
+
+          {/* Dark mode toggle */}
+          <button
+            onClick={toggleDark}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[12px] font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all mb-2"
+          >
+            <span className="flex items-center gap-2">
+              {darkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4" />}
+              <span>{darkMode ? 'Modo claro' : 'Modo escuro'}</span>
+            </span>
+            <div className={`w-8 h-4 rounded-full transition-colors relative ${darkMode ? 'bg-blue-600' : 'bg-slate-200'}`}>
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all ${darkMode ? 'left-4' : 'left-0.5'}`} />
+            </div>
+          </button>
 
           {/* User card */}
           <div className="border-t border-slate-100 pt-4 flex items-center justify-between">

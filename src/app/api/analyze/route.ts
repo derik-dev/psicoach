@@ -10,6 +10,7 @@ import {
 } from '@/lib/groq';
 import { CaseContext } from '@/context/AppContext';
 import { getAuthenticatedUser } from '@/lib/supabase/server';
+import { getSubscriptionAccess } from '@/lib/subscriptions/server';
 
 export async function POST(req: NextRequest) {
   const { user, error: authError } = await getAuthenticatedUser(req);
@@ -18,6 +19,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const access = await getSubscriptionAccess(user.id);
+    if (!access.hasAccess) {
+      return Response.json({ error: 'Assine um plano para gerar análises clínicas.' }, { status: 402 });
+    }
+    if (access.analysesLimit !== null && access.analysesUsed >= access.analysesLimit) {
+      return Response.json({ error: 'Você atingiu o limite mensal do seu plano.' }, { status: 403 });
+    }
+
     const body = await req.json();
     const {
       title,
@@ -66,7 +75,14 @@ export async function POST(req: NextRequest) {
     const raw = completion.choices[0]?.message?.content ?? '';
     const analysis = parseAnalysisJson(raw);
 
-    return Response.json({ analysis });
+    const analysesUsed = access.analysesUsed + 1;
+    const { error: usageError } = await access.admin
+      .from('subscriptions')
+      .update({ analyses_used: analysesUsed })
+      .eq('user_id', user.id);
+    if (usageError) throw new Error(`Falha ao registrar o uso: ${usageError.message}`);
+
+    return Response.json({ analysis, analysesUsed });
   } catch (err: unknown) {
     console.error('[/api/analyze] erro:', err);
 

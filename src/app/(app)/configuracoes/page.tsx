@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { supabase } from '@/lib/supabase/client';
+import { openCustomerPortal, startCheckout } from '@/lib/stripe/client';
 import {
   Settings,
   User,
@@ -20,11 +21,12 @@ import {
 } from 'lucide-react';
 
 export default function Configs() {
-  const { user, setUser, activePlan, setActivePlan, logout } = useApp();
+  const { user, setUser, activePlan, subscriptionStatus, currentPeriodEnd, logout } = useApp();
 
   const [activeTab, setActiveTab] = useState<'perfil' | 'assinatura' | 'preferencias' | 'seguranca' | 'privacidade'>('perfil');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -80,11 +82,24 @@ export default function Configs() {
   };
 
   const handlePlanChange = async (plan: 'starter' | 'plus' | 'pro') => {
+    setBillingLoading(true);
+    setSaveError(null);
     try {
-      await setActivePlan(plan);
-      showSuccess();
+      await startCheckout(plan);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Não foi possível salvar o plano.');
+      setSaveError(err instanceof Error ? err.message : 'Não foi possível abrir o pagamento.');
+      setBillingLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setBillingLoading(true);
+    setSaveError(null);
+    try {
+      await openCustomerPortal();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Não foi possível abrir a assinatura.');
+      setBillingLoading(false);
     }
   };
 
@@ -300,23 +315,40 @@ export default function Configs() {
 
               <div className="p-5 rounded-2xl bg-blue-50/60 border border-blue-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider">Assinatura ativa</span>
+                  <span className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider">
+                    {activePlan === 'free' ? 'Sem assinatura ativa' : `Assinatura ${subscriptionStatus || 'ativa'}`}
+                  </span>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-base font-semibold text-slate-800 capitalize">Plano PsiCoach {activePlan}</h4>
+                    <h4 className="text-base font-semibold text-slate-800 capitalize">
+                      {activePlan === 'free' ? 'Escolha um plano PsiCoach' : `Plano PsiCoach ${activePlan}`}
+                    </h4>
                     {activePlan === 'starter' && (
                       <span className="text-[9px] font-semibold px-2 py-0.5 rounded bg-blue-600 text-white">Upgrade disponível</span>
                     )}
                   </div>
                   <p className="text-xs text-slate-500">
-                    {activePlan === 'starter' ? 'Limite de 15 análises mensais' : activePlan === 'plus' ? 'Limite de 40 análises mensais' : 'Análises clínicas ilimitadas'}
+                    {activePlan === 'free' ? 'Assine para liberar as análises clínicas' : activePlan === 'starter' ? 'Limite de 15 análises mensais' : activePlan === 'plus' ? 'Limite de 40 análises mensais' : 'Análises clínicas ilimitadas'}
                   </p>
                 </div>
                 <div className="text-left md:text-right">
-                  <span className="text-2xl font-light text-slate-900 tracking-tight">{activePlan === 'starter' ? 'R$ 97' : activePlan === 'plus' ? 'R$ 157' : 'R$ 207'}<span className="text-xs text-slate-400">/mês</span></span>
-                  <p className="text-[10px] text-slate-400 flex items-center md:justify-end gap-1 mt-0.5">
-                    <Clock className="w-3 h-3" />
-                    <span>Renova em 15/06/2026</span>
-                  </p>
+                  {activePlan !== 'free' && (
+                    <>
+                      <span className="text-2xl font-light text-slate-900 tracking-tight">{activePlan === 'starter' ? 'R$ 97' : activePlan === 'plus' ? 'R$ 157' : 'R$ 207'}<span className="text-xs text-slate-400">/mês</span></span>
+                      {currentPeriodEnd && (
+                        <p className="text-[10px] text-slate-400 flex items-center md:justify-end gap-1 mt-0.5">
+                          <Clock className="w-3 h-3" />
+                          <span>Próxima cobrança em {new Intl.DateTimeFormat('pt-BR').format(new Date(currentPeriodEnd))}</span>
+                        </p>
+                      )}
+                      <button
+                        onClick={handleManageSubscription}
+                        disabled={billingLoading}
+                        className="mt-2 text-[10px] font-semibold text-blue-700 hover:text-blue-500 disabled:opacity-50"
+                      >
+                        Gerenciar cobrança
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -351,8 +383,8 @@ export default function Configs() {
                         {activePlan === plan.id ? (
                           <span className="text-[10px] font-semibold text-blue-700">Atual</span>
                         ) : (
-                          <button onClick={() => handlePlanChange(plan.id)} className="text-[10px] font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition-colors">
-                            Assinar
+                          <button disabled={billingLoading} onClick={() => handlePlanChange(plan.id)} className="text-[10px] font-semibold bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-colors">
+                            {activePlan === 'free' ? 'Assinar' : 'Alterar'}
                           </button>
                         )}
                       </div>

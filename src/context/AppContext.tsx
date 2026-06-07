@@ -90,7 +90,8 @@ interface AppContextType {
   cases: ClinicalCase[];
   setCases: React.Dispatch<React.SetStateAction<ClinicalCase[]>>;
   activePlan: PlanType;
-  setActivePlan: (plan: PlanType) => Promise<void>;
+  subscriptionStatus: string | null;
+  currentPeriodEnd: string | null;
   analysesUsed: number;
   setAnalysesUsed: React.Dispatch<React.SetStateAction<number>>;
   analysesLimit: number | null;
@@ -117,9 +118,11 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, _setUser] = useState<UserProfile | null>(null);
   const [cases, setCases] = useState<ClinicalCase[]>([]);
-  const [activePlan, _setActivePlan] = useState<PlanType>('starter');
+  const [activePlan, _setActivePlan] = useState<PlanType>('free');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [analysesUsed, setAnalysesUsed] = useState<number>(0);
-  const [analysesLimit, setAnalysesLimit] = useState<number | null>(15);
+  const [analysesLimit, setAnalysesLimit] = useState<number | null>(0);
   const [initialized, setInitialized] = useState(false);
 
   const userIdRef = useRef<string | null>(null);
@@ -157,9 +160,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     if (sub) {
-      _setActivePlan(sub.plan as PlanType);
+      const hasPaidAccess = Boolean(
+        sub.stripe_sub_id && ['active', 'trialing'].includes(sub.status)
+      );
+      _setActivePlan(hasPaidAccess ? (sub.plan as PlanType) : 'free');
+      setSubscriptionStatus(sub.status || null);
+      setCurrentPeriodEnd(sub.current_period_end || null);
       setAnalysesUsed(sub.analyses_used || 0);
-      setAnalysesLimit(sub.analyses_limit ?? 15);
+      setAnalysesLimit(hasPaidAccess ? (sub.analyses_limit ?? 0) : 0);
+    } else {
+      _setActivePlan('free');
+      setSubscriptionStatus(null);
+      setCurrentPeriodEnd(null);
+      setAnalysesUsed(0);
+      setAnalysesLimit(0);
     }
 
     if (casesData) {
@@ -202,9 +216,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         userIdRef.current = null;
         _setUser(null);
         setCases([]);
-        _setActivePlan('starter');
+        _setActivePlan('free');
+        setSubscriptionStatus(null);
+        setCurrentPeriodEnd(null);
         setAnalysesUsed(0);
-        setAnalysesLimit(15);
+        setAnalysesLimit(0);
       }
     });
 
@@ -271,39 +287,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     _setUser(userOrNull);
   };
 
-  const setActivePlan = async (plan: PlanType): Promise<void> => {
-    if (!userIdRef.current) {
-      throw new Error('Usuário não autenticado. Não foi possível salvar o plano no Supabase.');
-    }
-
-    const planLimits: Record<PlanType, number | null> = {
-      free: 0,
-      starter: 15,
-      plus: 40,
-      pro: null,
-      clinica: null,
-    };
-
-    const { error } = await supabase
-      .from('subscriptions')
-      .upsert(
-        {
-          user_id: userIdRef.current,
-          plan,
-          status: plan === 'free' ? 'inactive' : 'active',
-          analyses_limit: planLimits[plan],
-        },
-        { onConflict: 'user_id' }
-      );
-
-    if (error) {
-      throw new Error(`Falha ao salvar assinatura no Supabase: ${error.message}`);
-    }
-
-    _setActivePlan(plan);
-    setAnalysesLimit(planLimits[plan]);
-  };
-
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
@@ -352,9 +335,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       approachDescription: '',
       responseDetail: 'detalhado',
     });
-    _setActivePlan('starter');
+    _setActivePlan('free');
+    setSubscriptionStatus(null);
+    setCurrentPeriodEnd(null);
     setAnalysesUsed(0);
-    setAnalysesLimit(15);
+    setAnalysesLimit(0);
     setCases([]);
 
     return { error: null, needsEmailConfirmation: false };
@@ -507,9 +492,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await supabase.auth.signOut();
     _setUser(null);
     setCases([]);
-    _setActivePlan('starter');
+    _setActivePlan('free');
+    setSubscriptionStatus(null);
+    setCurrentPeriodEnd(null);
     setAnalysesUsed(0);
-    setAnalysesLimit(15);
+    setAnalysesLimit(0);
     userIdRef.current = null;
   };
 
@@ -521,7 +508,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cases,
         setCases,
         activePlan,
-        setActivePlan,
+        subscriptionStatus,
+        currentPeriodEnd,
         analysesUsed,
         setAnalysesUsed,
         analysesLimit,

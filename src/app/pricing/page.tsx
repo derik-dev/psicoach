@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Check, Sparkles, Coins } from 'lucide-react';
+import { startCheckout } from '@/lib/stripe/client';
 
 export default function PricingPage() {
-  const { setActivePlan, user } = useApp();
+  const { user } = useApp();
   const router = useRouter();
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [planError, setPlanError] = useState<string | null>(null);
   const [selectingPlan, setSelectingPlan] = useState<'starter' | 'plus' | 'pro' | null>(null);
 
@@ -23,18 +23,13 @@ export default function PricingPage() {
     setPlanError(null);
 
     try {
-      await setActivePlan(plan);
-      router.push('/dashboard');
+      await startCheckout(plan);
     } catch (err) {
-      setPlanError(err instanceof Error ? err.message : 'Não foi possível salvar o plano.');
+      setPlanError(err instanceof Error ? err.message : 'Não foi possível iniciar o pagamento.');
     } finally {
       setSelectingPlan(null);
     }
   };
-
-  const starterPrice = billingPeriod === 'monthly' ? 97 : Math.round(97 * 0.8);
-  const plusPrice = billingPeriod === 'monthly' ? 157 : Math.round(157 * 0.8);
-  const proPrice = billingPeriod === 'monthly' ? 207 : Math.round(207 * 0.8);
 
   const features = [
     { name: 'Análises por Mês', starter: '15', plus: '40', pro: 'Ilimitado' },
@@ -86,24 +81,8 @@ export default function PricingPage() {
             Economize em supervisões avulsas e tenha uma segunda opinião científica qualificada a qualquer hora.
           </p>
 
-          <div className="inline-flex items-center gap-1 p-1.5 rounded-full bg-white border border-slate-200 mx-auto shadow-sm">
-            <button
-              onClick={() => setBillingPeriod('monthly')}
-              className={`px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${
-                billingPeriod === 'monthly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Mensal
-            </button>
-            <button
-              onClick={() => setBillingPeriod('annual')}
-              className={`relative px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
-                billingPeriod === 'annual' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <span>Anual</span>
-              <span className="bg-emerald-500 text-white font-extrabold text-[9px] px-1.5 py-0.5 rounded uppercase">-20%</span>
-            </button>
+          <div className="inline-flex items-center rounded-full bg-blue-50 px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-blue-700">
+            Cobrança mensal
           </div>
 
           {planError && (
@@ -122,7 +101,7 @@ export default function PricingPage() {
                 <h3 className="text-lg font-semibold text-slate-800">Starter</h3>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {starterPrice}</span>
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ 97</span>
                 <span className="text-xs text-slate-400">/ mês</span>
               </div>
               <ul className="space-y-2.5 pt-2">
@@ -161,7 +140,7 @@ export default function PricingPage() {
                 <h3 className="text-lg font-semibold text-slate-900">Plus</h3>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {plusPrice}</span>
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ 157</span>
                 <span className="text-xs text-slate-400">/ mês</span>
               </div>
               <ul className="space-y-2.5 pt-2">
@@ -199,7 +178,7 @@ export default function PricingPage() {
                 <h3 className="text-lg font-semibold text-slate-800">Pro</h3>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ {proPrice}</span>
+                <span className="text-4xl font-light text-slate-900 tracking-tight">R$ 207</span>
                 <span className="text-xs text-slate-400">/ mês</span>
               </div>
               <ul className="space-y-2.5 pt-2">

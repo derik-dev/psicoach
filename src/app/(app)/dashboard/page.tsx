@@ -49,7 +49,7 @@ export default function Dashboard() {
             <span>Espaço Clínico</span>
           </div>
           <h1 className="page-headline">
-            Bem-vinda, <span className="page-headline-accent">{user.name.split(' ')[0]}.</span>
+            {user.gender === 'masculino' ? 'Bem-vindo' : 'Bem-vinda'}, <span className="page-headline-accent">{user.name.split(' ')[0]}.</span>
           </h1>
           <p className="text-slate-500 text-sm leading-relaxed">
             Seu copiloto está ativo. Atualmente você possui <span className="font-semibold text-slate-800">{totalCases} prontuários</span> em seu histórico confidencial.
