@@ -1278,7 +1278,16 @@ export default function NovaAnalise() {
                 </div>
                 <h3 className="text-base font-semibold text-rose-700">Análise indisponível</h3>
                 <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-rose-600">{errorMessage}</p>
-                <p className="mt-2 text-[11px] text-slate-500">Tente novamente em instantes.</p>
+                {errorMessage?.toLowerCase().includes('plano') ? (
+                  <a
+                    href="/pricing"
+                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500"
+                  >
+                    Ver planos
+                  </a>
+                ) : (
+                  <p className="mt-2 text-[11px] text-slate-500">Tente novamente em instantes.</p>
+                )}
               </div>
 
             ) : !isAnalyzing && !analysisResult ? (
@@ -1673,6 +1682,14 @@ export default function NovaAnalise() {
                 </div>
                 <h3 className="text-base font-semibold text-rose-700">Análise indisponível</h3>
                 <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-rose-600">{audioError}</p>
+                {audioError?.toLowerCase().includes('plano') ? (
+                  <a
+                    href="/pricing"
+                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500"
+                  >
+                    Ver planos
+                  </a>
+                ) : null}
               </div>
             ) : !isAudioAnalyzing && !audioResult ? (
               <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
