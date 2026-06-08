@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Lock, Mail, User, ArrowRight, CheckCircle } from 'lucide-react';
+import { startCheckout } from '@/lib/stripe/client';
+import { isPaidPlan } from '@/lib/stripe/config';
 
 export default function RegisterPage() {
   const { user, signUp, signInWithGoogle } = useApp();
@@ -22,6 +24,12 @@ export default function RegisterPage() {
 
   React.useEffect(() => {
     if (user) {
+      const pendingPlan = localStorage.getItem('pendingPlan');
+      if (pendingPlan && isPaidPlan(pendingPlan)) {
+        localStorage.removeItem('pendingPlan');
+        startCheckout(pendingPlan);
+        return;
+      }
       if (user.onboardingCompleted) {
         router.push('/dashboard');
       } else {
@@ -69,9 +77,8 @@ export default function RegisterPage() {
 
     if (needsEmailConfirmation) {
       setEmailConfirmationSent(true);
-    } else {
-      router.push('/onboarding/perfil');
     }
+    // If no email confirmation needed, the useEffect on `user` handles the redirect
   };
 
   const handleGoogleLogin = async () => {
@@ -219,7 +226,7 @@ export default function RegisterPage() {
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>Criar conta e iniciar onboarding</span>
+                <span>Criar conta</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
