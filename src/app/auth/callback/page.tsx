@@ -3,13 +3,17 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { startCheckout } from '@/lib/stripe/client';
+import { isPaidPlan } from '@/lib/stripe/config';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = new URLSearchParams(window.location.search).get('code');
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const planParam = params.get('plan');
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -25,6 +29,11 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      // Re-save plan to localStorage so tour can use it even if it was cleared during OAuth
+      if (planParam && isPaidPlan(planParam)) {
+        localStorage.setItem('pendingPlan', planParam);
+      }
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('onboarding_completed')
@@ -32,6 +41,12 @@ export default function AuthCallbackPage() {
         .single();
 
       if (profile?.onboarding_completed) {
+        const plan = planParam || localStorage.getItem('pendingPlan');
+        if (plan && isPaidPlan(plan)) {
+          localStorage.removeItem('pendingPlan');
+          await startCheckout(plan);
+          return;
+        }
         router.replace('/dashboard');
       } else {
         router.replace('/onboarding/perfil');

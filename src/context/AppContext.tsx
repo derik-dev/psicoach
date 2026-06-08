@@ -108,7 +108,7 @@ interface AppContextType {
   addChatMessage: (caseId: string, role: 'user' | 'assistant', content: string) => Promise<void>;
   logout: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signInWithGoogle: () => Promise<{ error: string | null }>;
+  signInWithGoogle: (redirectTo?: string) => Promise<{ error: string | null }>;
   signUp: (name: string, email: string, password: string) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
   initialized: boolean;
 }
@@ -293,11 +293,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { error: null };
   };
 
-  const signInWithGoogle = async (): Promise<{ error: string | null }> => {
-    const redirectTo = `${window.location.origin}/auth/callback`;
+  const signInWithGoogle = async (redirectTo?: string): Promise<{ error: string | null }> => {
+    const callbackUrl = redirectTo ?? `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: { redirectTo: callbackUrl },
     });
     if (error) return { error: error.message };
     return { error: null };

@@ -7,10 +7,13 @@ import { useApp } from '@/context/AppContext';
 import { Lock, Mail, User, ArrowRight, CheckCircle } from 'lucide-react';
 import { startCheckout } from '@/lib/stripe/client';
 import { isPaidPlan } from '@/lib/stripe/config';
+import { useSearchParams } from 'next/navigation';
 
 export default function RegisterPage() {
   const { user, signUp, signInWithGoogle } = useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planFromUrl = searchParams.get('plan');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -84,7 +87,11 @@ export default function RegisterPage() {
   const handleGoogleLogin = async () => {
     setError('');
     setGoogleLoading(true);
-    const { error } = await signInWithGoogle();
+    const plan = planFromUrl || localStorage.getItem('pendingPlan');
+    const redirectTo = plan
+      ? `${window.location.origin}/auth/callback?plan=${plan}`
+      : `${window.location.origin}/auth/callback`;
+    const { error } = await signInWithGoogle(redirectTo);
     if (error) {
       setError('Não foi possível iniciar cadastro com Google. Tente novamente.');
       setGoogleLoading(false);

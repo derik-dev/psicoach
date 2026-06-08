@@ -16,7 +16,7 @@ export default function PricingPage() {
   const handleSelectPlan = async (plan: 'starter' | 'plus' | 'pro') => {
     if (!user) {
       localStorage.setItem('pendingPlan', plan);
-      router.push('/cadastro');
+      router.push(`/cadastro?plan=${plan}`);
       return;
     }
 
