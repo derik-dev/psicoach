@@ -72,11 +72,8 @@ export interface UserProfile {
 
 export type PlanType = 'free' | 'starter' | 'plus' | 'pro' | 'clinica';
 
-export function planCanAccess(plan: PlanType, feature: 'risco' | 'prontuario' | 'perguntas_roteiro' | 'referencias'): boolean {
-  const plusPlans: PlanType[] = ['plus', 'pro', 'clinica'];
-  const proPlans: PlanType[] = ['pro', 'clinica'];
-  if (feature === 'referencias') return proPlans.includes(plan);
-  return plusPlans.includes(plan);
+export function planCanAccess(_plan: PlanType, _feature: 'risco' | 'prontuario' | 'perguntas_roteiro' | 'referencias'): boolean {
+  return true; // modo teste: todas as funcionalidades liberadas
 }
 
 export function planUpgradeLabel(feature: 'risco' | 'prontuario' | 'perguntas_roteiro' | 'referencias'): string {
