@@ -106,13 +106,13 @@ function renderMd(text: string) {
     <ReactMarkdown
       components={{
         p: ({ children }) => (
-          <p style={{ color: '#374151', lineHeight: 1.8, marginBottom: '0.75rem' }}>{children}</p>
+          <p className="text-slate-700" style={{ lineHeight: 1.8, marginBottom: '0.75rem' }}>{children}</p>
         ),
         strong: ({ children }) => (
-          <strong style={{ fontWeight: 600, color: '#1e293b' }}>{children}</strong>
+          <strong className="font-semibold text-slate-800">{children}</strong>
         ),
         li: ({ children }) => (
-          <li style={{ color: '#374151', lineHeight: 1.8 }}>{children}</li>
+          <li className="text-slate-700" style={{ lineHeight: 1.8 }}>{children}</li>
         ),
       }}
     >
@@ -127,9 +127,9 @@ function FormattedText({ text }: { text: string }) {
   const paragraphs = text.split(/\n{1,2}/).filter(p => p.trim());
 
   return (
-    <div className="space-y-0" style={{ color: '#374151', lineHeight: 1.8 }}>
+    <div className="space-y-0 text-slate-700" style={{ lineHeight: 1.8 }}>
       {paragraphs.map((para, i) => (
-        <div key={i} style={{ color: '#374151', lineHeight: 1.8 }}>
+        <div key={i} style={{ lineHeight: 1.8 }}>
           {renderMd(para)}
         </div>
       ))}
@@ -291,13 +291,11 @@ function AnalysisCard({
         </h4>
         <div style={{ fontFamily: 'Georgia, serif' }}>
           {hipotese.split(/\n{1,2}/).filter(p => p.trim()).map((para, i) => (
-            <div key={i}>
+            <div key={i} className="clinical-hypothesis-paragraph-wrapper">
               {i === 0 ? (
                 <div
+                  className="clinical-hypothesis-highlight"
                   style={{
-                    background: '#F8FAFF',
-                    borderLeft: '3px solid #3B82F6',
-                    borderRadius: '6px',
                     padding: '12px 16px',
                     marginBottom: '20px',
                   }}
@@ -306,12 +304,10 @@ function AnalysisCard({
                 </div>
               ) : (
                 <div
+                  className="clinical-hypothesis-paragraph"
                   style={{
                     paddingTop: '16px',
                     paddingBottom: '16px',
-                    borderBottom: i < hipotese.split(/\n{1,2}/).filter(p => p.trim()).length - 1
-                      ? '1px solid #F3F4F6'
-                      : 'none',
                   }}
                 >
                   {renderMd(para)}
@@ -337,7 +333,7 @@ function AnalysisCard({
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[12px] font-bold text-white mt-0.5">
                 {i + 1}
               </span>
-              <div className="text-[14px] leading-[1.7]" style={{ color: '#374151' }}>
+              <div className="text-[14px] leading-[1.7] text-slate-700">
                 {renderMd(p)}
               </div>
             </li>
@@ -361,8 +357,8 @@ function AnalysisCard({
                 &ldquo;
               </span>
               <p
-                className="text-[15px] italic leading-[1.7]"
-                style={{ color: '#374151', fontFamily: 'Georgia, serif' }}
+                className="text-[15px] italic leading-[1.7] text-slate-700"
+                style={{ fontFamily: 'Georgia, serif' }}
               >
                 {q}
               </p>
