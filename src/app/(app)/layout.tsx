@@ -68,9 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-100 px-5 flex items-center justify-between z-30">
         <Link href="/dashboard" className="inline-flex items-center">
-          <span className="text-base font-extrabold leading-none text-slate-950">
-            PsiCoach<span className="ml-1 text-blue-600">AI</span>
-          </span>
+          <img src="/imagens/logo.png" alt="PsiCoach AI" className="h-10 w-auto" />
         </Link>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -89,9 +87,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className={`m-4 lg:my-4 lg:ml-4 w-[calc(100%-2rem)] lg:w-60 rounded-3xl border shadow-sm p-5 flex flex-col h-[calc(100vh-2rem)] ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
           {/* Logo */}
           <div className="hidden lg:flex items-center mb-7 px-2">
-            <span className="text-lg font-extrabold leading-none tracking-normal text-slate-950">
-              PsiCoach<span className="ml-1 text-blue-600">AI</span>
-            </span>
+            <img src="/imagens/logo.png" alt="PsiCoach AI" className="h-10 w-auto" />
           </div>
 
           {/* Navigation */}
