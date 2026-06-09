@@ -42,26 +42,26 @@ function createEmptyAnalysis(): CaseAnalysis {
 }
 
 const ATENCAO_CFG: Record<AtencaoNivel, {
-  label: string; sublabel: string;
-  color: string; bg: string; border: string; dot: string;
+  label: string; bullets: string[];
+  color: string; bg: string; border: string; badge: string;
 }> = {
   baixo: {
     label: 'Baixa atenção',
-    sublabel: 'Sem indícios de urgência',
+    bullets: ['Sem sinais de risco imediato', 'Progresso dentro do esperado', 'Vínculo estável'],
     color: 'text-emerald-700', bg: 'bg-emerald-50',
-    border: 'border-emerald-200', dot: 'bg-emerald-500',
+    border: 'border-emerald-200', badge: 'bg-emerald-100 text-emerald-700',
   },
   moderado: {
     label: 'Atenção moderada',
-    sublabel: 'Pontos que merecem investigação',
+    bullets: ['Pontos que merecem investigação', 'Monitorar evolução de perto', 'Avaliar fatores de risco'],
     color: 'text-amber-700', bg: 'bg-amber-50',
-    border: 'border-amber-200', dot: 'bg-amber-500',
+    border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700',
   },
   alto: {
     label: 'Atenção clínica alta',
-    sublabel: 'Recomenda-se avaliação cuidadosa',
+    bullets: ['Sinais de risco identificados', 'Protocolo de segurança indicado', 'Avaliação prioritária'],
     color: 'text-rose-700', bg: 'bg-rose-50',
-    border: 'border-rose-200', dot: 'bg-rose-500',
+    border: 'border-rose-200', badge: 'bg-rose-100 text-rose-700',
   },
 };
 
@@ -186,33 +186,86 @@ function AnalysisCard({
         </button>
       </div>
 
-      {/* ── 4 cards superiores ── */}
+      {/* ── 4 cards superiores — altura fixa 160px ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5 flex flex-col">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-blue-600">Resumo rápido</span>
-          <p className="mt-2 text-[14px] leading-[1.7] text-blue-950 flex-1">{resumo}</p>
+
+        {/* Resumo rápido */}
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 flex flex-col h-40 overflow-hidden">
+          <span className="shrink-0 text-[11px] font-semibold uppercase text-blue-600" style={{ letterSpacing: '0.8px' }}>
+            Resumo rápido
+          </span>
+          <p className="mt-2 text-[14px] leading-[1.6] text-blue-950 line-clamp-3 flex-1">{resumo}</p>
+          {resumo.length > 120 && (
+            <button
+              onClick={() => { setActiveTab('sintese'); setModalOpen(true); }}
+              className="mt-1 shrink-0 text-left text-[11px] font-semibold text-blue-500 hover:text-blue-700 transition-colors"
+            >
+              Ver mais
+            </button>
+          )}
         </div>
 
-        <div className={`rounded-2xl border p-5 flex flex-col ${cfg.bg} ${cfg.border}`}>
-          <span className={`text-[11px] font-semibold uppercase tracking-widest ${cfg.color}`}>Atenção clínica</span>
-          <div className="mt-2 flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
-            <p className={`text-[14px] font-semibold leading-snug ${cfg.color}`}>{cfg.label}</p>
-          </div>
-          <p className={`mt-1.5 text-[12px] leading-snug ${cfg.color} opacity-75 flex-1`}>{cfg.sublabel}</p>
+        {/* Atenção clínica */}
+        <div className={`rounded-2xl border p-4 flex flex-col h-40 overflow-hidden ${cfg.bg} ${cfg.border}`}>
+          <span className={`shrink-0 text-[11px] font-semibold uppercase ${cfg.color}`} style={{ letterSpacing: '0.8px' }}>
+            Atenção clínica
+          </span>
+          <span className={`mt-2 shrink-0 inline-block self-start rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${cfg.badge}`}>
+            {cfg.label}
+          </span>
+          <ul className="mt-2 space-y-1 flex-1 overflow-hidden">
+            {cfg.bullets.map((b, i) => (
+              <li key={i} className={`flex items-center gap-1.5 text-[12px] leading-snug ${cfg.color} opacity-80`}>
+                <span className="w-1 h-1 rounded-full bg-current shrink-0" />
+                <span className="truncate">{b}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Foco inicial</span>
-          <p className="mt-2 text-[14px] leading-[1.7] text-slate-700 flex-1">{focoInicial}</p>
+        {/* Foco inicial */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col h-40 overflow-hidden">
+          <span className="shrink-0 text-[11px] font-semibold uppercase text-slate-500" style={{ letterSpacing: '0.8px' }}>
+            Foco inicial
+          </span>
+          <p
+            className="mt-2 text-[14px] leading-[1.6] text-slate-700 line-clamp-3 flex-1"
+            title={focoInicial}
+          >
+            {focoInicial}
+          </p>
+          {focoInicial.length > 100 && (
+            <button
+              onClick={() => { setActiveTab('sintese'); setModalOpen(true); }}
+              className="mt-1 shrink-0 text-left text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Ver mais
+            </button>
+          )}
         </div>
 
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5 flex flex-col">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-amber-600">Próxima pergunta</span>
-          <p className="mt-2 text-[14px] italic leading-[1.7] text-slate-700 flex-1" style={{ fontFamily: 'Georgia, serif' }}>
+        {/* Próxima pergunta */}
+        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 flex flex-col h-40 overflow-hidden">
+          <span className="shrink-0 text-[11px] font-semibold uppercase text-amber-600" style={{ letterSpacing: '0.8px' }}>
+            Próxima pergunta
+          </span>
+          <p
+            className="mt-2 text-[14px] italic leading-[1.6] text-slate-700 line-clamp-3 flex-1"
+            style={{ fontFamily: 'Georgia, serif' }}
+            title={proxPergunta}
+          >
             &ldquo;{proxPergunta}&rdquo;
           </p>
+          {proxPergunta.length > 100 && (
+            <button
+              onClick={() => { setActiveTab('sintese'); setModalOpen(true); }}
+              className="mt-1 shrink-0 text-left text-[11px] font-semibold text-amber-500 hover:text-amber-700 transition-colors"
+            >
+              Ver mais
+            </button>
+          )}
         </div>
+
       </div>
 
       {/* ── Hipótese central — largura total ── */}
