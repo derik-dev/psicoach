@@ -124,13 +124,19 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     console.error('[/api/analyze] erro:', err);
 
-    const invalidModelResponse =
-      err instanceof SyntaxError ||
-      (err instanceof Error && err.message.includes('Estrutura JSON inválida'));
-    const message = invalidModelResponse
-      ? 'A IA retornou uma análise incompleta. Tente gerar novamente.'
-      : 'Falha ao gerar análise. Verifique a chave GROQ_API_KEY.';
+    const msg = err instanceof Error ? err.message : String(err);
+    const status = (err as { status?: number })?.status;
 
-    return Response.json({ error: message }, { status: 500 });
+    if (status === 429 || msg.includes('rate_limit') || msg.includes('rate limit')) {
+      return Response.json({ error: 'Serviço temporariamente sobrecarregado. Aguarde alguns segundos e tente novamente.' }, { status: 429 });
+    }
+    if (status === 401 || msg.includes('api_key') || msg.includes('API key')) {
+      return Response.json({ error: 'Falha ao gerar análise. Verifique a chave GROQ_API_KEY.' }, { status: 500 });
+    }
+    if (err instanceof SyntaxError || msg.includes('Estrutura JSON inválida')) {
+      return Response.json({ error: 'A IA retornou uma análise incompleta. Tente gerar novamente.' }, { status: 500 });
+    }
+
+    return Response.json({ error: 'Falha ao gerar análise. Tente novamente em instantes.' }, { status: 500 });
   }
 }

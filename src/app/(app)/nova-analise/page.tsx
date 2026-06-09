@@ -1196,7 +1196,13 @@ export default function NovaAnalise() {
                     Ver planos
                   </a>
                 ) : (
-                  <p className="mt-2 text-[11px] text-slate-500">Tente novamente em instantes.</p>
+                  <button
+                    type="button"
+                    onClick={() => { setErrorMessage(null); }}
+                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 transition-all hover:bg-rose-50"
+                  >
+                    Tentar novamente
+                  </button>
                 )}
               </div>
 
