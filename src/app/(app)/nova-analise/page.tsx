@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useApp, CaseAnalysis, planCanAccess } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
@@ -98,40 +99,40 @@ const APPROACH_OPTIONS = [
   },
 ] as const;
 
+/* ══════════════════════ Markdown helpers ══════════════════════ */
+
+function renderMd(text: string) {
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ children }) => (
+          <p style={{ color: '#374151', lineHeight: 1.8, marginBottom: '0.75rem' }}>{children}</p>
+        ),
+        strong: ({ children }) => (
+          <strong style={{ fontWeight: 600, color: '#1e293b' }}>{children}</strong>
+        ),
+        li: ({ children }) => (
+          <li style={{ color: '#374151', lineHeight: 1.8 }}>{children}</li>
+        ),
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
+}
+
 /* ══════════════════════ FormattedText ══════════════════════ */
 
-function FormattedText({ text, italic = false }: { text: string; italic?: boolean }) {
-  const rawParagraphs = text.split(/\n{1,2}/).filter(p => p.trim());
-
-  const paragraphs: string[] = [];
-  for (const para of rawParagraphs) {
-    const sentences = para.match(/[^.!?]+[.!?]+["']?\s*/g) ?? [para];
-    let chunk = '';
-    let count = 0;
-    for (const s of sentences) {
-      chunk += s;
-      count++;
-      if (count >= 3) {
-        paragraphs.push(chunk.trim());
-        chunk = '';
-        count = 0;
-      }
-    }
-    if (chunk.trim()) paragraphs.push(chunk.trim());
-  }
+function FormattedText({ text }: { text: string }) {
+  const paragraphs = text.split(/\n{1,2}/).filter(p => p.trim());
 
   return (
-    <div className="space-y-3" style={{ color: '#374151', lineHeight: 1.8 }}>
-      {paragraphs.map((para, i) => {
-        const m = para.match(/^([^.!?]+[.!?]+["']?\s*)([\s\S]*)$/);
-        const fontStyle = italic ? 'italic' : undefined;
-        return (
-          <p key={i} style={{ color: '#374151', lineHeight: 1.8, fontStyle }}>
-            <strong className="font-semibold" style={{ fontStyle: 'normal' }}>{m ? m[1] : para}</strong>
-            {m?.[2] ?? ''}
-          </p>
-        );
-      })}
+    <div className="space-y-0" style={{ color: '#374151', lineHeight: 1.8 }}>
+      {paragraphs.map((para, i) => (
+        <div key={i} style={{ color: '#374151', lineHeight: 1.8 }}>
+          {renderMd(para)}
+        </div>
+      ))}
     </div>
   );
 }
@@ -284,28 +285,61 @@ function AnalysisCard({
 
       {/* ── Hipótese central — largura total ── */}
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
-        <h4 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
+        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
           <Brain className="h-4 w-4 text-blue-600" />
           Hipótese central
         </h4>
         <div style={{ fontFamily: 'Georgia, serif' }}>
-          <FormattedText text={hipotese} italic />
+          {hipotese.split(/\n{1,2}/).filter(p => p.trim()).map((para, i) => (
+            <div key={i}>
+              {i === 0 ? (
+                <div
+                  style={{
+                    background: '#F8FAFF',
+                    borderLeft: '3px solid #3B82F6',
+                    borderRadius: '6px',
+                    padding: '12px 16px',
+                    marginBottom: '20px',
+                  }}
+                >
+                  {renderMd(para)}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    paddingTop: '16px',
+                    paddingBottom: '16px',
+                    borderBottom: i < hipotese.split(/\n{1,2}/).filter(p => p.trim()).length - 1
+                      ? '1px solid #F3F4F6'
+                      : 'none',
+                  }}
+                >
+                  {renderMd(para)}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── Plano imediato — largura total ── */}
+      {/* ── Plano imediato — cards individuais ── */}
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
-        <h4 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
+        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
           <TrendingUp className="h-4 w-4 text-emerald-600" />
           Plano imediato
         </h4>
-        <ol className="divide-y divide-slate-100">
+        <ol className="flex flex-col gap-3">
           {plano.map((p, i) => (
-            <li key={i} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white mt-0.5">
+            <li
+              key={i}
+              className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[12px] font-bold text-white mt-0.5">
                 {i + 1}
               </span>
-              <span className="text-[15px] leading-[1.7] text-slate-600">{p}</span>
+              <div className="text-[14px] leading-[1.7]" style={{ color: '#374151' }}>
+                {renderMd(p)}
+              </div>
             </li>
           ))}
         </ol>
@@ -313,14 +347,25 @@ function AnalysisCard({
 
       {/* ── Perguntas clínicas — largura total ── */}
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
-        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
+        <h4 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
           <HelpCircle className="h-4 w-4 text-amber-600" />
           Perguntas clínicas
         </h4>
-        <ul className="space-y-4">
+        <ul className="divide-y divide-slate-100">
           {perguntas.slice(0, 5).map((q, i) => (
-            <li key={i} className="text-[15px] italic leading-[1.7] text-slate-600" style={{ fontFamily: 'Georgia, serif' }}>
-              &ldquo;{q}&rdquo;
+            <li key={i} className="flex items-start gap-3 py-2.5 first:pt-1">
+              <span
+                className="shrink-0 mt-0.5 text-[22px] font-serif leading-none"
+                style={{ color: '#93C5FD', lineHeight: 1 }}
+              >
+                &ldquo;
+              </span>
+              <p
+                className="text-[15px] italic leading-[1.7]"
+                style={{ color: '#374151', fontFamily: 'Georgia, serif' }}
+              >
+                {q}
+              </p>
             </li>
           ))}
         </ul>
