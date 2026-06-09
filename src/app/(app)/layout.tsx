@@ -84,7 +84,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         lg:translate-x-0 lg:static lg:h-screen lg:flex
         ${mobileMenuOpen ? 'translate-x-0 pt-20' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className={`m-4 lg:my-4 lg:ml-4 w-[calc(100%-2rem)] lg:w-60 rounded-3xl border shadow-sm p-5 flex flex-col h-[calc(100vh-2rem)] ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
+        <div className={`m-4 lg:my-4 lg:ml-4 w-[calc(100%-2rem)] lg:w-60 rounded-3xl border shadow-sm p-5 flex flex-col h-[calc(100vh-2rem)] ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-slate-100'}`}>
           {/* Logo */}
           <div className="hidden lg:flex items-center mb-7 px-2">
             <img src="/imagens/logo.png" alt="PsiCoach AI" className="h-10 w-auto" />
@@ -120,7 +120,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Usage card */}
-          <div className={`mt-4 mb-4 p-4 rounded-2xl border ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+          <div className={`mt-4 mb-4 p-4 rounded-2xl border ${darkMode ? 'bg-neutral-950 border-neutral-800' : 'bg-slate-50 border-slate-100'}`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Plano <span className="text-blue-600 capitalize">{activePlan}</span>
