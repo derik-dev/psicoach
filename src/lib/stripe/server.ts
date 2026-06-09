@@ -58,7 +58,7 @@ export async function syncStripeSubscription(
 
   const isDeleted = subscription.status === 'canceled' || subscription.status === 'incomplete_expired';
   const savedPlan = isDeleted ? 'free' : plan;
-  const analysesLimit = savedPlan === 'free' ? 0 : STRIPE_PLANS[savedPlan].analysesLimit;
+  const analysesLimit = savedPlan === 'free' ? 7 : STRIPE_PLANS[savedPlan].analysesLimit;
 
   const { error } = await admin.from('subscriptions').upsert(
     {

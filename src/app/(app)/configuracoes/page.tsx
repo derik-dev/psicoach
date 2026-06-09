@@ -327,7 +327,7 @@ export default function Configs() {
                     )}
                   </div>
                   <p className="text-xs text-slate-500">
-                    {activePlan === 'free' ? 'Assine para liberar as análises clínicas' : activePlan === 'starter' ? 'Limite de 15 análises mensais' : activePlan === 'plus' ? 'Limite de 40 análises mensais' : 'Análises clínicas ilimitadas'}
+                    {activePlan === 'free' ? '7 análises gratuitas por mês' : activePlan === 'starter' ? 'Limite de 15 análises mensais' : activePlan === 'plus' ? 'Limite de 40 análises mensais' : 'Análises clínicas ilimitadas'}
                   </p>
                 </div>
                 <div className="text-left md:text-right">

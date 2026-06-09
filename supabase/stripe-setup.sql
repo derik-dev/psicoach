@@ -19,7 +19,7 @@ create unique index if not exists subscriptions_stripe_sub_id_key
 
 -- O projeto ainda não cobrava de verdade. Contas sem assinatura Stripe voltam ao estado gratuito.
 update public.subscriptions
-set plan = 'free', status = 'inactive', analyses_limit = 0, updated_at = now()
+set plan = 'free', status = 'inactive', analyses_limit = 7, updated_at = now()
 where stripe_sub_id is null;
 
 -- Somente o backend com service role altera cobrança e consumo.

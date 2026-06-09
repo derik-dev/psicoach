@@ -167,13 +167,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSubscriptionStatus(sub.status || null);
       setCurrentPeriodEnd(sub.current_period_end || null);
       setAnalysesUsed(sub.analyses_used || 0);
-      setAnalysesLimit(hasPaidAccess ? (sub.analyses_limit ?? 0) : 0);
+      setAnalysesLimit(sub.analyses_limit ?? (hasPaidAccess ? 0 : 7));
     } else {
       _setActivePlan('free');
       setSubscriptionStatus(null);
       setCurrentPeriodEnd(null);
       setAnalysesUsed(0);
-      setAnalysesLimit(0);
+      setAnalysesLimit(7);
     }
 
     if (casesData) {
