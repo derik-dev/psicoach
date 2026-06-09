@@ -1,28 +1,20 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useApp, CaseAnalysis, ClinicalCase, planCanAccess } from '@/context/AppContext';
+import { useApp, CaseAnalysis, planCanAccess } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
   Brain, Sparkles, ChevronDown, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
-  CheckCircle, MessageSquare, LayoutTemplate, Send, User, Bot, Plus,
-  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, History, Lock,
+  CheckCircle, LayoutTemplate, Plus,
+  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, Lock,
 } from 'lucide-react';
 
 /* ─────────────────────────── types ─────────────────────────── */
 
-type Mode = 'standard' | 'chat' | 'audio';
+type Mode = 'standard' | 'audio';
 type AtencaoNivel = 'baixo' | 'moderado' | 'alto';
-
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  text: string;
-  analysis?: CaseAnalysis;
-  isLoading?: boolean;
-}
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 
@@ -682,7 +674,7 @@ function ApproachPanel({
 /* ════════════════════ main page ════════════════════ */
 
 export default function NovaAnalise() {
-  const { user, cases, addCase, updateCase, addChatMessage, setAnalysesUsed } = useApp();
+  const { user, cases, addCase, updateCase, setAnalysesUsed } = useApp();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>('standard');
@@ -703,17 +695,7 @@ export default function NovaAnalise() {
   const [errorMessage, setErrorMessage]     = useState<string | null>(null);
   const [copySuccess, setCopySuccess]       = useState(false);
 
-  /* chat mode */
-  const [chatMessages, setChatMessages]   = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput]         = useState('');
-  const [isChatSending, setIsChatSending] = useState(false);
-  const [chatCopyId, setChatCopyId]       = useState<string | null>(null);
-  const [currentChatCaseId, setCurrentChatCaseId] = useState<string | null>(null);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [loadedCaseAnalysis, setLoadedCaseAnalysis] = useState<CaseAnalysis | null>(null);
-  const [loadedCaseTitle, setLoadedCaseTitle] = useState<string | null>(null);
-
-  /* audio recording (shared between chat and audio mode) */
+  /* audio recording */
   const [isRecording, setIsRecording]       = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef  = useRef<MediaRecorder | null>(null);
@@ -729,16 +711,10 @@ export default function NovaAnalise() {
   const [audioCopySuccess, setAudioCopySuccess] = useState(false);
 
   const bottomRef      = useRef<HTMLDivElement>(null);
-  const chatBottomRef  = useRef<HTMLDivElement>(null);
-  const chatInputRef   = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (user && !useCustomApproach) setCustomApproach(user.mainApproach);
   }, [user, useCustomApproach]);
-
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
 
   /* ── auth token helper ── */
   const getAuthHeaders = async (): Promise<Record<string, string> | null> => {
@@ -824,157 +800,6 @@ export default function NovaAnalise() {
     navigator.clipboard.writeText(buildCopyText(analysisResult));
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
-  };
-
-  /* ── chat handlers ── */
-
-  const handleChatReset = () => {
-    setChatMessages([]);
-    setChatInput('');
-    setCurrentChatCaseId(null);
-    setLoadedCaseAnalysis(null);
-    setLoadedCaseTitle(null);
-  };
-
-  const handleLoadCase = (c: ClinicalCase) => {
-    const mapped: ChatMessage[] = c.messages.map(m => ({
-      id: m.id,
-      role: m.role,
-      text: m.content,
-    }));
-    setChatMessages(mapped);
-    setCurrentChatCaseId(c.id);
-    // fill context fields
-    if (c.context.sessions_count)  setSessionsCount(c.context.sessions_count);
-    if (c.context.current_diagnosis) setCurrentDiagnosis(c.context.current_diagnosis);
-    if (c.context.already_tried)   setAlreadyTried(c.context.already_tried);
-    if (c.context.specific_question) setSpecificQuestion(c.context.specific_question);
-    // fill approach
-    if (c.approach_used) {
-      setCustomApproach(c.approach_used);
-      setUseCustomApproach(c.approach_used !== (user?.mainApproach ?? ''));
-    }
-    setLoadedCaseAnalysis(c.analysis ?? null);
-    setLoadedCaseTitle(c.title);
-    setIsHistoryOpen(false);
-  };
-
-  const handleChatSend = async () => {
-    const text = chatInput.trim();
-    if (!text || isChatSending) return;
-
-    const userMsg: ChatMessage   = { id: crypto.randomUUID(), role: 'user', text };
-    const loadingMsg: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', text: '', isLoading: true };
-    setChatMessages(prev => [...prev, userMsg, loadingMsg]);
-    setChatInput(''); setIsChatSending(true);
-
-    const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
-    const clinicalContext = {
-      sessions_count: sessionsCount,
-      current_diagnosis: currentDiagnosis,
-      already_tried: alreadyTried,
-      specific_question: specificQuestion,
-    };
-
-    try {
-      let persistedCaseId = currentChatCaseId;
-
-      if (!persistedCaseId) {
-        const savedCase = await addCase(
-          `Conversa clínica ${new Date().toLocaleDateString('pt-BR')}`,
-          text,
-          approach,
-          clinicalContext,
-          createEmptyAnalysis(),
-          { incrementUsage: false }
-        );
-        persistedCaseId = savedCase.id;
-        setCurrentChatCaseId(savedCase.id);
-      }
-
-      await addChatMessage(persistedCaseId, 'user', text);
-
-      const headers = await getAuthHeaders();
-      if (!headers) {
-        setChatMessages(prev => {
-          const updated = [...prev];
-          const idx = updated.findIndex(m => m.id === loadingMsg.id);
-          if (idx !== -1) updated[idx] = { ...loadingMsg, isLoading: false, text: 'Sessão expirada. Faça login novamente.' };
-          return updated;
-        });
-        setIsChatSending(false);
-        return;
-      }
-
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          message: text, approach,
-          context: clinicalContext,
-          history: chatMessages.map(m => ({ role: m.role, content: m.text })),
-          caseAnalysis: loadedCaseAnalysis ?? undefined,
-          profile: {
-            yearsExperience: user?.yearsExperience,
-            patientTypes: user?.patientTypes,
-            specialties: user?.specialties,
-            approachDescription: user?.approachDescription,
-          },
-        }),
-      });
-      const data = await res.json();
-
-      if (res.ok && data?.analysis) {
-        const analysis = data.analysis as CaseAnalysis;
-        await updateCase(persistedCaseId, {
-          input_text: text,
-          approach_used: approach,
-          context: clinicalContext,
-          analysis,
-        });
-        await addChatMessage(
-          persistedCaseId,
-          'assistant',
-          `Aqui está a formulação clínica com base no que você compartilhou:\n\n${buildCopyText(analysis)}`
-        );
-      } else if (res.ok && data?.reply) {
-        await addChatMessage(persistedCaseId, 'assistant', data.reply);
-      }
-
-      setChatMessages(prev => {
-        const updated = [...prev];
-        const idx = updated.findIndex(m => m.id === loadingMsg.id);
-        if (idx === -1) return prev;
-        if (!res.ok)
-          updated[idx] = { ...loadingMsg, isLoading: false, text: data?.error || 'Não foi possível gerar a análise no momento.' };
-        else if (data?.analysis)
-          updated[idx] = { ...loadingMsg, isLoading: false, text: 'Aqui está a formulação clínica com base no que você compartilhou:', analysis: data.analysis as CaseAnalysis };
-        else
-          updated[idx] = { ...loadingMsg, isLoading: false, text: data?.reply || 'Resposta inesperada do servidor de IA.' };
-        return updated;
-      });
-    } catch (err) {
-      setChatMessages(prev => {
-        const updated = [...prev];
-        const idx = updated.findIndex(m => m.id === loadingMsg.id);
-        if (idx !== -1) {
-          updated[idx] = {
-            ...loadingMsg,
-            isLoading: false,
-            text: err instanceof Error
-              ? err.message
-              : 'Falha de comunicação ou salvamento com o servidor.',
-          };
-        }
-        return updated;
-      });
-    } finally {
-      setIsChatSending(false);
-    }
-  };
-
-  const handleChatKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend(); }
   };
 
   /* ── audio recording handlers ── */
@@ -1116,12 +941,6 @@ export default function NovaAnalise() {
     setTimeout(() => setAudioCopySuccess(false), 2000);
   };
 
-  const handleChatCopy = (msgId: string, result: CaseAnalysis) => {
-    navigator.clipboard.writeText(buildCopyText(result));
-    setChatCopyId(msgId);
-    setTimeout(() => setChatCopyId(null), 2000);
-  };
-
   void router;
 
   /* ══════════════════════════ render ══════════════════════════ */
@@ -1150,16 +969,6 @@ export default function NovaAnalise() {
             }`}
           >
             <LayoutTemplate className="h-4 w-4" /> Padrão
-          </button>
-          <button
-            onClick={() => setMode('chat')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-              mode === 'chat'
-                ? 'border border-slate-200 bg-white text-blue-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <MessageSquare className="h-4 w-4" /> Chat
           </button>
           <button
             onClick={() => setMode('audio')}
@@ -1332,218 +1141,6 @@ export default function NovaAnalise() {
                 <div ref={bottomRef} />
               </div>
             ) : null}
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════ CHAT MODE ══════════════ */}
-      {mode === 'chat' && (
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[380px_1fr]">
-
-          {/* Left: config panel */}
-          <div className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white">
-                <Brain className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Copiloto clínico</p>
-                <p className="text-[12px] font-semibold text-slate-800">Modo conversação</p>
-              </div>
-            </div>
-            <ContextPanel
-              sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
-              currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
-              alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
-              specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
-            />
-            {/* Carregar caso do histórico */}
-            <div className="relative">
-              <button
-                onClick={() => setIsHistoryOpen(v => !v)}
-                className={`inline-flex w-full items-center justify-between gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all ${isHistoryOpen ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
-              >
-                <span className="flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  Carregar caso do histórico
-                </span>
-                <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isHistoryOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {isHistoryOpen && (
-                <div className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                  <p className="border-b border-slate-100 px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Selecione um caso</p>
-                  {cases.length === 0 ? (
-                    <p className="px-3.5 py-4 text-center text-[12px] text-slate-400">Nenhum caso salvo ainda.</p>
-                  ) : (
-                    <ul className="max-h-64 overflow-y-auto">
-                      {cases.slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(c => (
-                        <li key={c.id}>
-                          <button
-                            onClick={() => handleLoadCase(c)}
-                            className="flex w-full flex-col gap-0.5 px-3.5 py-3 text-left transition-colors hover:bg-blue-50"
-                          >
-                            <span className="truncate text-[13px] font-semibold text-slate-800">{c.title}</span>
-                            <span className="text-[11px] text-slate-400">
-                              {new Date(c.created_at).toLocaleDateString('pt-BR')} · {c.messages.length} mensagens
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <ApproachPanel
-              useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
-              customApproach={customApproach} setCustomApproach={setCustomApproach}
-              mainApproach={user?.mainApproach}
-            />
-            <button
-              onClick={handleChatReset}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
-            >
-              <Plus className="h-4 w-4" /> Nova conversa
-            </button>
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-600">Dica</p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-blue-700">
-                Descreva o caso livremente. Você pode fazer perguntas, pedir novas intervenções ou aprofundar hipóteses.
-              </p>
-              <p className="mt-1.5 text-[10px] text-blue-500">Enter para enviar · Shift+Enter para nova linha</p>
-            </div>
-          </div>
-
-          {/* Right: chat window */}
-          <div
-            className="flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm"
-            style={{ height: 'calc(100vh - 220px)', minHeight: '520px' }}
-          >
-            {loadedCaseTitle && (
-              <div className="flex items-center gap-2.5 border-b border-slate-100 px-5 py-3">
-                <History className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                <span className="text-[11px] font-semibold text-slate-500">Caso carregado:</span>
-                <span className="truncate text-[12px] font-semibold text-slate-800">{loadedCaseTitle}</span>
-              </div>
-            )}
-            <div className="flex-1 space-y-5 overflow-y-auto p-5">
-              {chatMessages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
-                    <MessageSquare className="h-7 w-7" />
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-800">Inicie a conversa</h3>
-                  <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-slate-500">
-                    Descreva o caso como se estivesse conversando com um supervisor. A IA responderá com formulação clínica completa.
-                  </p>
-                  <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    {['Paciente com queixas de ansiedade intensa...', 'Preciso de ajuda com um caso de fobia...', 'Tenho um caso de luto complicado...'].map(s => (
-                      <button
-                        key={s}
-                        onClick={() => { setChatInput(s); chatInputRef.current?.focus(); }}
-                        className="rounded-xl border border-slate-200 px-3.5 py-2 text-[12px] font-medium text-slate-600 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                chatMessages.map(msg => (
-                  <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${msg.role === 'user' ? 'bg-slate-200 text-slate-600' : 'bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.28)]'}`}>
-                      {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                    </div>
-                    <div className={`max-w-[80%] space-y-3 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}>
-                      {msg.isLoading ? (
-                        <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm border border-slate-100 bg-white px-4 py-3 shadow-sm">
-                          <div className="flex gap-1">
-                            {[0, 150, 300].map(d => <span key={d} className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: `${d}ms` }} />)}
-                          </div>
-                          <span className="text-[12px] text-slate-400">Tecendo formulação...</span>
-                        </div>
-                      ) : msg.role === 'user' ? (
-                        <div className="rounded-2xl rounded-tr-sm bg-blue-600 px-4 py-3 text-[13px] leading-relaxed text-white">
-                          {msg.text}
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {msg.text && (
-                            <div className="rounded-2xl rounded-tl-sm border border-slate-100 bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-700 shadow-sm">
-                              {msg.text}
-                            </div>
-                          )}
-                          {msg.analysis && (
-                            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                              <AnalysisCard
-                                result={msg.analysis}
-                                onCopy={() => handleChatCopy(msg.id, msg.analysis!)}
-                                copySuccess={chatCopyId === msg.id}
-                              />
-                            </div>
-                          )}
-                          {!msg.analysis && msg.text && (msg.text.includes('IA') || msg.text.includes('servidor')) && (
-                            <div className="flex items-start gap-2 rounded-2xl rounded-tl-sm border border-rose-100 bg-rose-50 px-4 py-3 text-[12px] text-rose-700">
-                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                              {msg.text}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-              <div ref={chatBottomRef} />
-            </div>
-
-            {/* Chat input */}
-            <div className="border-t border-slate-100 p-4">
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={chatInputRef}
-                  rows={2}
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={handleChatKeyDown}
-                  placeholder="Descreva o caso ou faça uma pergunta ao copiloto..."
-                  className="flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                />
-                {/* Mic button */}
-                <button
-                  type="button"
-                  onClick={isRecording ? stopRecording : () => startRecording(text => { setChatInput(prev => prev ? `${prev} ${text}` : text); chatInputRef.current?.focus(); })}
-                  disabled={isTranscribing || isChatSending}
-                  title={isRecording ? 'Parar gravação' : 'Gravar áudio'}
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${
-                    isRecording
-                      ? 'animate-pulse bg-rose-500 text-white shadow-[0_8px_20px_rgba(239,68,68,0.35)]'
-                      : 'border border-slate-200 bg-slate-50 text-slate-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600'
-                  } disabled:cursor-not-allowed disabled:opacity-40`}
-                >
-                  {isTranscribing ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : isRecording ? (
-                    <Square className="h-4 w-4 fill-current" />
-                  ) : (
-                    <Mic className="h-4 w-4" />
-                  )}
-                </button>
-                {/* Send button */}
-                <button
-                  onClick={handleChatSend}
-                  disabled={!chatInput.trim() || isChatSending}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:shadow-none"
-                >
-                  {isChatSending ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}

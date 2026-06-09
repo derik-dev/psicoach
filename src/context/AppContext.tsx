@@ -102,7 +102,6 @@ interface AppContextType {
   ) => Promise<ClinicalCase>;
   updateCase: (id: string, updates: Partial<ClinicalCase>) => Promise<void>;
   deleteCase: (id: string) => Promise<void>;
-  addChatMessage: (caseId: string, role: 'user' | 'assistant', content: string) => Promise<void>;
   logout: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: string | null }>;
@@ -443,48 +442,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCases((prev) => prev.filter((c) => c.id !== id));
   };
 
-  const addChatMessage = async (
-    caseId: string,
-    role: 'user' | 'assistant',
-    content: string
-  ): Promise<void> => {
-    if (!userIdRef.current) {
-      throw new Error('Usuário não autenticado. Não foi possível salvar mensagem no Supabase.');
-    }
-
-    const newMsg: CaseMessage = {
-      id: crypto.randomUUID(),
-      role,
-      content,
-      created_at: new Date().toISOString(),
-    };
-
-    const { error } = await supabase.from('messages').insert({
-      id: newMsg.id,
-      case_id: caseId,
-      user_id: userIdRef.current,
-      role,
-      content,
-    });
-
-    if (error) {
-      throw new Error(`Falha ao salvar mensagem no Supabase: ${error.message}`);
-    }
-
-    setCases((prev) =>
-      prev.map((c) => {
-        if (c.id === caseId) {
-          return {
-            ...c,
-            messages: [...c.messages, newMsg],
-            updated_at: new Date().toISOString(),
-          };
-        }
-        return c;
-      })
-    );
-  };
-
   const logout = async (): Promise<void> => {
     await supabase.auth.signOut();
     _setUser(null);
@@ -513,7 +470,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addCase,
         updateCase,
         deleteCase,
-        addChatMessage,
         logout,
         signIn,
         signInWithGoogle,

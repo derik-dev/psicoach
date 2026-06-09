@@ -164,8 +164,8 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="diferenciais" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
-        <div className="max-w-6xl mx-auto space-y-14">
+      <section id="diferenciais" className="bg-[#f4f6f9] py-14 lg:py-20 px-6">
+        <div className="max-w-6xl mx-auto space-y-10">
 
           <div className="text-center space-y-4 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 mx-auto shadow-sm">
@@ -295,8 +295,8 @@ export default function LandingPage() {
       </section>
 
       {/* Abordagens Section */}
-      <section id="abordagens" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
-        <div className="max-w-6xl mx-auto space-y-14">
+      <section id="abordagens" className="bg-[#f4f6f9] py-14 lg:py-20 px-6">
+        <div className="max-w-6xl mx-auto space-y-10">
 
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 mx-auto shadow-sm">
@@ -339,10 +339,10 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-[#f4f6f9] px-6 py-16">
+      <section className="bg-[#f4f6f9] px-6 py-10">
         <div className="max-w-6xl mx-auto">
           <div className="rounded-3xl overflow-hidden" style={{ background: 'radial-gradient(ellipse at 20% 50%, #c7d9f8 0%, #dce8fb 40%, #edf3fd 100%)' }}>
-            <div className="py-20 px-8 text-center space-y-8">
+            <div className="py-14 px-8 text-center space-y-6">
 
               <div className="space-y-4 max-w-2xl mx-auto">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl text-slate-800 tracking-tight font-light">
@@ -377,8 +377,8 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="depoimentos" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
-        <div className="max-w-6xl mx-auto space-y-10">
+      <section id="depoimentos" className="bg-[#f4f6f9] py-14 lg:py-20 px-6">
+        <div className="max-w-6xl mx-auto space-y-8">
 
           <div className="text-center space-y-4 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 shadow-sm">
@@ -448,8 +448,8 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="precos" className="bg-[#f4f6f9] py-24 lg:py-32 px-6">
-        <div className="max-w-5xl mx-auto space-y-14">
+      <section id="precos" className="bg-[#f4f6f9] py-14 lg:py-20 px-6">
+        <div className="max-w-5xl mx-auto space-y-10">
 
           <div className="text-center space-y-4 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 shadow-sm">
@@ -574,8 +574,8 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="faq-to-footer bg-[#f4f6f9] px-6 pb-28 pt-24">
-        <div className="max-w-3xl mx-auto space-y-12">
+      <section className="faq-to-footer bg-[#f4f6f9] px-6 pb-20 pt-14">
+        <div className="max-w-3xl mx-auto space-y-8">
 
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-500 shadow-sm">
