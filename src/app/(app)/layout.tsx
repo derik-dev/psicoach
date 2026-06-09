@@ -62,13 +62,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const remaining = analysesLimit !== null ? Math.max(0, analysesLimit - analysesUsed) : null;
   const percentage = analysesLimit !== null ? (analysesUsed / analysesLimit) * 100 : 0;
+  const logoSrc = darkMode ? '/imagens/logo-dark-mode.png' : '/imagens/logo.png';
 
   return (
     <div className={`flex h-screen overflow-hidden font-sans selection:bg-blue-600/10 selection:text-blue-700 ${darkMode ? 'app-dark' : 'bg-[#f4f6f9] text-slate-900'}`}>
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-100 px-5 flex items-center justify-between z-30">
         <Link href="/dashboard" className="inline-flex items-center">
-          <img src="/imagens/logo.png" alt="PsiCoach AI" className="h-10 w-auto" />
+          <img src={logoSrc} alt="PsiCoach AI" className="h-10 w-auto" />
         </Link>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -87,7 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className={`m-4 lg:my-4 lg:ml-4 w-[calc(100%-2rem)] lg:w-60 rounded-3xl border shadow-sm p-5 flex flex-col h-[calc(100vh-2rem)] ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-slate-100'}`}>
           {/* Logo */}
           <div className="hidden lg:flex items-center mb-7 px-2">
-            <img src="/imagens/logo.png" alt="PsiCoach AI" className="h-10 w-auto" />
+            <img src={logoSrc} alt="PsiCoach AI" className="h-10 w-auto" />
           </div>
 
           {/* Navigation */}
