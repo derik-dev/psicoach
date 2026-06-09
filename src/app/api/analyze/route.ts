@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import {
   groq,
   GROQ_MODEL,
+  ANALYSIS_RESPONSE_FORMAT,
   buildSystemPrompt,
   buildAnalysisUserMessage,
   parseAnalysisJson,
@@ -57,15 +58,18 @@ export async function POST(req: NextRequest) {
 
     const userMessage = buildAnalysisUserMessage(input_text, context, title);
 
+    const systemPrompt = buildSystemPrompt(therapistProfile) + '\n\n' + JSON_SCHEMA_INSTRUCTIONS;
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
       temperature: 0.35,
       max_completion_tokens: 4096,
-      response_format: { type: 'json_object' },
+      reasoning_effort: 'medium',
+      reasoning_format: 'hidden',
+      response_format: ANALYSIS_RESPONSE_FORMAT,
       messages: [
         {
           role: 'system',
-          content: buildSystemPrompt(therapistProfile, userMessage) + '\n\n' + JSON_SCHEMA_INSTRUCTIONS,
+          content: systemPrompt,
         },
         {
           role: 'user',
@@ -75,7 +79,39 @@ export async function POST(req: NextRequest) {
     });
 
     const raw = completion.choices[0]?.message?.content ?? '';
-    const analysis = parseAnalysisJson(raw);
+    let analysis;
+
+    try {
+      analysis = parseAnalysisJson(raw);
+    } catch (firstParseError) {
+      console.warn('[/api/analyze] resposta inicial fora do contrato:', {
+        reason: firstParseError instanceof Error ? firstParseError.message : String(firstParseError),
+        finishReason: completion.choices[0]?.finish_reason,
+        outputCharacters: raw.length,
+      });
+
+      const repairCompletion = await groq.chat.completions.create({
+        model: GROQ_MODEL,
+        temperature: 0.1,
+        max_completion_tokens: 4096,
+        reasoning_effort: 'low',
+        reasoning_format: 'hidden',
+        response_format: ANALYSIS_RESPONSE_FORMAT,
+        messages: [
+          {
+            role: 'system',
+            content: `Você corrige respostas JSON de uma API clínica. Preserve o conteúdo útil da resposta original, complete campos ausentes e corrija tipos ou valores inválidos. Não invente dados do paciente. Responda somente com o objeto JSON corrigido.\n\n${JSON_SCHEMA_INSTRUCTIONS}`,
+          },
+          {
+            role: 'user',
+            content: `A resposta abaixo não passou na validação. Motivo: ${firstParseError instanceof Error ? firstParseError.message : 'formato inválido'}.\n\nRESPOSTA ORIGINAL:\n${raw}`,
+          },
+        ],
+      });
+
+      const repairedRaw = repairCompletion.choices[0]?.message?.content ?? '';
+      analysis = parseAnalysisJson(repairedRaw);
+    }
 
     const analysesUsed = access.analysesUsed + 1;
     const { error: usageError } = await access.admin

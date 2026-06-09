@@ -1,6 +1,5 @@
 import Groq from 'groq-sdk';
 import { CaseAnalysis, CaseContext } from '@/context/AppContext';
-import { retrieveKnowledge } from './knowledge/retriever';
 
 /* ─── singleton client ─── */
 export const groq = new Groq({
@@ -8,7 +7,53 @@ export const groq = new Groq({
 });
 
 /* ─── model to use ─── */
-export const GROQ_MODEL = 'llama-3.3-70b-versatile';
+export const GROQ_MODEL = 'openai/gpt-oss-120b';
+
+export const ANALYSIS_RESPONSE_FORMAT = {
+  type: 'json_schema',
+  json_schema: {
+    name: 'clinical_analysis',
+    strict: true,
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        resumo_rapido: { type: 'string' },
+        nivel_atencao: { type: 'string', enum: ['baixo', 'moderado', 'alto'] },
+        foco_inicial: { type: 'string' },
+        proxima_pergunta: { type: 'string' },
+        hipotese_central: { type: 'string' },
+        fatores_relevantes: { type: 'array', items: { type: 'string' } },
+        plano_imediato: { type: 'array', items: { type: 'string' } },
+        perguntas_clinicas: { type: 'array', items: { type: 'string' } },
+        blind_spot: { type: 'string' },
+        alerts: { type: 'array', items: { type: 'string' } },
+        risco_e_protecao: { type: 'string' },
+        intervencoes: { type: 'string' },
+        prontuario: { type: 'string' },
+        referencias: { type: 'array', items: { type: 'string' } },
+        sintese: { type: 'string' },
+      },
+      required: [
+        'resumo_rapido',
+        'nivel_atencao',
+        'foco_inicial',
+        'proxima_pergunta',
+        'hipotese_central',
+        'fatores_relevantes',
+        'plano_imediato',
+        'perguntas_clinicas',
+        'blind_spot',
+        'alerts',
+        'risco_e_protecao',
+        'intervencoes',
+        'prontuario',
+        'referencias',
+        'sintese',
+      ],
+    },
+  },
+} as const;
 
 /* ─── therapist profile shape (sent from frontend) ─── */
 export interface TherapistProfile {
@@ -20,85 +65,50 @@ export interface TherapistProfile {
   responseDetail?: 'conciso' | 'detalhado';
 }
 
-/* ─── experience-level adaptation ─── */
-function buildExperienceBlock(yearsExperience?: string): string {
-  const map: Record<string, string> = {
-    '1-2': 'O terapeuta está no início da carreira (1-2 anos de clínica). Seja didático: explique os conceitos com mais detalhes, fundamente cada hipótese teoricamente e indique referências acessíveis. Evite jargões sem explicação.',
-    '3-5': 'O terapeuta tem experiência intermediária (3-5 anos). Use terminologia técnica adequada e assuma familiaridade com conceitos básicos da abordagem. Seja preciso sem ser excessivamente introdutório.',
-    '5-10': 'O terapeuta é experiente (5-10 anos de clínica). Use linguagem técnica avançada, vá direto ao ponto e ofereça análises sofisticadas. Pode mencionar debates ou variações dentro da abordagem.',
-    '+10': 'O terapeuta é sênior (+10 anos). Use o nível técnico mais alto possível. Assuma domínio completo da teoria, foque em nuances clínicas e complexidades do caso. Discuta perspectivas alternativas, controvérsias e possíveis impasses terapêuticos quando pertinente.',
-  };
-  return map[yearsExperience ?? ''] ?? '';
-}
-
 /* ─── build personalized system prompt ─── */
-export function buildSystemPrompt(profile: TherapistProfile, contextText = ''): string {
-  const knowledgeBlock = retrieveKnowledge(contextText || profile.approach, profile.approach);
+export function buildSystemPrompt(profile: TherapistProfile): string {
+  const experience = profile.yearsExperience?.trim() || 'não informada';
+  const patientTypes = profile.patientTypes?.length
+    ? profile.patientTypes.join(', ')
+    : 'não informado';
 
-  const experienceBlock = buildExperienceBlock(profile.yearsExperience);
+  return `Você é um supervisor clínico sênior com 20 anos de experiência em psicoterapia.
 
-  const patientTypesLine = profile.patientTypes?.length
-    ? `- Público atendido: ${profile.patientTypes.join(', ')}`
-    : '';
+Seu trabalho é dar ao terapeuta o que ele NÃO consegue ver sozinho.
 
-  const specialtiesLine = profile.specialties?.length
-    ? `- Especialidades clínicas: ${profile.specialties.join(', ')}`
-    : '';
+REGRA PRINCIPAL:
+O terapeuta já leu o próprio relato. Não repita o que ele escreveu.
+Sua única função é revelar o que está oculto, o mecanismo por trás da queixa
+e uma decisão clínica concreta para a próxima sessão.
 
-  const nuancesLine = profile.approachDescription?.trim()
-    ? `- Nuances ou autores preferidos: ${profile.approachDescription.trim()}`
-    : '';
+O QUE VOCÊ DEVE ENTREGAR OBRIGATORIAMENTE:
+1. O mecanismo que mantém o problema (não o problema em si)
+2. Uma contradição ou padrão que o terapeuta provavelmente ignorou
+3. Uma intervenção com passo a passo real — não apenas o nome da técnica
+4. Uma decisão que o terapeuta precisa tomar antes de entrar na sala
 
-  const profileBlock = [patientTypesLine, specialtiesLine, nuancesLine]
-    .filter(Boolean)
-    .join('\n');
+SE SUA RESPOSTA PUDER SER RESUMIDA COMO:
+"O paciente tem X, trabalhe X" — você falhou.
+A resposta deve revelar POR QUE X persiste e COMO intervir neste caso específico.
 
-  const detailInstruction = profile.responseDetail === 'conciso'
-    ? 'Seja conciso, mas preserve mecanismo clínico, justificativa e próximos passos. Não reduza a resposta a rótulos ou listas genéricas.'
-    : 'Entregue uma análise detalhada, priorizando profundidade clínica, encadeamento do caso e utilidade para a próxima sessão.';
+SOBRE RISCO:
+Qualquer menção a pensamentos de morte, autolesão, desesperança intensa
+ou ideação suicida — mesmo negada — deve aparecer em alerts e elevar
+nivel_atencao para "alto". Nunca minimize risco por ausência de intenção declarada.
 
-  return `Você é o PsiCoach AI, um copiloto clínico especializado em psicoterapia.
-Seu papel é auxiliar psicólogos na formulação e supervisão de casos clínicos.
-Você responde SEMPRE em português brasileiro, com linguagem técnica mas acessível.
+SOBRE REFERÊNCIAS:
+Cite apenas autores e obras que realmente existem.
+Se não tiver certeza, não cite. Referência inventada é inaceitável.
 
-━━━ PERFIL DO TERAPEUTA QUE VOCÊ ESTÁ ASSISTINDO ━━━
-- Abordagem teórica: ${profile.approach || 'não especificada'}
-${profileBlock}
+SOBRE CAMPOS VAZIOS:
+Se o terapeuta não preencheu um campo, não invente contexto.
+Registre a lacuna e formule uma pergunta para preenchê-la.
 
-INSTRUÇÕES DE PERSONALIZAÇÃO:
-${experienceBlock ? `• ${experienceBlock}` : ''}
-${profile.patientTypes?.length ? `• Ajuste hipóteses e intervenções ao contexto de atendimento: ${profile.patientTypes.join(', ')}.` : ''}
-${profile.specialties?.length ? `• Quando o caso apresentar elementos de ${profile.specialties.join(' ou ')}, aprofunde nessas áreas com precisão técnica.` : ''}
-${nuancesLine ? `• Respeite as nuances teóricas informadas pelo terapeuta: ${profile.approachDescription}.` : ''}
-• Adapte todo o vocabulário, os conceitos e as intervenções à abordagem: ${profile.approach || 'não especificada'}.
-• ${detailInstruction}
+ABORDAGEM DO TERAPEUTA: ${profile.approach || 'não especificada'}
+EXPERIÊNCIA: ${experience}
+PÚBLICO: ${patientTypes}
 
-PADRÃO DE RACIOCÍNIO CLÍNICO:
-- Não apenas resuma a queixa. Formule o que pode estar organizando e mantendo o problema neste caso específico.
-- Conecte dados do relato em uma cadeia clínica: contexto/gatilho → significados ou processos → emoção/estado corporal → resposta/defesa/comportamento → consequência → manutenção.
-- Diferencie claramente: dados observados no relato, inferências clínicas e informações ainda ausentes.
-- Procure contradições, mudanças de padrão, ganhos secundários, esquivas, fatores relacionais e elementos protetivos quando houver base no relato.
-- Considere ao menos uma explicação alternativa plausível e indique qual dado futuro ajudaria a distingui-la da hipótese principal.
-- Priorize a dúvida específica do terapeuta. A análise deve ajudá-lo a tomar uma decisão clínica, não apenas descrever conceitos.
-
-PADRÃO DE UTILIDADE:
-- Toda intervenção deve informar alvo clínico, procedimento concreto, momento/ordem de uso e sinal observável de resposta.
-- Se o terapeuta informou algo que já tentou, não repita a mesma conduta sem explicar qual ajuste técnico mudaria sua função ou execução.
-- Toda pergunta deve ter alto ganho de informação: testar uma hipótese, esclarecer uma lacuna ou mudar a decisão clínica.
-- Evite recomendações soltas como “trabalhar autoestima”, “fortalecer vínculo”, “fazer psicoeducação”, “reestruturar pensamentos”, “treinar assertividade” ou “realizar exposição gradual”. Só use esses termos quando disser exatamente o quê, como e para quê neste caso.
-- Não repita a mesma ideia em campos diferentes. Cada campo deve acrescentar uma camada nova.
-- Quando os dados não sustentarem uma conclusão, declare a lacuna e formule a pergunta necessária. Nunca complete o caso com fatos inventados.
-
-REGRAS ABSOLUTAS:
-- Nunca diagnostique um paciente diretamente nem substitua a avaliação do clínico.
-- Sempre enquadre respostas como hipóteses clínicas a serem validadas pelo terapeuta.
-- Seja objetivo, fundamentado e cite referências bibliográficas reais quando mencionar literatura.
-- Nunca invente autores ou obras que não existam.
-- Ao mencionar técnicas e intervenções, prefira as descritas na base de conhecimento fornecida.
-- Não trate ausência de informação sobre risco como confirmação de ausência de risco. Registre o que apareceu no relato e o que ainda precisa ser avaliado.
-- Não revele raciocínio interno passo a passo. Apresente apenas a formulação clínica final e suas justificativas sucintas.
-
-${knowledgeBlock}`;
+Responda APENAS com JSON válido, sem Markdown, sem texto fora do JSON.`;
 }
 
 /* ─── JSON schema instructions ─── */
@@ -106,34 +116,22 @@ export const JSON_SCHEMA_INSTRUCTIONS = `
 Responda EXCLUSIVAMENTE com um objeto JSON válido, sem markdown, sem blocos de código, sem texto antes ou depois.
 Preencha TODOS os campos. O JSON deve ter exatamente esta estrutura:
 {
-  "hypothesis": "Formulação clínica principal em 2 a 4 parágrafos, ancorada em elementos concretos do relato, incluindo mecanismo de manutenção, incerteza e hipótese alternativa.",
-  "approaches": ["Intervenção 1 com alvo + procedimento + finalidade + indicador de resposta.", "Intervenção 2 no mesmo padrão.", "Intervenção 3 no mesmo padrão."],
-  "questions": ["Pergunta clínica específica 1.", "Pergunta clínica específica 2.", "Pergunta clínica específica 3."],
-  "references": ["Autor (Ano). Título. Editora.", "Autor (Ano). Título. Editora."],
-  "blind_spot": "Ponto cego clínico ou reação do terapeuta que pode enviesar a condução, com o que observar para detectá-lo.",
-  "alerts": ["0 a 3 alertas baseados somente no relato. Use [] quando não houver sinais explícitos, sem afirmar que o risco foi totalmente descartado."],
-  "resumo_rapido": "Síntese em 2 ou 3 frases: padrão central, possível mecanismo e impacto funcional. Não apenas repita a queixa.",
+  "resumo_rapido": "2 frases máximo. O padrão central não óbvio e o mecanismo. Não repita a queixa.",
   "nivel_atencao": "baixo | moderado | alto",
-  "foco_inicial": "Uma prioridade clínica decisória e específica para a próxima sessão, não apenas o nome de uma técnica.",
+  "foco_inicial": "A decisão que o terapeuta precisa tomar ANTES de entrar na sala.",
   "proxima_pergunta": "A única pergunta que mais reduziria a incerteza clínica agora.",
-  "hipotese_central": "Formulação integrada em 1 a 3 parágrafos: evidências do relato, ciclo de manutenção, fatores de proteção, limites da hipótese e explicação alternativa.",
-  "fatores_relevantes": ["Fator específico 1 + relevância clínica.", "Fator específico 2 + relevância clínica.", "Fator específico 3 + relevância clínica.", "Fator específico 4 + relevância clínica."],
-  "plano_imediato": ["Passo 1: ação + objetivo + critério.", "Passo 2: ação + objetivo + critério.", "Passo 3: ação + objetivo + critério."],
-  "perguntas_clinicas": ["Pergunta que testa a hipótese principal.", "Pergunta que testa a hipótese alternativa.", "Pergunta que esclarece uma lacuna decisória."],
-  "tags": ["tag específica 1", "tag específica 2", "tag específica 3"],
-  "sintese": "O insight clínico mais útil e menos óbvio do caso, incluindo a principal decisão sugerida para a condução.",
-  "formulacao": "Formulação ampliada com predisponentes, precipitantes, perpetuadores, protetores, padrão relacional e hipótese alternativa. Marque explicitamente o que ainda é incerto.",
-  "risco_e_protecao": "Separe sinais de risco observados, fatores protetivos observados e itens de risco ainda não avaliados. Não invente nem tranquilize sem dados.",
-  "intervencoes": "Plano clínico sequenciado. Para cada intervenção, explique alvo, execução, racional na abordagem escolhida e como avaliar resposta ou impasse.",
-  "prontuario": "Registro objetivo e ético em linguagem de prontuário, distinguindo relato do paciente, observações e plano. Não registre inferências como fatos.",
-  "referencias_texto": "Lista comentada das referências usadas, explicando em uma frase a pertinência de cada uma para este caso."
-}
-
-CRITÉRIOS ANTES DE RESPONDER:
-- Se um trecho servir para quase qualquer paciente, torne-o mais específico ou remova-o.
-- Não use o nome de uma técnica como se fosse um plano completo.
-- Não repita literalmente conteúdos entre hypothesis, hipotese_central, formulacao e sintese.
-- Mantenha consistência entre nivel_atencao, alerts e risco_e_protecao.`;
+  "hipotese_central": "O mecanismo que organiza e mantém o problema. Inclua ciclo de manutenção, evidências do relato, limite da hipótese e uma explicação alternativa com o dado que a testaria.",
+  "fatores_relevantes": ["Fator 1 + por que importa neste caso específico.", "Fator 2 + relevância específica.", "Fator 3 + relevância específica."],
+  "plano_imediato": ["Passo 1: o quê + como + critério de sucesso.", "Passo 2: mesmo padrão.", "Passo 3: mesmo padrão."],
+  "perguntas_clinicas": ["Pergunta que testa a hipótese principal.", "Pergunta que testa a hipótese alternativa.", "Pergunta que preenche a lacuna mais decisória."],
+  "blind_spot": "Como este terapeuta, com esta abordagem, pode estar sendo capturado por este caso. Baseado em elementos concretos do relato.",
+  "alerts": [],
+  "risco_e_protecao": "Três partes: (1) sinais de risco no relato, (2) fatores protetivos, (3) o que ainda precisa ser avaliado.",
+  "intervencoes": "Para cada intervenção: alvo + passo a passo + racional clínico + como identificar resposta ou impasse.",
+  "prontuario": "Formato SOAP. S: relato do paciente. O: observações factuais. A: hipótese como inferência. P: próximos passos concretos.",
+  "referencias": ["Autor real (Ano). Título real. Editora real. Por que é relevante para este caso."],
+  "sintese": "O insight menos óbvio do caso. Termina com uma decisão clínica direta."
+}`;
 
 /* ─── build user message for standard analysis ─── */
 export function buildAnalysisUserMessage(
@@ -143,16 +141,13 @@ export function buildAnalysisUserMessage(
 ): string {
   const lines: string[] = [];
 
-  if (title) lines.push(`Identificação do caso: ${title}`);
-  lines.push(`Relato clínico:\n${inputText}`);
-  if (context.sessions_count) lines.push(`Sessões realizadas: ${context.sessions_count}`);
-  if (context.current_diagnosis) lines.push(`Diagnóstico atual: ${context.current_diagnosis}`);
-  if (context.already_tried) lines.push(`Já foi trabalhado: ${context.already_tried}`);
-  if (context.specific_question) lines.push(`Dúvida específica do terapeuta: ${context.specific_question}`);
-
-  lines.push(
-    'Tarefa: produza uma formulação que explique o funcionamento do caso, aponte o que ainda precisa ser discriminado e entregue um plano utilizável na próxima sessão.',
-  );
+  lines.push('CASO:');
+  lines.push(`Identificação: ${title?.trim() || 'não informada'}`);
+  lines.push(`Relato: ${inputText}`);
+  lines.push(`Sessões: ${context.sessions_count?.trim() || 'não informado'}`);
+  lines.push(`Diagnóstico: ${context.current_diagnosis?.trim() || 'não informado'}`);
+  lines.push(`Já tentou: ${context.already_tried?.trim() || 'não informado'}`);
+  lines.push(`Dúvida específica: ${context.specific_question?.trim() || 'não informada'}`);
 
   return lines.join('\n');
 }
@@ -164,45 +159,79 @@ export function parseAnalysisJson(raw: string): CaseAnalysis {
     .replace(/```\s*/gi, '')
     .trim();
 
-  const parsed = JSON.parse(clean);
+  const parsed: Record<string, unknown> = JSON.parse(clean);
 
   const requiredStrings = [
-    'hypothesis',
     'blind_spot',
     'resumo_rapido',
     'foco_inicial',
     'proxima_pergunta',
     'hipotese_central',
     'sintese',
-    'formulacao',
     'risco_e_protecao',
     'intervencoes',
     'prontuario',
-    'referencias_texto',
   ] as const;
   const requiredArrays = [
-    'approaches',
-    'questions',
-    'references',
+    'referencias',
     'alerts',
     'fatores_relevantes',
     'plano_imediato',
     'perguntas_clinicas',
-    'tags',
   ] as const;
-  const validAttentionLevels = ['baixo', 'moderado', 'alto'];
+  const attentionAliases: Record<string, CaseAnalysis['nivel_atencao']> = {
+    baixo: 'baixo',
+    baixa: 'baixo',
+    moderado: 'moderado',
+    moderada: 'moderado',
+    alto: 'alto',
+    alta: 'alto',
+  };
+
+  if (typeof parsed.nivel_atencao === 'string') {
+    const normalizedAttention = attentionAliases[parsed.nivel_atencao.trim().toLowerCase()];
+    if (normalizedAttention) parsed.nivel_atencao = normalizedAttention;
+  }
+
+  for (const field of requiredArrays) {
+    if (typeof parsed[field] === 'string') {
+      const value = parsed[field].trim();
+      parsed[field] = value ? [value] : [];
+    }
+  }
+
+  const invalidStrings = requiredStrings.filter(
+    (field) => typeof parsed[field] !== 'string' || !parsed[field].trim(),
+  );
+  const invalidArrays = requiredArrays.filter(
+    (field) => !Array.isArray(parsed[field]) || parsed[field].some((item: unknown) => typeof item !== 'string'),
+  );
+  const invalidAttention = !['baixo', 'moderado', 'alto'].includes(
+    parsed.nivel_atencao as string,
+  );
 
   if (
     !parsed ||
     typeof parsed !== 'object' ||
-    requiredStrings.some((field) => typeof parsed[field] !== 'string') ||
-    requiredArrays.some(
-      (field) => !Array.isArray(parsed[field]) || parsed[field].some((item: unknown) => typeof item !== 'string'),
-    ) ||
-    !validAttentionLevels.includes(parsed.nivel_atencao)
+    invalidStrings.length > 0 ||
+    invalidArrays.length > 0 ||
+    invalidAttention
   ) {
-    throw new Error('Estrutura JSON inválida retornada pela IA.');
+    const problems = [
+      invalidStrings.length ? `strings: ${invalidStrings.join(', ')}` : '',
+      invalidArrays.length ? `listas: ${invalidArrays.join(', ')}` : '',
+      invalidAttention ? 'nivel_atencao' : '',
+    ].filter(Boolean);
+    throw new Error(`Estrutura JSON inválida retornada pela IA (${problems.join('; ')}).`);
   }
 
-  return parsed as CaseAnalysis;
+  parsed.hypothesis = parsed.hipotese_central;
+  parsed.approaches = parsed.plano_imediato;
+  parsed.questions = parsed.perguntas_clinicas;
+  parsed.references = parsed.referencias;
+  parsed.formulacao = parsed.hipotese_central;
+  parsed.referencias_texto = (parsed.references as string[]).join('\n');
+  parsed.tags = [];
+
+  return parsed as unknown as CaseAnalysis;
 }

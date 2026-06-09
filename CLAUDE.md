@@ -24,7 +24,7 @@ No test suite is configured.
 - **Framework:** Next.js App Router (TypeScript, `@/*` → `./src/*`)
 - **UI:** React 19, Tailwind CSS v4, Lucide React
 - **Backend/DB:** Supabase (PostgreSQL + Auth)
-- **AI:** Groq SDK (`src/lib/groq.ts`) — `llama-3.3-70b-versatile` for analysis, `whisper-large-v3` for audio transcription
+- **AI:** Groq SDK (`src/lib/groq.ts`) — `openai/gpt-oss-120b` for analysis, `whisper-large-v3` for audio transcription
 - **Error monitoring:** Sentry (`@sentry/nextjs`) — configured in `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`; `next.config.ts` wraps the config with `withSentryConfig()`
 - **Env vars required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GROQ_API_KEY`, `SENTRY_AUTH_TOKEN` (for source map upload)
 
@@ -43,7 +43,7 @@ Central React Context holds: `user`, `cases`, `activePlan`, `analysesUsed/Limit`
 nova-analise page → POST /api/analyze
   → auth validated via Bearer token (server Supabase client)
   → system prompt built from therapist profile + knowledge retrieval
-  → Groq (llama-3.3-70b-versatile, temp=0.6, max_tokens=2048) returns structured JSON
+  → Groq (openai/gpt-oss-120b, temp=0.35, reasoning=medium, strict JSON schema) returns structured JSON
   → JSON schema: { hypothesis, approaches[], questions[], references[], blind_spot, alerts[] }
   → frontend saves case to Supabase + updates AppContext
 ```
