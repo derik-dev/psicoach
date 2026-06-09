@@ -123,7 +123,7 @@ Preencha TODOS os campos. O JSON deve ter exatamente esta estrutura:
   "hipotese_central": "O mecanismo que organiza e mantém o problema. Inclua ciclo de manutenção, evidências do relato, limite da hipótese e uma explicação alternativa com o dado que a testaria.",
   "fatores_relevantes": ["Fator 1 + por que importa neste caso específico.", "Fator 2 + relevância específica.", "Fator 3 + relevância específica."],
   "plano_imediato": ["Passo 1: o quê + como + critério de sucesso.", "Passo 2: mesmo padrão.", "Passo 3: mesmo padrão."],
-  "perguntas_clinicas": ["Pergunta que testa a hipótese principal.", "Pergunta que testa a hipótese alternativa.", "Pergunta que preenche a lacuna mais decisória."],
+  "perguntas_clinicas": ["Pergunta que testa a hipótese principal.", "Pergunta que testa a hipótese alternativa.", "Pergunta que preenche a lacuna mais decisória.", "Pergunta sobre padrão relacional ou histórico relevante.", "Pergunta que o terapeuta provavelmente evitaria fazer."],
   "blind_spot": "Como este terapeuta, com esta abordagem, pode estar sendo capturado por este caso. Baseado em elementos concretos do relato.",
   "alerts": [],
   "risco_e_protecao": "Três partes: (1) sinais de risco no relato, (2) fatores protetivos, (3) o que ainda precisa ser avaliado.",
