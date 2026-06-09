@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   FileText,
   Bookmark,
-  Calendar,
   Layers,
   Heart,
   Quote
@@ -71,7 +70,6 @@ export default function Dashboard() {
           { label: 'Consultas IA', value: analysesUsed, icon: FileText, sub: 'Total executadas', color: 'text-blue-600' },
           { label: 'Disponíveis', value: remaining, icon: Layers, sub: activePlan === 'starter' ? 'No plano mensal' : 'Plano Pro', color: 'text-emerald-500' },
           { label: 'Casos Salvos', value: totalCases, icon: Bookmark, sub: 'Sob sigilo', color: 'text-amber-500' },
-          { label: 'Plano', value: activePlan.charAt(0).toUpperCase() + activePlan.slice(1), icon: Calendar, sub: 'Assinatura atual', color: 'text-rose-400' }
         ].map(({ label, value, icon: Icon, sub, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-4">
             <div className="flex items-center justify-between">
