@@ -1125,7 +1125,7 @@ export default function NovaAnalise() {
                 </div>
                 <textarea
                   required
-                  rows={3}
+                  rows={8}
                   value={inputText}
                   onChange={e => setInputText(e.target.value)}
                   placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
