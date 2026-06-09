@@ -100,7 +100,7 @@ const APPROACH_OPTIONS = [
 
 /* ══════════════════════ AnalysisCard ══════════════════════ */
 
-type TabId = 'sintese' | 'formulacao' | 'risco' | 'intervencoes' | 'prontuario' | 'referencias';
+type TabId = 'sintese' | 'formulacao' | 'fatores' | 'risco' | 'intervencoes' | 'prontuario' | 'referencias';
 
 function AnalysisCard({
   result, onCopy, copySuccess,
@@ -135,241 +135,235 @@ function AnalysisCard({
   const nivel = deriveAtencao(result);
   const cfg = ATENCAO_CFG[nivel];
 
-  /* map existing fields → new display structure */
-  const resumo       = result.resumo_rapido   || (result.hypothesis.split('.')[0] + '.');
-  const focoInicial  = result.foco_inicial    || result.approaches[0] || '—';
-  const proxPergunta = result.proxima_pergunta || result.questions[0] || '—';
-  const hipotese     = result.hipotese_central || result.hypothesis;
+  const resumo       = result.resumo_rapido    || (result.hypothesis.split('.')[0] + '.');
+  const focoInicial  = result.foco_inicial     || result.approaches[0] || '—';
+  const proxPergunta = result.proxima_pergunta  || result.questions[0] || '—';
+  const hipotese     = result.hipotese_central  || result.hypothesis;
   const fatores      = result.fatores_relevantes || result.approaches.slice(0, 5);
-  const plano        = result.plano_imediato   || result.approaches.slice(0, 3);
-  const perguntas    = result.perguntas_clinicas || result.questions.slice(0, 3);
+  const plano        = result.plano_imediato    || result.approaches.slice(0, 3);
+  const perguntas    = result.perguntas_clinicas || result.questions.slice(0, 5);
+
+  const fatoresContent = fatores.map((f, i) => `${i + 1}. ${f}`).join('\n');
 
   const tabs: { id: TabId; label: string; content: string }[] = [
-    { id: 'sintese',      label: 'Síntese',          content: result.sintese        || result.blind_spot },
-    { id: 'formulacao',   label: 'Formulação',        content: result.formulacao     || result.hypothesis },
-    { id: 'risco',        label: 'Risco e proteção',  content: result.risco_e_protecao || (result.alerts || []).join('\n') || 'Sem alertas identificados.' },
-    { id: 'intervencoes', label: 'Intervenções',      content: result.intervencoes   || result.approaches.join('\n') },
-    { id: 'prontuario',   label: 'Prontuário',        content: result.prontuario     || '' },
-    { id: 'referencias',  label: 'Referências',       content: result.referencias_texto || result.references.join('\n') },
+    { id: 'sintese',      label: 'Síntese',             content: result.sintese          || result.blind_spot },
+    { id: 'formulacao',   label: 'Formulação',           content: result.formulacao       || result.hypothesis },
+    { id: 'fatores',      label: 'Fatores relevantes',   content: fatoresContent },
+    { id: 'risco',        label: 'Risco e proteção',     content: result.risco_e_protecao || (result.alerts || []).join('\n') || 'Sem alertas identificados.' },
+    { id: 'intervencoes', label: 'Intervenções',         content: result.intervencoes     || result.approaches.join('\n') },
+    { id: 'prontuario',   label: 'Prontuário',           content: result.prontuario       || '' },
+    { id: 'referencias',  label: 'Referências',          content: result.referencias_texto || result.references.join('\n') },
   ];
 
   const activeContent = tabs.find(t => t.id === activeTab)?.content || '';
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
+      {/* ── Banner de risco alto ── */}
+      {nivel === 'alto' && (
+        <div className="rounded-xl border-l-4 border-red-600 bg-red-50 px-4 py-4 text-[14px] font-medium text-red-700 leading-snug">
+          ⚠️ Risco identificado — Avalie protocolo de segurança antes da próxima sessão
+        </div>
+      )}
+
       {/* Card header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)]">
-            <Sparkles className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)]">
+            <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <span className="block text-[9px] font-semibold uppercase tracking-widest text-blue-600">Mapa clínico</span>
-            <h3 className="text-[13px] font-semibold text-slate-800 leading-none mt-0.5">Formulação compacta</h3>
+            <span className="block text-[11px] font-semibold uppercase tracking-widest text-blue-600">Mapa clínico</span>
+            <h3 className="text-sm font-semibold text-slate-800 leading-none mt-0.5">Formulação compacta</h3>
           </div>
         </div>
         <button
           onClick={onCopy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
         >
-          <Copy className="w-3 h-3" />
+          <Copy className="w-3.5 h-3.5" />
           {copySuccess ? 'Copiado!' : 'Copiar'}
         </button>
       </div>
 
-      {/* ── NÍVEL 1 — 4 mini cards em linha ── */}
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-3.5">
-          <span className="text-[9px] font-semibold uppercase tracking-widest text-blue-600">Resumo rápido</span>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-blue-950">{resumo}</p>
+      {/* ── 4 cards superiores ── */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5 flex flex-col">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-blue-600">Resumo rápido</span>
+          <p className="mt-2 text-[14px] leading-[1.7] text-blue-950 flex-1">{resumo}</p>
         </div>
 
-        <div className={`rounded-2xl border p-3.5 ${cfg.bg} ${cfg.border}`}>
-          <span className={`text-[9px] font-semibold uppercase tracking-widest ${cfg.color}`}>Atenção clínica</span>
-          <div className="mt-1.5 flex items-center gap-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
-            <p className={`text-[11px] font-semibold leading-snug ${cfg.color}`}>{cfg.label}</p>
+        <div className={`rounded-2xl border p-5 flex flex-col ${cfg.bg} ${cfg.border}`}>
+          <span className={`text-[11px] font-semibold uppercase tracking-widest ${cfg.color}`}>Atenção clínica</span>
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+            <p className={`text-[14px] font-semibold leading-snug ${cfg.color}`}>{cfg.label}</p>
           </div>
-          <p className={`mt-1 text-[9px] leading-snug ${cfg.color} opacity-75`}>{cfg.sublabel}</p>
+          <p className={`mt-1.5 text-[12px] leading-snug ${cfg.color} opacity-75 flex-1`}>{cfg.sublabel}</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-          <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-500">Foco inicial</span>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-700">{focoInicial}</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Foco inicial</span>
+          <p className="mt-2 text-[14px] leading-[1.7] text-slate-700 flex-1">{focoInicial}</p>
         </div>
 
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3.5">
-          <span className="text-[9px] font-semibold uppercase tracking-widest text-amber-600">Próxima pergunta</span>
-          <p className="mt-1.5 text-[11px] italic leading-relaxed text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
+        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5 flex flex-col">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-amber-600">Próxima pergunta</span>
+          <p className="mt-2 text-[14px] italic leading-[1.7] text-slate-700 flex-1" style={{ fontFamily: 'Georgia, serif' }}>
             &ldquo;{proxPergunta}&rdquo;
           </p>
         </div>
       </div>
 
-      {/* ── NÍVEL 2 — grid 2×2 ── */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
-            <Brain className="h-3 w-3 text-blue-600" />
-            Hipótese central
-          </h4>
-          <p className="text-[11px] italic leading-relaxed text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
-            {hipotese}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
-            <Target className="h-3 w-3 text-purple-600" />
-            Fatores relevantes
-          </h4>
-          <ul className="space-y-1">
-            {fatores.slice(0, 5).map((f, i) => (
-              <li key={i} className="flex gap-1.5 text-[11px] text-slate-600 leading-snug">
-                <span className="mt-1 h-1 w-1 rounded-full bg-blue-400 shrink-0" />
-                <span className="line-clamp-2">{f}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
-            <TrendingUp className="h-3 w-3 text-emerald-600" />
-            Plano imediato
-          </h4>
-          <ol className="space-y-1.5">
-            {plano.slice(0, 3).map((p, i) => (
-              <li key={i} className="flex gap-2 text-[11px] text-slate-600 leading-snug">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
-                  {i + 1}
-                </span>
-                <span>{p}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-          <h4 className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-500">
-            <HelpCircle className="h-3 w-3 text-amber-600" />
-            Perguntas clínicas
-          </h4>
-          <ul className="space-y-1.5">
-            {perguntas.slice(0, 3).map((q, i) => (
-              <li key={i} className="text-[11px] italic leading-relaxed text-slate-600" style={{ fontFamily: 'Georgia, serif' }}>
-                &ldquo;{q}&rdquo;
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* ── Hipótese central — largura total ── */}
+      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
+        <h4 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
+          <Brain className="h-4 w-4 text-blue-600" />
+          Hipótese central
+        </h4>
+        <p className="text-[15px] italic leading-[1.7] text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
+          {hipotese}
+        </p>
       </div>
 
-      {/* ── NÍVEL 3 — Abas compactas ── */}
+      {/* ── Plano imediato — largura total ── */}
+      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
+        <h4 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
+          <TrendingUp className="h-4 w-4 text-emerald-600" />
+          Plano imediato
+        </h4>
+        <ol className="divide-y divide-slate-100">
+          {plano.map((p, i) => (
+            <li key={i} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white mt-0.5">
+                {i + 1}
+              </span>
+              <span className="text-[15px] leading-[1.7] text-slate-600">{p}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {/* ── Perguntas clínicas — largura total ── */}
+      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
+        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
+          <HelpCircle className="h-4 w-4 text-amber-600" />
+          Perguntas clínicas
+        </h4>
+        <ul className="space-y-4">
+          {perguntas.slice(0, 5).map((q, i) => (
+            <li key={i} className="text-[15px] italic leading-[1.7] text-slate-600" style={{ fontFamily: 'Georgia, serif' }}>
+              &ldquo;{q}&rdquo;
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* ── Abas ── */}
       <div className="overflow-hidden rounded-2xl border border-slate-200">
         <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50">
           {tabs.map((tab) => {
             const locked = isTabLocked(tab.id);
+            const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => !locked && setActiveTab(tab.id)}
-                className={`shrink-0 border-b-2 px-3 py-2 text-[10px] font-semibold transition-colors flex items-center gap-1 ${
+                className={`shrink-0 border-b-2 px-4 py-2.5 text-[12px] font-semibold transition-colors flex items-center gap-1.5 ${
                   locked
                     ? 'border-transparent text-slate-400 cursor-not-allowed'
-                    : activeTab === tab.id
-                    ? 'border-blue-600 bg-white text-blue-600'
-                    : 'border-transparent text-slate-500 hover:bg-white/60 hover:text-slate-700'
+                    : isActive
+                    ? 'border-blue-600 bg-blue-50 text-blue-700'
+                    : 'border-transparent text-slate-500 hover:bg-white/70 hover:text-slate-700'
                 }`}
               >
                 {tab.label}
-                {locked && <Lock className="w-2.5 h-2.5 shrink-0" />}
+                {locked && <Lock className="w-3 h-3 shrink-0" />}
               </button>
             );
           })}
         </div>
-        <div className="min-h-[72px] bg-white p-3.5">
+        <div className="min-h-[96px] bg-white p-6">
           {isTabLocked(activeTab) ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-4">
+            <div className="flex flex-col items-center justify-center gap-2 py-6">
               <Lock className="w-5 h-5 text-slate-300" />
-              <p className="text-[11px] text-slate-500 text-center">
+              <p className="text-[13px] text-slate-500 text-center">
                 Disponível no <span className="font-semibold">{upgradeLabel[activeTab]}</span>
               </p>
-              <a href="/pricing" className="text-[10px] font-semibold text-blue-600 hover:underline">
+              <a href="/pricing" className="text-[13px] font-semibold text-blue-600 hover:underline">
                 Fazer upgrade →
               </a>
             </div>
           ) : activeContent ? (
             <div>
-              <p className="line-clamp-5 text-[12px] leading-relaxed text-slate-600">
+              <p className="line-clamp-6 text-[15px] leading-[1.7] text-slate-700 whitespace-pre-line">
                 {activeContent}
               </p>
-              {activeContent.length > 180 && (
+              {activeContent.length > 200 && (
                 <button
                   onClick={() => setModalOpen(true)}
-                  className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                  className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                 >
-                  Ver análise completa <ChevronRight className="w-3 h-3" />
+                  Ver análise detalhada <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-[12px] italic text-slate-400">Não disponível para este caso.</p>
+            <p className="text-[14px] italic text-slate-400">Não disponível para este caso.</p>
           )}
         </div>
       </div>
 
       {/* ── Botões de ação rápida ── */}
-      <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+      <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
         <button
           onClick={onCopy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
         >
-          <Copy className="w-3 h-3" /> Copiar síntese
+          <Copy className="w-3.5 h-3.5" /> Copiar síntese
         </button>
         {planCanAccess(activePlan, 'prontuario') ? (
-          <button
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-          >
-            <Zap className="w-3 h-3" /> Gerar evolução
+          <button className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+            <Zap className="w-3.5 h-3.5" /> Gerar nota de evolução
           </button>
         ) : (
-          <a href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-400 cursor-not-allowed">
-            <Lock className="w-3 h-3" /> Gerar evolução
+          <a href="/pricing" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-[13px] font-semibold text-slate-400 cursor-not-allowed">
+            <Lock className="w-3.5 h-3.5" /> Gerar nota de evolução
           </a>
         )}
         {planCanAccess(activePlan, 'perguntas_roteiro') ? (
           <button
             onClick={() => setQuestionsModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
           >
-            <HelpCircle className="w-3 h-3" /> Gerar perguntas
+            <HelpCircle className="w-3.5 h-3.5" /> Gerar roteiro de perguntas
           </button>
         ) : (
-          <a href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-400 cursor-not-allowed">
-            <Lock className="w-3 h-3" /> Gerar perguntas
+          <a href="/pricing" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-[13px] font-semibold text-slate-400 cursor-not-allowed">
+            <Lock className="w-3.5 h-3.5" /> Gerar roteiro de perguntas
           </a>
         )}
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
         >
-          <Eye className="w-3 h-3" /> Ver análise completa
+          <Eye className="w-3.5 h-3.5" /> Ver análise detalhada
         </button>
       </div>
 
-      {/* ── Modal análise completa ── */}
+      {/* ── Modal análise detalhada ── */}
       {modalOpen && (() => {
         const tabMeta: Record<TabId, { icon: React.ReactNode; accent: string; bg: string; border: string }> = {
           sintese:      { icon: <Brain className="w-4 h-4" />,         accent: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100' },
           formulacao:   { icon: <FileText className="w-4 h-4" />,      accent: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
+          fatores:      { icon: <Target className="w-4 h-4" />,        accent: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
           risco:        { icon: <AlertTriangle className="w-4 h-4" />, accent: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-100' },
           intervencoes: { icon: <Zap className="w-4 h-4" />,           accent: 'text-emerald-600',bg: 'bg-emerald-50',border: 'border-emerald-100' },
           prontuario:   { icon: <BookOpen className="w-4 h-4" />,      accent: 'text-slate-600',  bg: 'bg-slate-50',  border: 'border-slate-200' },
           referencias:  { icon: <BookOpen className="w-4 h-4" />,      accent: 'text-slate-600',  bg: 'bg-slate-50',  border: 'border-slate-200' },
         };
         const meta = tabMeta[activeTab] ?? tabMeta.sintese;
-        const activeLabel = tabs.find(t => t.id === activeTab)?.label || 'Análise completa';
+        const activeLabel = tabs.find(t => t.id === activeTab)?.label || 'Análise detalhada';
         return (
           <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-backdrop-in"
@@ -380,14 +374,13 @@ function AnalysisCard({
               className="relative w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[82vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl animate-modal-in overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
-              {/* Header */}
               <div className={`flex items-center justify-between px-6 py-4 ${meta.bg} border-b ${meta.border}`}>
                 <div className="flex items-center gap-2.5">
                   <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${meta.bg} ${meta.accent} ring-1 ${meta.border}`}>
                     {meta.icon}
                   </span>
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Análise completa</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Análise detalhada</p>
                     <h3 className={`text-sm font-bold ${meta.accent}`}>{activeLabel}</h3>
                   </div>
                 </div>
@@ -398,15 +391,11 @@ function AnalysisCard({
                   <X className="w-4 h-4" />
                 </button>
               </div>
-
-              {/* Body */}
               <div className="flex-1 overflow-y-auto px-6 py-6">
-                <p className="text-[14px] leading-7 text-slate-700 whitespace-pre-line">
+                <p className="text-[15px] leading-[1.7] text-slate-700 whitespace-pre-line">
                   {activeContent}
                 </p>
               </div>
-
-              {/* Footer */}
               <div className="flex items-center justify-between border-t border-slate-100 bg-white px-6 py-3">
                 <div className="flex gap-1.5">
                   {tabs.map(t => (
@@ -419,9 +408,9 @@ function AnalysisCard({
                 </div>
                 <button
                   onClick={() => navigator.clipboard.writeText(activeContent)}
-                  className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
                 >
-                  <Copy className="w-3 h-3" /> Copiar
+                  <Copy className="w-3.5 h-3.5" /> Copiar
                 </button>
               </div>
             </div>
@@ -436,7 +425,7 @@ function AnalysisCard({
             <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
               <div className="flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-amber-600" />
-                <h3 className="text-sm font-semibold text-slate-800">Perguntas clínicas</h3>
+                <h3 className="text-sm font-semibold text-slate-800">Roteiro de perguntas</h3>
               </div>
               <button
                 onClick={() => setQuestionsModalOpen(false)}
@@ -446,14 +435,14 @@ function AnalysisCard({
               </button>
             </div>
             <div className="p-6">
-              <p className="mb-4 text-[11px] text-slate-400">Perguntas sugeridas para explorar com o paciente na próxima sessão.</p>
-              <ol className="space-y-3">
+              <p className="mb-4 text-[13px] text-slate-400">Perguntas sugeridas para explorar com o paciente na próxima sessão.</p>
+              <ol className="space-y-4">
                 {(result.perguntas_clinicas || result.questions || []).map((q, i) => (
                   <li key={i} className="flex gap-3">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold text-amber-700">
                       {i + 1}
                     </span>
-                    <p className="text-[13px] italic leading-relaxed text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
+                    <p className="text-[15px] italic leading-[1.7] text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
                       &ldquo;{q}&rdquo;
                     </p>
                   </li>
