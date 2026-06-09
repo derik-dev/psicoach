@@ -768,6 +768,7 @@ export default function NovaAnalise() {
             patientTypes: user?.patientTypes,
             specialties: user?.specialties,
             approachDescription: user?.approachDescription,
+            responseDetail: user?.responseDetail,
           },
         }),
       });
@@ -917,6 +918,7 @@ export default function NovaAnalise() {
             patientTypes: user?.patientTypes,
             specialties: user?.specialties,
             approachDescription: user?.approachDescription,
+            responseDetail: user?.responseDetail,
           },
         }),
       });

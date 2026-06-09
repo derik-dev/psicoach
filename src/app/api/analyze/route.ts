@@ -52,14 +52,16 @@ export async function POST(req: NextRequest) {
       patientTypes: profile?.patientTypes,
       specialties: profile?.specialties,
       approachDescription: profile?.approachDescription,
+      responseDetail: profile?.responseDetail,
     };
 
     const userMessage = buildAnalysisUserMessage(input_text, context, title);
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
-      temperature: 0.6,
-      max_tokens: 2048,
+      temperature: 0.35,
+      max_completion_tokens: 4096,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -86,10 +88,12 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     console.error('[/api/analyze] erro:', err);
 
-    const message =
-      err instanceof SyntaxError
-        ? 'A IA retornou um formato inesperado. Tente novamente.'
-        : 'Falha ao gerar análise. Verifique a chave GROQ_API_KEY.';
+    const invalidModelResponse =
+      err instanceof SyntaxError ||
+      (err instanceof Error && err.message.includes('Estrutura JSON inválida'));
+    const message = invalidModelResponse
+      ? 'A IA retornou uma análise incompleta. Tente gerar novamente.'
+      : 'Falha ao gerar análise. Verifique a chave GROQ_API_KEY.';
 
     return Response.json({ error: message }, { status: 500 });
   }
