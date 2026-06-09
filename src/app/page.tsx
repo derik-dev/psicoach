@@ -61,11 +61,7 @@ export default function LandingPage() {
         <div className="hero-fade" />
         <header className="relative z-20 mx-auto flex h-11 max-w-[1440px] items-center justify-between">
           <Link href="/" className="group inline-flex items-center">
-            <span className="relative text-xl font-extrabold leading-none tracking-normal text-slate-950 sm:text-2xl">
-              PsiCoach
-              <span className="ml-1 text-blue-600">AI</span>
-              <span className="absolute -bottom-1 left-0 h-[3px] w-[78%] rounded-full bg-slate-950 transition-all group-hover:w-full" />
-            </span>
+            <img src="/imagens/logo.png" alt="PsiCoach AI" className="h-12 w-auto" />
           </Link>
 
           <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 rounded-full border border-white/70 bg-white/76 px-9 py-3 text-[11px] font-semibold text-slate-500 shadow-[0_12px_40px_rgba(59,130,246,0.08)] backdrop-blur-md md:flex">
