@@ -58,9 +58,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-sm p-8 lg:p-10 space-y-7">
         <div className="text-center space-y-4">
           <Link href="/" className="inline-flex items-center">
-            <span className="text-xl font-extrabold leading-none tracking-normal text-slate-950">
-              PsiCoach<span className="ml-1 text-blue-600">AI</span>
-            </span>
+            <img src="/imagens/logo.png" alt="PsiCoach AI" className="h-12 w-auto" />
           </Link>
           <h1 className="page-headline" style={{ fontSize: 'clamp(28px, 3.6vw, 40px)' }}>
             Bem-vinda de <span className="page-headline-accent">volta.</span>
