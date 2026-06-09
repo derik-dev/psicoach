@@ -98,6 +98,44 @@ const APPROACH_OPTIONS = [
   },
 ] as const;
 
+/* ══════════════════════ FormattedText ══════════════════════ */
+
+function FormattedText({ text, italic = false }: { text: string; italic?: boolean }) {
+  const rawParagraphs = text.split(/\n{1,2}/).filter(p => p.trim());
+
+  const paragraphs: string[] = [];
+  for (const para of rawParagraphs) {
+    const sentences = para.match(/[^.!?]+[.!?]+["']?\s*/g) ?? [para];
+    let chunk = '';
+    let count = 0;
+    for (const s of sentences) {
+      chunk += s;
+      count++;
+      if (count >= 3) {
+        paragraphs.push(chunk.trim());
+        chunk = '';
+        count = 0;
+      }
+    }
+    if (chunk.trim()) paragraphs.push(chunk.trim());
+  }
+
+  return (
+    <div className="space-y-3" style={{ color: '#374151', lineHeight: 1.8 }}>
+      {paragraphs.map((para, i) => {
+        const m = para.match(/^([^.!?]+[.!?]+["']?\s*)([\s\S]*)$/);
+        const fontStyle = italic ? 'italic' : undefined;
+        return (
+          <p key={i} style={{ color: '#374151', lineHeight: 1.8, fontStyle }}>
+            <strong className="font-semibold" style={{ fontStyle: 'normal' }}>{m ? m[1] : para}</strong>
+            {m?.[2] ?? ''}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ══════════════════════ AnalysisCard ══════════════════════ */
 
 type TabId = 'sintese' | 'formulacao' | 'fatores' | 'risco' | 'intervencoes' | 'prontuario' | 'referencias';
@@ -250,9 +288,9 @@ function AnalysisCard({
           <Brain className="h-4 w-4 text-blue-600" />
           Hipótese central
         </h4>
-        <p className="text-[15px] italic leading-[1.7] text-slate-700" style={{ fontFamily: 'Georgia, serif' }}>
-          {hipotese}
-        </p>
+        <div style={{ fontFamily: 'Georgia, serif' }}>
+          <FormattedText text={hipotese} italic />
+        </div>
       </div>
 
       {/* ── Plano imediato — largura total ── */}
@@ -325,9 +363,9 @@ function AnalysisCard({
             </div>
           ) : activeContent ? (
             <div>
-              <p className="line-clamp-6 text-[15px] leading-[1.7] text-slate-700 whitespace-pre-line">
-                {activeContent}
-              </p>
+              <div className="line-clamp-6 text-[15px]">
+                <FormattedText text={activeContent} />
+              </div>
               {activeContent.length > 200 && (
                 <button
                   onClick={() => setModalOpen(true)}
@@ -420,10 +458,8 @@ function AnalysisCard({
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-6 py-6">
-                <p className="text-[15px] leading-[1.7] text-slate-700 whitespace-pre-line">
-                  {activeContent}
-                </p>
+              <div className="flex-1 overflow-y-auto px-6 py-6 text-[15px]">
+                <FormattedText text={activeContent} />
               </div>
               <div className="flex items-center justify-between border-t border-slate-100 bg-white px-6 py-3">
                 <div className="flex gap-1.5">
