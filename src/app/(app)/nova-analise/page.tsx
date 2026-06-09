@@ -135,8 +135,14 @@ function AnalysisCard({
   const nivel = deriveAtencao(result);
   const cfg = ATENCAO_CFG[nivel];
 
-  const resumo       = result.resumo_rapido    || (result.hypothesis.split('.')[0] + '.');
-  const focoInicial  = result.foco_inicial     || result.approaches[0] || '—';
+  function oneSentence(text: string, maxWords = 20): string {
+    const first = text.split(/(?<=[.!?])\s+/)[0] ?? text;
+    const words = first.trim().split(/\s+/);
+    return words.length <= maxWords ? first.trim() : words.slice(0, maxWords).join(' ') + '…';
+  }
+
+  const resumo       = oneSentence(result.resumo_rapido    || result.hypothesis, 20);
+  const focoInicial  = oneSentence(result.foco_inicial     || result.approaches[0] || '—', 20);
   const proxPergunta = result.proxima_pergunta  || result.questions[0] || '—';
   const hipotese     = result.hipotese_central  || result.hypothesis;
   const fatores      = result.fatores_relevantes || result.approaches.slice(0, 5);
@@ -189,23 +195,15 @@ function AnalysisCard({
       {/* ── 4 cards superiores — altura fixa 160px ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 
-        {/* Resumo rápido */}
+        {/* Resumo rápido — 1 frase, máx 20 palavras */}
         <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 flex flex-col h-40 overflow-hidden">
           <span className="shrink-0 text-[11px] font-semibold uppercase text-blue-600" style={{ letterSpacing: '0.8px' }}>
             Resumo rápido
           </span>
-          <p className="mt-2 text-[14px] leading-[1.6] text-blue-950 line-clamp-3 flex-1">{resumo}</p>
-          {resumo.length > 120 && (
-            <button
-              onClick={() => { setActiveTab('sintese'); setModalOpen(true); }}
-              className="mt-1 shrink-0 text-left text-[11px] font-semibold text-blue-500 hover:text-blue-700 transition-colors"
-            >
-              Ver mais
-            </button>
-          )}
+          <p className="mt-3 text-[14px] leading-[1.6] text-blue-950">{resumo}</p>
         </div>
 
-        {/* Atenção clínica */}
+        {/* Atenção clínica — badge + 2 bullets */}
         <div className={`rounded-2xl border p-4 flex flex-col h-40 overflow-hidden ${cfg.bg} ${cfg.border}`}>
           <span className={`shrink-0 text-[11px] font-semibold uppercase ${cfg.color}`} style={{ letterSpacing: '0.8px' }}>
             Atenção clínica
@@ -213,57 +211,35 @@ function AnalysisCard({
           <span className={`mt-2 shrink-0 inline-block self-start rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${cfg.badge}`}>
             {cfg.label}
           </span>
-          <ul className="mt-2 space-y-1 flex-1 overflow-hidden">
-            {cfg.bullets.map((b, i) => (
-              <li key={i} className={`flex items-center gap-1.5 text-[12px] leading-snug ${cfg.color} opacity-80`}>
-                <span className="w-1 h-1 rounded-full bg-current shrink-0" />
-                <span className="truncate">{b}</span>
+          <ul className="mt-2.5 space-y-1.5">
+            {cfg.bullets.slice(0, 2).map((b, i) => (
+              <li key={i} className={`flex items-start gap-1.5 text-[12px] leading-snug ${cfg.color} opacity-85`}>
+                <span className="mt-1.5 w-1 h-1 rounded-full bg-current shrink-0" />
+                <span>{b}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Foco inicial */}
+        {/* Foco inicial — 1 frase de decisão */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col h-40 overflow-hidden">
           <span className="shrink-0 text-[11px] font-semibold uppercase text-slate-500" style={{ letterSpacing: '0.8px' }}>
             Foco inicial
           </span>
-          <p
-            className="mt-2 text-[14px] leading-[1.6] text-slate-700 line-clamp-3 flex-1"
-            title={focoInicial}
-          >
-            {focoInicial}
-          </p>
-          {focoInicial.length > 100 && (
-            <button
-              onClick={() => { setActiveTab('sintese'); setModalOpen(true); }}
-              className="mt-1 shrink-0 text-left text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              Ver mais
-            </button>
-          )}
+          <p className="mt-3 text-[14px] leading-[1.6] text-slate-700">{focoInicial}</p>
         </div>
 
-        {/* Próxima pergunta */}
+        {/* Próxima pergunta — a pergunta em itálico */}
         <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 flex flex-col h-40 overflow-hidden">
           <span className="shrink-0 text-[11px] font-semibold uppercase text-amber-600" style={{ letterSpacing: '0.8px' }}>
             Próxima pergunta
           </span>
           <p
-            className="mt-2 text-[14px] italic leading-[1.6] text-slate-700 line-clamp-3 flex-1"
+            className="mt-3 text-[14px] italic leading-[1.6] text-slate-700"
             style={{ fontFamily: 'Georgia, serif' }}
-            title={proxPergunta}
           >
             &ldquo;{proxPergunta}&rdquo;
           </p>
-          {proxPergunta.length > 100 && (
-            <button
-              onClick={() => { setActiveTab('sintese'); setModalOpen(true); }}
-              className="mt-1 shrink-0 text-left text-[11px] font-semibold text-amber-500 hover:text-amber-700 transition-colors"
-            >
-              Ver mais
-            </button>
-          )}
         </div>
 
       </div>
