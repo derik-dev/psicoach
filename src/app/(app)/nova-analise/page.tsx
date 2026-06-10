@@ -1062,7 +1062,7 @@ export default function NovaAnalise() {
     if (pat.sessions_count) setSessionsCount(pat.sessions_count);
     if (pat.initial_diagnosis) setCurrentDiagnosis(pat.initial_diagnosis);
     if (pat.previous_therapy_notes) setAlreadyTried(pat.previous_therapy_notes);
-    if (pat.entry_reason) setSpecificQuestion(pat.entry_reason);
+    if (pat.entry_reason) setInputText(pat.entry_reason);
   };
 
   /* shared config */
