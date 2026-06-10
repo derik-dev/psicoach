@@ -15,6 +15,7 @@ import {
   Sparkles,
   Moon,
   Sun,
+  Users,
 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -51,8 +52,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Nova Análise', href: '/nova-analise', icon: PlusCircle, highlight: true },
+    { name: 'Pacientes', href: '/pacientes', icon: Users },
     { name: 'Histórico', href: '/historico', icon: FolderHeart },
-{ name: 'Configurações', href: '/configuracoes', icon: Settings }
+    { name: 'Configurações', href: '/configuracoes', icon: Settings },
   ];
 
   const handleLogout = async () => {

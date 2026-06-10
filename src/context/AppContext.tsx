@@ -42,6 +42,45 @@ export interface CaseMessage {
   created_at: string;
 }
 
+export interface Patient {
+  id: string;
+  pseudonym: string;
+  age_range: string;
+  entry_reason: string;
+  initial_diagnosis: string;
+  approach: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AttentionHistoryEntry {
+  date: string;
+  level: 'baixo' | 'moderado' | 'alto';
+  session_number: number;
+}
+
+export interface PatientMemory {
+  id: string;
+  patient_id: string;
+  confirmed_hypotheses: string[];
+  discarded_hypotheses: string[];
+  what_worked: string[];
+  what_didnt_work: string[];
+  recurring_patterns: string[];
+  central_themes: string[];
+  attention_history: AttentionHistoryEntry[];
+  updated_at: string;
+}
+
+export interface PatientSession {
+  id: string;
+  patient_id: string;
+  analysis_id: string | null;
+  session_number: number;
+  therapist_notes: string;
+  created_at: string;
+}
+
 export interface ClinicalCase {
   id: string;
   title: string;
@@ -86,6 +125,7 @@ interface AppContextType {
   setUser: (user: UserProfile | null) => Promise<void>;
   cases: ClinicalCase[];
   setCases: React.Dispatch<React.SetStateAction<ClinicalCase[]>>;
+  patients: Patient[];
   activePlan: PlanType;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
@@ -102,6 +142,9 @@ interface AppContextType {
   ) => Promise<ClinicalCase>;
   updateCase: (id: string, updates: Partial<ClinicalCase>) => Promise<void>;
   deleteCase: (id: string) => Promise<void>;
+  addPatient: (data: Omit<Patient, 'id' | 'created_at' | 'updated_at'>) => Promise<Patient>;
+  updatePatient: (id: string, updates: Partial<Omit<Patient, 'id' | 'created_at'>>) => Promise<void>;
+  deletePatient: (id: string) => Promise<void>;
   logout: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: string | null }>;
@@ -114,6 +157,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, _setUser] = useState<UserProfile | null>(null);
   const [cases, setCases] = useState<ClinicalCase[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [activePlan, _setActivePlan] = useState<PlanType>('free');
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
@@ -129,7 +173,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [analysesUsed]);
 
   const loadUserData = async (userId: string, userEmail: string) => {
-    const [{ data: profile }, { data: sub }, { data: casesData }] = await Promise.all([
+    const [{ data: profile }, { data: sub }, { data: casesData }, { data: patientsData }] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', userId).single(),
       supabase.from('subscriptions').select('*').eq('user_id', userId).single(),
       supabase
@@ -137,6 +181,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .select('*, messages(*)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false }),
+      supabase
+        .from('patients')
+        .select('*')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false }),
     ]);
 
     if (profile) {
@@ -170,6 +219,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentPeriodEnd(null);
       setAnalysesUsed(0);
       setAnalysesLimit(7);
+    }
+
+    if (patientsData) {
+      setPatients(patientsData.map(p => ({
+        id: p.id,
+        pseudonym: p.pseudonym,
+        age_range: p.age_range || '',
+        entry_reason: p.entry_reason || '',
+        initial_diagnosis: p.initial_diagnosis || '',
+        approach: p.approach || '',
+        created_at: p.created_at,
+        updated_at: p.updated_at,
+      })));
     }
 
     if (casesData) {
@@ -428,6 +490,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const addPatient = async (data: Omit<Patient, 'id' | 'created_at' | 'updated_at'>): Promise<Patient> => {
+    if (!userIdRef.current) throw new Error('Usuário não autenticado.');
+    const newPatient: Patient = {
+      id: crypto.randomUUID(),
+      ...data,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from('patients').insert({
+      ...newPatient,
+      user_id: userIdRef.current,
+    });
+    if (error) throw new Error(`Falha ao criar paciente: ${error.message}`);
+    setPatients(prev => [newPatient, ...prev]);
+    return newPatient;
+  };
+
+  const updatePatient = async (id: string, updates: Partial<Omit<Patient, 'id' | 'created_at'>>): Promise<void> => {
+    if (!userIdRef.current) throw new Error('Usuário não autenticado.');
+    const updatedAt = new Date().toISOString();
+    const { error } = await supabase.from('patients').update({ ...updates, updated_at: updatedAt }).eq('id', id);
+    if (error) throw new Error(`Falha ao atualizar paciente: ${error.message}`);
+    setPatients(prev => prev.map(p => p.id === id ? { ...p, ...updates, updated_at: updatedAt } : p));
+  };
+
+  const deletePatient = async (id: string): Promise<void> => {
+    if (!userIdRef.current) throw new Error('Usuário não autenticado.');
+    const { error } = await supabase.from('patients').delete().eq('id', id);
+    if (error) throw new Error(`Falha ao excluir paciente: ${error.message}`);
+    setPatients(prev => prev.filter(p => p.id !== id));
+  };
+
   const deleteCase = async (id: string): Promise<void> => {
     if (!userIdRef.current) {
       throw new Error('Usuário não autenticado. Não foi possível excluir no Supabase.');
@@ -446,6 +540,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await supabase.auth.signOut();
     _setUser(null);
     setCases([]);
+    setPatients([]);
     _setActivePlan('free');
     setSubscriptionStatus(null);
     setCurrentPeriodEnd(null);
@@ -461,6 +556,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUser,
         cases,
         setCases,
+        patients,
         activePlan,
         subscriptionStatus,
         currentPeriodEnd,
@@ -470,6 +566,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addCase,
         updateCase,
         deleteCase,
+        addPatient,
+        updatePatient,
+        deletePatient,
         logout,
         signIn,
         signInWithGoogle,

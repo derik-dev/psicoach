@@ -8,6 +8,7 @@ import {
   parseAnalysisJson,
   JSON_SCHEMA_INSTRUCTIONS,
   TherapistProfile,
+  PatientMemoryContext,
 } from '@/lib/groq';
 import { CaseContext } from '@/context/AppContext';
 import { getAuthenticatedUser } from '@/lib/supabase/server';
@@ -35,16 +36,53 @@ export async function POST(req: NextRequest) {
       approach,
       context,
       profile,
+      patient_id,
     }: {
       title?: string;
       input_text: string;
       approach: string;
       context: CaseContext;
       profile?: Omit<TherapistProfile, 'approach'>;
+      patient_id?: string;
     } = body;
 
     if (!input_text || input_text.trim().length < 10) {
       return Response.json({ error: 'Relato clínico muito curto.' }, { status: 400 });
+    }
+
+    /* ── patient memory context (if patient selected) ── */
+    let patientMemoryContext: PatientMemoryContext | undefined;
+    let existingSessionsCount = 0;
+
+    if (patient_id) {
+      const [patientResult, memoryResult, sessionsResult] = await Promise.all([
+        access.admin.from('patients').select('*').eq('id', patient_id).single(),
+        access.admin.from('patient_memory').select('*').eq('patient_id', patient_id).single(),
+        access.admin.from('sessions').select('id').eq('patient_id', patient_id),
+      ]);
+
+      const patient = patientResult.data;
+      const memory = memoryResult.data;
+      existingSessionsCount = sessionsResult.data?.length || 0;
+
+      if (patient) {
+        const createdAt = new Date(patient.created_at);
+        const diffMs = Date.now() - createdAt.getTime();
+        const weeksDiff = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+
+        patientMemoryContext = {
+          pseudonym: patient.pseudonym,
+          weeks_in_therapy: weeksDiff,
+          sessions_count: existingSessionsCount,
+          confirmed_hypotheses: memory?.confirmed_hypotheses || [],
+          discarded_hypotheses: memory?.discarded_hypotheses || [],
+          what_worked: memory?.what_worked || [],
+          what_didnt_work: memory?.what_didnt_work || [],
+          recurring_patterns: memory?.recurring_patterns || [],
+          central_themes: memory?.central_themes || [],
+          attention_history: (memory?.attention_history || []) as PatientMemoryContext['attention_history'],
+        };
+      }
     }
 
     const therapistProfile: TherapistProfile = {
@@ -56,9 +94,9 @@ export async function POST(req: NextRequest) {
       responseDetail: profile?.responseDetail,
     };
 
-    const userMessage = buildAnalysisUserMessage(input_text, context, title);
-
+    const userMessage = buildAnalysisUserMessage(input_text, context, title, patientMemoryContext);
     const systemPrompt = buildSystemPrompt(therapistProfile) + '\n\n' + JSON_SCHEMA_INSTRUCTIONS;
+
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
       temperature: 0.35,
@@ -67,14 +105,8 @@ export async function POST(req: NextRequest) {
       reasoning_format: 'hidden',
       response_format: ANALYSIS_RESPONSE_FORMAT,
       messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        {
-          role: 'user',
-          content: userMessage,
-        },
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
       ],
     });
 
@@ -113,6 +145,7 @@ export async function POST(req: NextRequest) {
       analysis = parseAnalysisJson(repairedRaw);
     }
 
+    /* ── update usage counter ── */
     const analysesUsed = access.analysesUsed + 1;
     const { error: usageError } = await access.admin
       .from('subscriptions')
@@ -120,7 +153,43 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id);
     if (usageError) throw new Error(`Falha ao registrar o uso: ${usageError.message}`);
 
-    return Response.json({ analysis, analysesUsed });
+    /* ── create session + update patient memory ── */
+    let session_id: string | undefined;
+
+    if (patient_id) {
+      const newSessionNumber = existingSessionsCount + 1;
+      const newAttentionEntry = {
+        date: new Date().toISOString(),
+        level: analysis.nivel_atencao || 'baixo',
+        session_number: newSessionNumber,
+      };
+
+      const { data: newSession } = await access.admin
+        .from('sessions')
+        .insert({ patient_id, session_number: newSessionNumber, therapist_notes: '' })
+        .select('id')
+        .single();
+
+      session_id = newSession?.id;
+
+      const existingHistory = patientMemoryContext?.attention_history || [];
+      const { data: existingMemory } = await access.admin
+        .from('patient_memory').select('id').eq('patient_id', patient_id).single();
+
+      if (existingMemory) {
+        await access.admin.from('patient_memory').update({
+          attention_history: [...existingHistory, newAttentionEntry],
+          updated_at: new Date().toISOString(),
+        }).eq('patient_id', patient_id);
+      } else {
+        await access.admin.from('patient_memory').insert({
+          patient_id,
+          attention_history: [newAttentionEntry],
+        });
+      }
+    }
+
+    return Response.json({ analysis, analysesUsed, session_id });
   } catch (err: unknown) {
     console.error('[/api/analyze] erro:', err);
 

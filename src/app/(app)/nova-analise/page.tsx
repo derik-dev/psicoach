@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { useApp, CaseAnalysis, planCanAccess } from '@/context/AppContext';
+import { useApp, CaseAnalysis, Patient, planCanAccess } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -10,6 +10,7 @@ import {
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
   CheckCircle, LayoutTemplate, Plus,
   Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, Lock,
+  Users, UserPlus, Clock, Save,
 } from 'lucide-react';
 
 /* ─────────────────────────── types ─────────────────────────── */
@@ -766,13 +767,283 @@ function ApproachPanel({
   );
 }
 
+/* ════════════════════ PatientSelector ════════════════════ */
+
+interface PatientSelectorProps {
+  patients: Patient[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+  onNewPatient: () => void;
+}
+
+function PatientSelector({ patients, selectedId, onSelect, onNewPatient }: PatientSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const selected = patients.find(p => p.id === selectedId);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`w-full flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-all ${
+          open ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200 hover:border-blue-200'
+        } bg-white`}
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <Users className="h-4 w-4 shrink-0 text-slate-400" />
+          {selected ? (
+            <span className="truncate font-medium text-slate-800">{selected.pseudonym}</span>
+          ) : (
+            <span className="text-slate-400">Selecionar paciente (opcional)</span>
+          )}
+        </span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-40 left-0 right-0 top-full mt-1.5 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+          {selectedId && (
+            <button
+              type="button"
+              onClick={() => { onSelect(null); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-500 hover:bg-slate-50 border-b border-slate-100"
+            >
+              <X className="h-3.5 w-3.5" /> Remover vínculo
+            </button>
+          )}
+          <div className="max-h-48 overflow-y-auto">
+            {patients.length === 0 ? (
+              <p className="px-3 py-3 text-xs text-slate-400">Nenhum paciente cadastrado ainda.</p>
+            ) : (
+              patients.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => { onSelect(p.id); setOpen(false); }}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors ${
+                    p.id === selectedId ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-bold shrink-0">
+                    {p.pseudonym.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-sm font-medium text-slate-800 truncate">{p.pseudonym}</span>
+                    {p.age_range && <span className="block text-[10px] text-slate-400">{p.age_range}</span>}
+                  </div>
+                  {p.id === selectedId && <Check className="h-3.5 w-3.5 text-blue-600 ml-auto shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => { onNewPatient(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 border-t border-slate-100"
+          >
+            <UserPlus className="h-4 w-4" /> Novo paciente
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ════════════════════ NewPatientModal ════════════════════ */
+
+interface NewPatientModalProps {
+  onClose: () => void;
+  onSave: (patient: Patient) => void;
+}
+
+const EMPTY_PATIENT_FORM = {
+  pseudonym: '', age_range: '', entry_reason: '', initial_diagnosis: '', approach: '',
+};
+
+function NewPatientModal({ onClose, onSave }: NewPatientModalProps) {
+  const { addPatient } = useApp();
+  const [form, setForm] = useState(EMPTY_PATIENT_FORM);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.pseudonym.trim()) { setError('Pseudônimo é obrigatório.'); return; }
+    setSaving(true);
+    try {
+      const patient = await addPatient({
+        pseudonym: form.pseudonym.trim(),
+        age_range: form.age_range.trim(),
+        entry_reason: form.entry_reason.trim(),
+        initial_diagnosis: form.initial_diagnosis.trim(),
+        approach: form.approach.trim(),
+      });
+      onSave(patient);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao salvar paciente.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-blue-600" />
+            <h3 className="text-sm font-semibold text-slate-800">Novo paciente</h3>
+          </div>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-3">
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Pseudônimo <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text" value={form.pseudonym} onChange={set('pseudonym')} required
+              placeholder="Ex: Marcos, Paciente A..."
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Faixa etária</label>
+              <input
+                type="text" value={form.age_range} onChange={set('age_range')}
+                placeholder="Ex: 30-40"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Diagnóstico inicial</label>
+              <input
+                type="text" value={form.initial_diagnosis} onChange={set('initial_diagnosis')}
+                placeholder="Ex: F41.1"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Motivo de entrada</label>
+            <input
+              type="text" value={form.entry_reason} onChange={set('entry_reason')}
+              placeholder="Ex: Ansiedade generalizada, conflitos relacionais..."
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Abordagem</label>
+            <input
+              type="text" value={form.approach} onChange={set('approach')}
+              placeholder="Ex: TCC, Psicanálise..."
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          {error && <p className="text-xs text-rose-600">{error}</p>}
+          <div className="flex items-center gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-[2] rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
+              {saving ? 'Salvando...' : 'Cadastrar paciente'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════ SessionNotes ════════════════════ */
+
+interface SessionNotesProps {
+  sessionId: string;
+  patientName: string;
+}
+
+function SessionNotes({ sessionId, patientName }: SessionNotesProps) {
+  const [note, setNote] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!note.trim()) return;
+    setSaving(true);
+    try {
+      await supabase.from('sessions').update({ therapist_notes: note.trim() }).eq('id', sessionId);
+      setSaved(true);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Clock className="h-4 w-4 text-slate-400" />
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+          Nota da sessão — {patientName}
+        </span>
+      </div>
+      {saved ? (
+        <div className="flex items-center gap-2 py-2 text-emerald-600">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-sm font-medium">Nota salva com sucesso.</span>
+        </div>
+      ) : (
+        <>
+          <textarea
+            rows={3}
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="O que aconteceu nessa sessão? (opcional) — Ex: paciente trouxe melhora no sono, ainda resistente ao tema do pai..."
+            className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+          />
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!note.trim() || saving}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Save className="h-3.5 w-3.5" />
+            {saving ? 'Salvando...' : 'Salvar nota'}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ════════════════════ main page ════════════════════ */
 
 export default function NovaAnalise() {
-  const { user, cases, addCase, updateCase, setAnalysesUsed } = useApp();
+  const { user, cases, addCase, updateCase, setAnalysesUsed, patients, addPatient } = useApp();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>('standard');
+
+  /* patient */
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [showPatientModal, setShowPatientModal] = useState(false);
+  const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
 
   /* shared config */
   const [sessionsCount, setSessionsCount]   = useState('1-5');
@@ -829,6 +1100,7 @@ export default function NovaAnalise() {
     setUseCustomApproach(false);
     setCustomApproach(user?.mainApproach || '');
     setAnalysisResult(null); setErrorMessage(null);
+    setSavedSessionId(null);
   };
 
   const handleAnalyze = async (e: React.FormEvent) => {
@@ -858,6 +1130,7 @@ export default function NovaAnalise() {
         body: JSON.stringify({
           title, input_text: inputText, approach,
           context: clinicalContext,
+          patient_id: selectedPatientId || undefined,
           profile: {
             yearsExperience: user?.yearsExperience,
             patientTypes: user?.patientTypes,
@@ -871,7 +1144,11 @@ export default function NovaAnalise() {
       if (!res.ok)          setErrorMessage(data?.error || 'Não foi possível gerar a análise no momento.');
       else if (data?.analysis) {
         const analysis = data.analysis as CaseAnalysis;
-        await addCase(title, inputText, approach, clinicalContext, analysis, { incrementUsage: false });
+        const savedCase = await addCase(title, inputText, approach, clinicalContext, analysis, { incrementUsage: false });
+        if (data.session_id && savedCase?.id) {
+          await supabase.from('sessions').update({ analysis_id: savedCase.id }).eq('id', data.session_id);
+          setSavedSessionId(data.session_id);
+        }
         if (typeof data.analysesUsed === 'number') setAnalysesUsed(data.analysesUsed);
         setAnalysisResult(analysis);
       }
@@ -1008,6 +1285,7 @@ export default function NovaAnalise() {
         body: JSON.stringify({
           input_text: audioTranscript, approach,
           context: clinicalContext,
+          patient_id: selectedPatientId || undefined,
           profile: {
             yearsExperience: user?.yearsExperience,
             patientTypes: user?.patientTypes,
@@ -1020,7 +1298,11 @@ export default function NovaAnalise() {
       const data = await res.json();
       if (!res.ok) setAudioError(data?.error || 'Não foi possível gerar a análise.');
       else if (data?.analysis) {
-        await addCase('Análise por áudio', audioTranscript, approach, clinicalContext, data.analysis as CaseAnalysis, { incrementUsage: false });
+        const savedCase = await addCase('Análise por áudio', audioTranscript, approach, clinicalContext, data.analysis as CaseAnalysis, { incrementUsage: false });
+        if (data.session_id && savedCase?.id) {
+          await supabase.from('sessions').update({ analysis_id: savedCase.id }).eq('id', data.session_id);
+          setSavedSessionId(data.session_id);
+        }
         if (typeof data.analysesUsed === 'number') setAnalysesUsed(data.analysesUsed);
         setAudioResult(data.analysis as CaseAnalysis);
       } else setAudioError('Resposta inesperada do servidor de IA.');
@@ -1095,10 +1377,37 @@ export default function NovaAnalise() {
             </div>
 
             <form onSubmit={handleAnalyze} className="space-y-3">
+              {/* Seletor de paciente */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                  Paciente
+                </label>
+                <PatientSelector
+                  patients={patients}
+                  selectedId={selectedPatientId}
+                  onSelect={setSelectedPatientId}
+                  onNewPatient={() => setShowPatientModal(true)}
+                />
+                {selectedPatientId && (() => {
+                  const pat = patients.find(p => p.id === selectedPatientId);
+                  if (!pat) return null;
+                  const createdAt = new Date(pat.created_at);
+                  const diffMs = Date.now() - createdAt.getTime();
+                  const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+                  const timeLabel = weeks === 0 ? 'menos de 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
+                  return (
+                    <p className="text-[11px] text-blue-600 font-medium mt-1 flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Em acompanhamento há {timeLabel}
+                    </p>
+                  );
+                })()}
+              </div>
+
               {/* Pseudônimo */}
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  Pseudônimo (opcional)
+                  Título do caso (opcional)
                 </label>
                 <input
                   type="text"
@@ -1241,6 +1550,10 @@ export default function NovaAnalise() {
                   onCopy={handleCopyText}
                   copySuccess={copySuccess}
                 />
+                {savedSessionId && selectedPatientId && (() => {
+                  const pat = patients.find(p => p.id === selectedPatientId);
+                  return pat ? <SessionNotes sessionId={savedSessionId} patientName={pat.pseudonym} /> : null;
+                })()}
                 <div ref={bottomRef} />
               </div>
             ) : null}
@@ -1422,10 +1735,25 @@ export default function NovaAnalise() {
                   onCopy={handleAudioCopy}
                   copySuccess={audioCopySuccess}
                 />
+                {savedSessionId && selectedPatientId && (() => {
+                  const pat = patients.find(p => p.id === selectedPatientId);
+                  return pat ? <SessionNotes sessionId={savedSessionId} patientName={pat.pseudonym} /> : null;
+                })()}
               </div>
             ) : null}
           </div>
         </div>
+      )}
+
+      {/* Modal novo paciente */}
+      {showPatientModal && (
+        <NewPatientModal
+          onClose={() => setShowPatientModal(false)}
+          onSave={(patient) => {
+            setSelectedPatientId(patient.id);
+            setShowPatientModal(false);
+          }}
+        />
       )}
     </div>
   );

@@ -55,6 +55,20 @@ export const ANALYSIS_RESPONSE_FORMAT = {
   },
 } as const;
 
+/* ─── patient memory context (injected by server into the prompt) ─── */
+export interface PatientMemoryContext {
+  pseudonym: string;
+  weeks_in_therapy: number;
+  sessions_count: number;
+  confirmed_hypotheses: string[];
+  discarded_hypotheses: string[];
+  what_worked: string[];
+  what_didnt_work: string[];
+  recurring_patterns: string[];
+  central_themes: string[];
+  attention_history: { session_number: number; level: string }[];
+}
+
 /* ─── therapist profile shape (sent from frontend) ─── */
 export interface TherapistProfile {
   approach: string;
@@ -150,8 +164,39 @@ export function buildAnalysisUserMessage(
   inputText: string,
   context: CaseContext,
   title?: string,
+  patientMemory?: PatientMemoryContext,
 ): string {
   const lines: string[] = [];
+
+  if (patientMemory) {
+    lines.push('MEMÓRIA DO PACIENTE:');
+    lines.push(`Pseudônimo: ${patientMemory.pseudonym}`);
+    if (patientMemory.weeks_in_therapy > 0) {
+      const weeks = patientMemory.weeks_in_therapy;
+      const timeLabel = weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
+      lines.push(`Em terapia há: ${timeLabel}`);
+    }
+    lines.push(`Sessões realizadas: ${patientMemory.sessions_count}`);
+    if (patientMemory.confirmed_hypotheses.length > 0)
+      lines.push(`Hipóteses confirmadas: ${patientMemory.confirmed_hypotheses.join('; ')}`);
+    if (patientMemory.discarded_hypotheses.length > 0)
+      lines.push(`Hipóteses descartadas: ${patientMemory.discarded_hypotheses.join('; ')}`);
+    if (patientMemory.what_worked.length > 0)
+      lines.push(`O que funcionou: ${patientMemory.what_worked.join('; ')}`);
+    if (patientMemory.what_didnt_work.length > 0)
+      lines.push(`O que não funcionou: ${patientMemory.what_didnt_work.join('; ')}`);
+    if (patientMemory.recurring_patterns.length > 0)
+      lines.push(`Padrões recorrentes: ${patientMemory.recurring_patterns.join('; ')}`);
+    if (patientMemory.central_themes.length > 0)
+      lines.push(`Temas centrais: ${patientMemory.central_themes.join('; ')}`);
+    if (patientMemory.attention_history.length > 0) {
+      const histStr = patientMemory.attention_history
+        .map(h => `Sessão ${h.session_number}: ${h.level}`)
+        .join(' → ');
+      lines.push(`Histórico de atenção: ${histStr}`);
+    }
+    lines.push('');
+  }
 
   lines.push('CASO:');
   lines.push(`Identificação: ${title?.trim() || 'não informada'}`);
