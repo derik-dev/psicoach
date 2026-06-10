@@ -30,6 +30,15 @@ SOBRE CAMPOS VAZIOS:
 Se o terapeuta não preencheu um campo, não invente contexto.
 Registre a lacuna e formule uma pergunta para preenchê-la.
 
+ESTILO DE ESCRITA:
+- Escreva como um colega experiente conversando, não como um artigo científico.
+- Use frases curtas, com no máximo 2 linhas cada.
+- Evite jargão desnecessário. Quando usar um termo técnico, explique-o em seguida.
+- Destaque com **negrito** as palavras-chave de cada parágrafo.
+- Em hipotese_central, escreva no máximo 3 parágrafos curtos, separados por uma linha em branco.
+- Em plano_imediato, limite cada passo a no máximo 3 linhas.
+- Quebre o texto em blocos curtos e use espaço em branco para facilitar a leitura.
+
 ABORDAGEM DO TERAPEUTA: {{abordagem_teorica}}
 EXPERIÊNCIA: {{tempo_experiencia}}
 PÚBLICO: {{publicos_atendidos}}
@@ -42,23 +51,25 @@ Diagnóstico: {{diagnostico}}
 Já tentou: {{ja_tentou}}
 Dúvida específica: {{duvida}}
 
-Responda APENAS com JSON válido, sem Markdown, sem texto fora do JSON.
+Responda APENAS com JSON válido, sem texto fora do JSON.
+Dentro dos valores textuais, Markdown é permitido somente para **negrito** inline.
+Não use títulos Markdown, listas Markdown ou blocos de código.
 
 {
   "resumo_rapido": "2 frases máximo. O padrão central não óbvio e o mecanismo. Não repita a queixa.",
   "nivel_atencao": "baixo | moderado | alto",
   "foco_inicial": "A decisão que o terapeuta precisa tomar ANTES de entrar na sala.",
   "proxima_pergunta": "A única pergunta que mais reduziria a incerteza clínica agora.",
-  "hipotese_central": "O mecanismo que organiza e mantém o problema. Inclua ciclo de manutenção, evidências do relato, limite da hipótese e uma explicação alternativa com o dado que a testaria.",
+  "hipotese_central": "No máximo 3 parágrafos curtos, separados por uma linha em branco. Explique o mecanismo que organiza e mantém o problema. Inclua ciclo de manutenção, evidências do relato, limite da hipótese e uma explicação alternativa com o dado que a testaria.",
   "fatores_relevantes": [
     "Fator 1 + por que importa neste caso específico.",
     "Fator 2 + relevância específica.",
     "Fator 3 + relevância específica."
   ],
   "plano_imediato": [
-    "Passo 1: o quê + como + critério de sucesso.",
-    "Passo 2: mesmo padrão.",
-    "Passo 3: mesmo padrão."
+    "Passo 1 em no máximo 3 linhas: o quê + como + critério de sucesso.",
+    "Passo 2 no mesmo formato e limite.",
+    "Passo 3 no mesmo formato e limite."
   ],
   "perguntas_clinicas": [
     "Pergunta que testa a hipótese principal.",
