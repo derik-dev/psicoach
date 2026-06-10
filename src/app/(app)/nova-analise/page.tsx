@@ -1054,6 +1054,17 @@ export default function NovaAnalise() {
   const [showPatientModal, setShowPatientModal] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
 
+  const handlePatientSelect = (id: string | null) => {
+    setSelectedPatientId(id);
+    if (!id) return;
+    const pat = patients.find(p => p.id === id);
+    if (!pat) return;
+    if (pat.sessions_count) setSessionsCount(pat.sessions_count);
+    if (pat.initial_diagnosis) setCurrentDiagnosis(pat.initial_diagnosis);
+    if (pat.previous_therapy_notes) setAlreadyTried(pat.previous_therapy_notes);
+    if (pat.entry_reason) setSpecificQuestion(pat.entry_reason);
+  };
+
   /* shared config */
   const [sessionsCount, setSessionsCount]   = useState('1-5');
   const [currentDiagnosis, setCurrentDiagnosis] = useState('');
@@ -1394,7 +1405,7 @@ export default function NovaAnalise() {
                 <PatientSelector
                   patients={patients}
                   selectedId={selectedPatientId}
-                  onSelect={setSelectedPatientId}
+                  onSelect={handlePatientSelect}
                   onNewPatient={() => setShowPatientModal(true)}
                 />
                 {selectedPatientId && (() => {
@@ -1759,7 +1770,7 @@ export default function NovaAnalise() {
         <NewPatientModal
           onClose={() => setShowPatientModal(false)}
           onSave={(patient) => {
-            setSelectedPatientId(patient.id);
+            handlePatientSelect(patient.id);
             setShowPatientModal(false);
           }}
         />
