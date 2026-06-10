@@ -262,96 +262,98 @@ function PatientCard({ patient, sessionCount, lastSessionDate, lastAttention, on
   const createdAt = new Date(patient.created_at);
   const diffMs = Date.now() - createdAt.getTime();
   const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-  const timeLabel = weeks === 0 ? '< 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} sem.`;
+  const timeLabel = weeks === 0 ? '< 1 sem.' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} sem.`;
 
-  const attentionDot = lastAttention === 'alto' ? 'bg-rose-500' : lastAttention === 'moderado' ? 'bg-amber-400' : null;
+  const accentBar = lastAttention === 'alto'
+    ? 'bg-rose-400'
+    : lastAttention === 'moderado'
+    ? 'bg-amber-400'
+    : 'bg-transparent';
+
+  const meta = [patient.age_range && `${patient.age_range} anos`, patient.gender].filter(Boolean).join(' · ');
 
   return (
-    <div className="group rounded-2xl border border-slate-100 bg-white flex flex-col overflow-hidden hover:border-slate-200 hover:shadow-lg transition-all duration-200">
+    <Link href={`/pacientes/${patient.id}`}
+      className="group relative rounded-2xl border border-slate-100 bg-white flex flex-col overflow-hidden hover:border-blue-200 hover:shadow-[0_8px_24px_rgba(37,99,235,0.10)] transition-all duration-200 cursor-pointer">
 
-      {/* Top strip */}
-      <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className={`relative w-11 h-11 rounded-xl bg-gradient-to-br ${avatarColor(patient.pseudonym)} flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm`}>
+      {/* Attention accent bar */}
+      <div className={`h-[3px] w-full ${accentBar}`} />
+
+      <div className="p-4 flex flex-col gap-3 flex-1">
+
+        {/* Header */}
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${avatarColor(patient.pseudonym)} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
             {patient.pseudonym.slice(0, 2).toUpperCase()}
-            {attentionDot && (
-              <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${attentionDot} ring-2 ring-white`} />
-            )}
           </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-slate-800 truncate leading-tight">{patient.pseudonym}</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-              {[patient.age_range && `${patient.age_range} anos`, patient.gender].filter(Boolean).join(' · ') || 'Sem detalhes'}
-            </p>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-slate-800 truncate leading-snug">{patient.pseudonym}</h3>
+            <p className="text-[11px] text-slate-400 truncate mt-0.5">{meta || <span className="italic">sem detalhes</span>}</p>
+          </div>
+          <div className="shrink-0" onClick={e => e.preventDefault()}>
+            {confirmDelete ? (
+              <div className="flex gap-1">
+                <button onClick={() => onDelete(patient.id)}
+                  className="p-1.5 rounded-lg bg-rose-500 text-white hover:bg-rose-600 transition-colors">
+                  <Check className="h-3 w-3" />
+                </button>
+                <button onClick={() => setConfirmDelete(false)}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmDelete(true)}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-rose-400 hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100">
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        {confirmDelete ? (
-          <div className="flex gap-1 shrink-0">
-            <button onClick={() => onDelete(patient.id)}
-              className="p-1.5 rounded-lg bg-rose-500 text-white hover:bg-rose-600 transition-colors">
-              <Check className="h-3.5 w-3.5" />
-            </button>
-            <button onClick={() => setConfirmDelete(false)}
-              className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
+        {/* Entry reason */}
+        {patient.entry_reason ? (
+          <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2 italic">
+            &ldquo;{patient.entry_reason}&rdquo;
+          </p>
         ) : (
-          <button onClick={() => setConfirmDelete(true)}
-            className="p-1.5 rounded-lg text-slate-200 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0 opacity-0 group-hover:opacity-100">
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          <p className="text-[11px] text-slate-300 italic">Sem motivo de entrada registrado.</p>
         )}
-      </div>
 
-      {/* Tags */}
-      {(patient.approach || lastAttention) && (
-        <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1.5">
           {lastAttention && <AttentionBadge level={lastAttention} />}
           {patient.approach && (
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
               {patient.approach}
             </span>
           )}
+          {patient.initial_diagnosis && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+              {patient.initial_diagnosis}
+            </span>
+          )}
         </div>
-      )}
 
-      {/* Entry reason snippet */}
-      {patient.entry_reason && (
-        <div className="mx-4 mb-3 rounded-xl bg-slate-50 px-3 py-2">
-          <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{patient.entry_reason}</p>
-        </div>
-      )}
-
-      {/* Divider */}
-      <div className="mx-4 border-t border-slate-100" />
-
-      {/* Stats row */}
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <Activity className="h-3 w-3 text-slate-400" />
-          <span><span className="font-semibold text-slate-700">{sessionCount}</span> sessões</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <Clock className="h-3 w-3 text-slate-400" />
-          <span>{timeLabel} em terapia</span>
-        </div>
-        {lastSessionDate && (
-          <span className="text-[10px] text-slate-400 hidden sm:block">
-            {new Date(lastSessionDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-          </span>
-        )}
       </div>
 
-      {/* Footer CTA */}
-      <Link
-        href={`/pacientes/${patient.id}`}
-        className="mx-3 mb-3 flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 py-2.5 text-[13px] font-semibold text-white hover:bg-slate-700 transition-colors"
-      >
-        Ver perfil <ChevronRight className="h-3.5 w-3.5" />
-      </Link>
-    </div>
+      {/* Footer stats */}
+      <div className="px-4 py-3 border-t border-slate-50 flex items-center justify-between">
+        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+          <span className="flex items-center gap-1">
+            <Activity className="h-3 w-3" />
+            <span className="font-semibold text-slate-600">{sessionCount}</span> sess.
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {timeLabel}
+          </span>
+        </div>
+        <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
+          Perfil <ChevronRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    </Link>
   );
 }
 
