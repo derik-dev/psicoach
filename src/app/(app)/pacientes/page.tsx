@@ -7,11 +7,27 @@ import { supabase } from '@/lib/supabase/client';
 import {
   Users, UserPlus, Search, X, ChevronRight,
   Clock, Activity, Trash2, Check,
+  User, Calendar, Stethoscope, Brain, FileText, Sparkles,
 } from 'lucide-react';
 
 /* ── New Patient Modal ── */
 
 const EMPTY_FORM = { pseudonym: '', age_range: '', entry_reason: '', initial_diagnosis: '', approach: '' };
+
+const inputBase = "w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100";
+
+function Field({ label, icon, required, children }: { label: string; icon: React.ReactNode; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+        <span className="text-slate-400">{icon}</span>
+        {label}
+        {required && <span className="text-rose-400 normal-case tracking-normal text-[11px]">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 function NewPatientModal({ onClose, onSave }: { onClose: () => void; onSave: (p: Patient) => void }) {
   const { addPatient } = useApp();
@@ -19,7 +35,7 @@ function NewPatientModal({ onClose, onSave }: { onClose: () => void; onSave: (p:
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,58 +58,92 @@ function NewPatientModal({ onClose, onSave }: { onClose: () => void; onSave: (p:
     }
   };
 
+  const initials = form.pseudonym.trim().slice(0, 2).toUpperCase() || '?';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-blue-600" />
-            <h3 className="text-sm font-semibold text-slate-800">Novo paciente</h3>
-          </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60 overflow-hidden">
+
+        {/* Header com gradiente */}
+        <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 px-6 pt-6 pb-8">
+          <button type="button" onClick={onClose}
+            className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 transition">
             <X className="h-4 w-4" />
           </button>
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-white/20 ring-2 ring-white/30 flex items-center justify-center text-white font-bold text-lg select-none">
+              {initials}
+            </div>
+            <div>
+              <p className="text-white/70 text-xs font-medium mb-0.5 flex items-center gap-1">
+                <Sparkles className="h-3 w-3" /> Novo paciente
+              </p>
+              <h3 className="text-white text-base font-semibold leading-tight">
+                {form.pseudonym.trim() || 'Identificação do paciente'}
+              </h3>
+              <p className="text-white/60 text-xs mt-0.5">Dados clínicos iniciais — anônimos</p>
+            </div>
+          </div>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-3">
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-              Pseudônimo <span className="text-rose-500">*</span>
-            </label>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 -mt-2">
+          <Field label="Pseudônimo" icon={<User className="h-3 w-3" />} required>
             <input type="text" value={form.pseudonym} onChange={set('pseudonym')} required
-              placeholder="Ex: Marcos, Paciente A..."
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-          </div>
+              autoFocus
+              placeholder="Ex: Marcos, Paciente A, Mulher 35..."
+              className={inputBase} />
+            <p className="text-[10px] text-slate-400">Use um apelido ou código — nunca o nome real.</p>
+          </Field>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Faixa etária</label>
+            <Field label="Faixa etária" icon={<Calendar className="h-3 w-3" />}>
               <input type="text" value={form.age_range} onChange={set('age_range')} placeholder="Ex: 30-40"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Diagnóstico</label>
+                className={inputBase} />
+            </Field>
+            <Field label="Diagnóstico CID" icon={<Stethoscope className="h-3 w-3" />}>
               <input type="text" value={form.initial_diagnosis} onChange={set('initial_diagnosis')} placeholder="Ex: F41.1"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
+                className={inputBase} />
+            </Field>
+          </div>
+
+          <Field label="Motivo de entrada" icon={<FileText className="h-3 w-3" />}>
+            <textarea value={form.entry_reason} onChange={set('entry_reason')}
+              placeholder="Descreva brevemente a queixa principal e o contexto de chegada..."
+              rows={3}
+              className={`${inputBase} resize-none`} />
+          </Field>
+
+          <Field label="Abordagem terapêutica" icon={<Brain className="h-3 w-3" />}>
+            <input type="text" value={form.approach} onChange={set('approach')} placeholder="Ex: TCC, Psicanálise, Gestalt..."
+              className={inputBase} />
+          </Field>
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-100 px-3 py-2">
+              <X className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+              <p className="text-xs text-rose-600">{error}</p>
             </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Motivo de entrada</label>
-            <input type="text" value={form.entry_reason} onChange={set('entry_reason')} placeholder="Ex: Ansiedade, conflitos relacionais..."
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Abordagem</label>
-            <input type="text" value={form.approach} onChange={set('approach')} placeholder="Ex: TCC, Psicanálise..."
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-          </div>
-          {error && <p className="text-xs text-rose-600">{error}</p>}
+          )}
+
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
-              className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+              className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
               Cancelar
             </button>
             <button type="submit" disabled={saving}
-              className="flex-[2] rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
-              {saving ? 'Salvando...' : 'Cadastrar'}
+              className="flex-[2] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-2.5 text-sm font-semibold text-white hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 transition shadow-sm shadow-blue-200 flex items-center justify-center gap-2">
+              {saving ? (
+                <>
+                  <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  Cadastrar paciente
+                </>
+              )}
             </button>
           </div>
         </form>
