@@ -243,28 +243,49 @@ interface PatientCardProps {
   onDelete: (id: string) => void;
 }
 
+const AVATAR_COLORS = [
+  'from-blue-500 to-indigo-600',
+  'from-violet-500 to-purple-600',
+  'from-emerald-500 to-teal-600',
+  'from-orange-500 to-rose-500',
+  'from-cyan-500 to-blue-600',
+];
+
+function avatarColor(name: string) {
+  const i = name.charCodeAt(0) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[i];
+}
+
 function PatientCard({ patient, sessionCount, lastSessionDate, lastAttention, onDelete }: PatientCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const createdAt = new Date(patient.created_at);
   const diffMs = Date.now() - createdAt.getTime();
   const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-  const timeLabel = weeks === 0 ? 'menos de 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
+  const timeLabel = weeks === 0 ? '< 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} sem.`;
+
+  const attentionDot = lastAttention === 'alto' ? 'bg-rose-500' : lastAttention === 'moderado' ? 'bg-amber-400' : null;
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col gap-3 hover:border-blue-200 hover:shadow-md transition-all">
-      <div className="flex items-start justify-between gap-2">
+    <div className="group rounded-2xl border border-slate-100 bg-white flex flex-col overflow-hidden hover:border-slate-200 hover:shadow-lg transition-all duration-200">
+
+      {/* Top strip */}
+      <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+          <div className={`relative w-11 h-11 rounded-xl bg-gradient-to-br ${avatarColor(patient.pseudonym)} flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm`}>
             {patient.pseudonym.slice(0, 2).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-slate-800 truncate">{patient.pseudonym}</h3>
-            {patient.age_range && (
-              <p className="text-[11px] text-slate-400">{patient.age_range} anos</p>
+            {attentionDot && (
+              <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${attentionDot} ring-2 ring-white`} />
             )}
           </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-slate-800 truncate leading-tight">{patient.pseudonym}</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+              {[patient.age_range && `${patient.age_range} anos`, patient.gender].filter(Boolean).join(' · ') || 'Sem detalhes'}
+            </p>
+          </div>
         </div>
+
         {confirmDelete ? (
           <div className="flex gap-1 shrink-0">
             <button onClick={() => onDelete(patient.id)}
@@ -278,43 +299,55 @@ function PatientCard({ patient, sessionCount, lastSessionDate, lastAttention, on
           </div>
         ) : (
           <button onClick={() => setConfirmDelete(true)}
-            className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0">
+            className="p-1.5 rounded-lg text-slate-200 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0 opacity-0 group-hover:opacity-100">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {lastAttention && <AttentionBadge level={lastAttention} />}
-        {patient.approach && (
-          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
-            {patient.approach}
+      {/* Tags */}
+      {(patient.approach || lastAttention) && (
+        <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+          {lastAttention && <AttentionBadge level={lastAttention} />}
+          {patient.approach && (
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+              {patient.approach}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Entry reason snippet */}
+      {patient.entry_reason && (
+        <div className="mx-4 mb-3 rounded-xl bg-slate-50 px-3 py-2">
+          <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{patient.entry_reason}</p>
+        </div>
+      )}
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-slate-100" />
+
+      {/* Stats row */}
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <Activity className="h-3 w-3 text-slate-400" />
+          <span><span className="font-semibold text-slate-700">{sessionCount}</span> sessões</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <Clock className="h-3 w-3 text-slate-400" />
+          <span>{timeLabel} em terapia</span>
+        </div>
+        {lastSessionDate && (
+          <span className="text-[10px] text-slate-400 hidden sm:block">
+            {new Date(lastSessionDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
           </span>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 text-center">
-        <div className="rounded-xl bg-slate-50 py-2">
-          <p className="text-lg font-bold text-slate-800">{sessionCount}</p>
-          <p className="text-[10px] text-slate-400 font-medium">sessões</p>
-        </div>
-        <div className="rounded-xl bg-slate-50 py-2">
-          <p className="text-[11px] font-semibold text-slate-700 flex items-center justify-center gap-1">
-            <Clock className="h-3 w-3 text-slate-400" /> {timeLabel}
-          </p>
-          <p className="text-[10px] text-slate-400 font-medium mt-0.5">em terapia</p>
-        </div>
-      </div>
-
-      {lastSessionDate && (
-        <p className="text-[10px] text-slate-400">
-          Última sessão: {new Date(lastSessionDate).toLocaleDateString('pt-BR')}
-        </p>
-      )}
-
+      {/* Footer CTA */}
       <Link
         href={`/pacientes/${patient.id}`}
-        className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+        className="mx-3 mb-3 flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 py-2.5 text-[13px] font-semibold text-white hover:bg-slate-700 transition-colors"
       >
         Ver perfil <ChevronRight className="h-3.5 w-3.5" />
       </Link>
