@@ -56,6 +56,8 @@ export interface Patient {
   previous_therapy_notes: string;
   medication: string;
   referral_source: string;
+  medication_use: string;
+  sessions_count: string;
   created_at: string;
   updated_at: string;
 }
@@ -243,6 +245,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         previous_therapy_notes: p.previous_therapy_notes || '',
         medication: p.medication || '',
         referral_source: p.referral_source || '',
+        medication_use: p.medication_use || '',
+        sessions_count: p.sessions_count || '',
         created_at: p.created_at,
         updated_at: p.updated_at,
       })));

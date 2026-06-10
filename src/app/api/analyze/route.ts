@@ -72,6 +72,10 @@ export async function POST(req: NextRequest) {
 
         patientMemoryContext = {
           pseudonym: patient.pseudonym,
+          gender: patient.gender || undefined,
+          referral_source: patient.referral_source || undefined,
+          medication_use: patient.medication_use || undefined,
+          intake_sessions_count: patient.sessions_count || undefined,
           weeks_in_therapy: weeksDiff,
           sessions_count: existingSessionsCount,
           confirmed_hypotheses: memory?.confirmed_hypotheses || [],

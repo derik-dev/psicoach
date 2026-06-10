@@ -67,6 +67,11 @@ export interface PatientMemoryContext {
   recurring_patterns: string[];
   central_themes: string[];
   attention_history: { session_number: number; level: string }[];
+  // intake fields
+  gender?: string;
+  referral_source?: string;
+  medication_use?: string;
+  intake_sessions_count?: string;
 }
 
 /* ─── therapist profile shape (sent from frontend) ─── */
@@ -171,11 +176,15 @@ export function buildAnalysisUserMessage(
   if (patientMemory) {
     lines.push('MEMÓRIA DO PACIENTE:');
     lines.push(`Pseudônimo: ${patientMemory.pseudonym}`);
+    if (patientMemory.gender) lines.push(`Gênero: ${patientMemory.gender}`);
+    if (patientMemory.referral_source) lines.push(`Como chegou: ${patientMemory.referral_source}`);
+    if (patientMemory.medication_use) lines.push(`Medicação psiquiátrica: ${patientMemory.medication_use}`);
     if (patientMemory.weeks_in_therapy > 0) {
       const weeks = patientMemory.weeks_in_therapy;
       const timeLabel = weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
       lines.push(`Em terapia há: ${timeLabel}`);
     }
+    if (patientMemory.intake_sessions_count) lines.push(`Sessões informadas no cadastro: ${patientMemory.intake_sessions_count}`);
     lines.push(`Sessões realizadas: ${patientMemory.sessions_count}`);
     if (patientMemory.confirmed_hypotheses.length > 0)
       lines.push(`Hipóteses confirmadas: ${patientMemory.confirmed_hypotheses.join('; ')}`);

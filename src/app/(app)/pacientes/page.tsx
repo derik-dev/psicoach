@@ -8,16 +8,19 @@ import {
   Users, UserPlus, Search, X, ChevronRight,
   Clock, Activity, Trash2, Check,
   User, Calendar, Stethoscope, Brain, FileText, ArrowLeft,
-  Briefcase, Heart, Pill, Share2, History,
+  Pill, Share2, History,
 } from 'lucide-react';
 
 /* ── New Patient Form (inline) ── */
 
 const EMPTY_FORM = {
-  pseudonym: '', age_range: '', gender: '', occupation: '', marital_status: '',
-  entry_reason: '', initial_diagnosis: '', approach: '',
+  pseudonym: '', age_range: '', gender: '', initial_diagnosis: '',
+  referral_source: '', medication_use: '', entry_reason: '', approach: '',
+  sessions_count: '',
+  // legacy fields kept for compat
+  occupation: '', marital_status: '',
   previous_therapy: null as boolean | null, previous_therapy_notes: '',
-  medication: '', referral_source: '',
+  medication: '',
 };
 
 const inputBase = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
@@ -62,16 +65,18 @@ function NewPatientForm({ onCancel, onSave }: { onCancel: () => void; onSave: (p
       const patient = await addPatient({
         pseudonym: form.pseudonym.trim(),
         age_range: form.age_range.trim(),
-        gender: form.gender.trim(),
-        occupation: form.occupation.trim(),
+        gender: form.gender,
+        occupation: form.occupation,
         marital_status: form.marital_status,
         entry_reason: form.entry_reason.trim(),
         initial_diagnosis: form.initial_diagnosis.trim(),
         approach: form.approach.trim(),
         previous_therapy: form.previous_therapy,
-        previous_therapy_notes: form.previous_therapy_notes.trim(),
-        medication: form.medication.trim(),
-        referral_source: form.referral_source.trim(),
+        previous_therapy_notes: form.previous_therapy_notes,
+        medication: form.medication,
+        referral_source: form.referral_source,
+        medication_use: form.medication_use,
+        sessions_count: form.sessions_count,
       });
       onSave(patient);
     } catch (err) {
@@ -99,9 +104,7 @@ function NewPatientForm({ onCancel, onSave }: { onCancel: () => void; onSave: (p
 
       <form onSubmit={handleSubmit} className="max-w-xl space-y-5">
 
-        {/* Identificação */}
-        <SectionTitle>Identificação</SectionTitle>
-
+        {/* 1. Pseudônimo */}
         <Field label="Pseudônimo" icon={<User className="h-3 w-3" />} required
           hint="Use um apelido ou código — nunca o nome real.">
           <input type="text" value={form.pseudonym} onChange={set('pseudonym')} required
@@ -109,95 +112,74 @@ function NewPatientForm({ onCancel, onSave }: { onCancel: () => void; onSave: (p
             className={inputBase} />
         </Field>
 
+        {/* 2+4. Faixa etária | Diagnóstico CID */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Faixa etária" icon={<Calendar className="h-3 w-3" />}>
             <input type="text" value={form.age_range} onChange={set('age_range')} placeholder="Ex: 30-40"
               className={inputBase} />
           </Field>
-          <Field label="Gênero / Pronomes" icon={<User className="h-3 w-3" />}>
-            <input type="text" value={form.gender} onChange={set('gender')} placeholder="Ex: Ela/dela, Ele/dele..."
+          <Field label="Diagnóstico CID" icon={<Stethoscope className="h-3 w-3" />}>
+            <input type="text" value={form.initial_diagnosis} onChange={set('initial_diagnosis')} placeholder="Ex: F41.1"
               className={inputBase} />
           </Field>
         </div>
 
+        {/* 3+5. Gênero | Como chegou à terapia */}
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Ocupação" icon={<Briefcase className="h-3 w-3" />}>
-            <input type="text" value={form.occupation} onChange={set('occupation')} placeholder="Ex: Professora, Estudante..."
-              className={inputBase} />
-          </Field>
-          <Field label="Estado civil" icon={<Heart className="h-3 w-3" />}>
-            <select value={form.marital_status} onChange={set('marital_status')} className={selectBase}>
+          <Field label="Gênero" icon={<User className="h-3 w-3" />}>
+            <select value={form.gender} onChange={set('gender')} className={selectBase}>
               <option value="">Selecionar...</option>
-              <option value="solteiro">Solteiro(a)</option>
-              <option value="casado">Casado(a) / União estável</option>
-              <option value="divorciado">Divorciado(a) / Separado(a)</option>
-              <option value="viuvo">Viúvo(a)</option>
-              <option value="namorando">Namorando</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Não-binário">Não-binário</option>
+              <option value="Prefiro não informar">Prefiro não informar</option>
+            </select>
+          </Field>
+          <Field label="Como chegou à terapia" icon={<Share2 className="h-3 w-3" />}>
+            <select value={form.referral_source} onChange={set('referral_source')} className={selectBase}>
+              <option value="">Selecionar...</option>
+              <option value="Conta própria">Conta própria</option>
+              <option value="Indicação de familiar/amigo">Indicação de familiar/amigo</option>
+              <option value="Indicação médica/psiquiátrica">Indicação médica/psiquiátrica</option>
+              <option value="Escola/trabalho">Escola/trabalho</option>
+              <option value="Outro">Outro</option>
             </select>
           </Field>
         </div>
 
-        {/* Clínico */}
-        <SectionTitle>Clínico</SectionTitle>
+        {/* 6. Uso de medicação psiquiátrica */}
+        <Field label="Uso de medicação psiquiátrica" icon={<Pill className="h-3 w-3" />}>
+          <select value={form.medication_use} onChange={set('medication_use')} className={selectBase}>
+            <option value="">Selecionar...</option>
+            <option value="Não">Não</option>
+            <option value="Sim">Sim</option>
+            <option value="Não informado">Não informado</option>
+          </select>
+        </Field>
 
+        {/* 7. Motivo de entrada */}
         <Field label="Motivo de entrada" icon={<FileText className="h-3 w-3" />}>
           <textarea value={form.entry_reason} onChange={set('entry_reason')}
             placeholder="Descreva brevemente a queixa principal e o contexto de chegada..."
             rows={4} className={`${inputBase} resize-none`} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Diagnóstico CID" icon={<Stethoscope className="h-3 w-3" />}>
-            <input type="text" value={form.initial_diagnosis} onChange={set('initial_diagnosis')} placeholder="Ex: F41.1"
-              className={inputBase} />
-          </Field>
-          <Field label="Medicação em uso" icon={<Pill className="h-3 w-3" />}>
-            <input type="text" value={form.medication} onChange={set('medication')} placeholder="Ex: Sertralina 50mg..."
-              className={inputBase} />
-          </Field>
-        </div>
-
+        {/* 8. Abordagem terapêutica */}
         <Field label="Abordagem terapêutica" icon={<Brain className="h-3 w-3" />}>
           <input type="text" value={form.approach} onChange={set('approach')} placeholder="Ex: TCC, Psicanálise, Gestalt..."
             className={inputBase} />
         </Field>
 
-        {/* Histórico */}
-        <SectionTitle>Histórico</SectionTitle>
-
-        <Field label="Já fez psicoterapia antes?" icon={<History className="h-3 w-3" />}>
-          <div className="flex gap-3">
-            {([true, false] as const).map(val => (
-              <button key={String(val)} type="button"
-                onClick={() => setForm(prev => ({ ...prev, previous_therapy: val, previous_therapy_notes: val ? prev.previous_therapy_notes : '' }))}
-                className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${
-                  form.previous_therapy === val
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                }`}>
-                {val ? 'Sim' : 'Não'}
-              </button>
-            ))}
-          </div>
-        </Field>
-
-        {form.previous_therapy && (
-          <Field label="Detalhes sobre a terapia anterior" icon={<History className="h-3 w-3" />}>
-            <textarea value={form.previous_therapy_notes} onChange={set('previous_therapy_notes')}
-              placeholder="Abordagem, duração, motivo do encerramento..."
-              rows={2} className={`${inputBase} resize-none`} />
-          </Field>
-        )}
-
-        <Field label="Como chegou até você?" icon={<Share2 className="h-3 w-3" />}>
-          <select value={form.referral_source} onChange={set('referral_source')} className={selectBase}>
+        {/* 9. Sessões já realizadas */}
+        <Field label="Sessões já realizadas" icon={<History className="h-3 w-3" />}
+          hint="Preencha se estiver cadastrando um paciente já em acompanhamento">
+          <select value={form.sessions_count} onChange={set('sessions_count')} className={selectBase}>
             <option value="">Selecionar...</option>
-            <option value="indicacao_paciente">Indicação de outro paciente</option>
-            <option value="indicacao_profissional">Encaminhamento médico/profissional</option>
-            <option value="busca_online">Busca online / redes sociais</option>
-            <option value="plataforma">Plataforma de saúde mental</option>
-            <option value="familiar_amigo">Familiar ou amigo</option>
-            <option value="outro">Outro</option>
+            <option value="Primeira sessão">Primeira sessão</option>
+            <option value="2-5 sessões">2-5 sessões</option>
+            <option value="6-15 sessões">6-15 sessões</option>
+            <option value="16-30 sessões">16-30 sessões</option>
+            <option value="Mais de 30 sessões">Mais de 30 sessões</option>
           </select>
         </Field>
 

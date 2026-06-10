@@ -896,6 +896,8 @@ function NewPatientModal({ onClose, onSave }: NewPatientModalProps) {
         previous_therapy_notes: '',
         medication: '',
         referral_source: '',
+        medication_use: '',
+        sessions_count: '',
       });
       onSave(patient);
     } catch (err) {
