@@ -239,7 +239,7 @@ function AnalysisCard({
           <span className="shrink-0 text-[11px] font-semibold uppercase text-blue-600" style={{ letterSpacing: '0.8px' }}>
             Resumo rápido
           </span>
-          <p className="mt-3 text-[14px] leading-[1.6] text-blue-950">{resumo}</p>
+          <p className="mt-3 text-[14px] leading-[1.6] text-blue-950 line-clamp-5">{resumo}</p>
         </div>
 
         {/* Atenção clínica — badge + 2 bullets */}
@@ -265,7 +265,7 @@ function AnalysisCard({
           <span className="shrink-0 text-[11px] font-semibold uppercase text-slate-500" style={{ letterSpacing: '0.8px' }}>
             Foco inicial
           </span>
-          <p className="mt-3 text-[14px] leading-[1.6] text-slate-700">{focoInicial}</p>
+          <p className="mt-3 text-[14px] leading-[1.6] text-slate-700 line-clamp-5">{focoInicial}</p>
         </div>
 
         {/* Próxima pergunta — a pergunta em itálico */}
@@ -274,7 +274,7 @@ function AnalysisCard({
             Próxima pergunta
           </span>
           <p
-            className="mt-3 text-[14px] italic leading-[1.6] text-slate-700"
+            className="mt-3 text-[14px] italic leading-[1.6] text-slate-700 line-clamp-5"
             style={{ fontFamily: 'Georgia, serif' }}
           >
             &ldquo;{proxPergunta}&rdquo;
