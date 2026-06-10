@@ -46,9 +46,16 @@ export interface Patient {
   id: string;
   pseudonym: string;
   age_range: string;
+  gender: string;
+  occupation: string;
+  marital_status: string;
   entry_reason: string;
   initial_diagnosis: string;
   approach: string;
+  previous_therapy: boolean | null;
+  previous_therapy_notes: string;
+  medication: string;
+  referral_source: string;
   created_at: string;
   updated_at: string;
 }
@@ -226,9 +233,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: p.id,
         pseudonym: p.pseudonym,
         age_range: p.age_range || '',
+        gender: p.gender || '',
+        occupation: p.occupation || '',
+        marital_status: p.marital_status || '',
         entry_reason: p.entry_reason || '',
         initial_diagnosis: p.initial_diagnosis || '',
         approach: p.approach || '',
+        previous_therapy: p.previous_therapy ?? null,
+        previous_therapy_notes: p.previous_therapy_notes || '',
+        medication: p.medication || '',
+        referral_source: p.referral_source || '',
         created_at: p.created_at,
         updated_at: p.updated_at,
       })));

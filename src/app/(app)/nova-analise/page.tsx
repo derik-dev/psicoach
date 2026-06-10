@@ -886,9 +886,16 @@ function NewPatientModal({ onClose, onSave }: NewPatientModalProps) {
       const patient = await addPatient({
         pseudonym: form.pseudonym.trim(),
         age_range: form.age_range.trim(),
+        gender: '',
+        occupation: '',
+        marital_status: '',
         entry_reason: form.entry_reason.trim(),
         initial_diagnosis: form.initial_diagnosis.trim(),
         approach: form.approach.trim(),
+        previous_therapy: null,
+        previous_therapy_notes: '',
+        medication: '',
+        referral_source: '',
       });
       onSave(patient);
     } catch (err) {
