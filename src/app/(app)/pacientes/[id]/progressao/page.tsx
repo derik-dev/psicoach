@@ -135,7 +135,7 @@ function NotesCard({
 
   return (
     <div
-      className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex flex-col gap-3 h-full min-h-[160px] cursor-text"
+      className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex flex-col gap-2 cursor-text"
       onClick={() => textareaRef.current?.focus()}
     >
       <div className={`flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest ${accentClass}`}>
@@ -151,7 +151,8 @@ function NotesCard({
         value={draft}
         onChange={e => handleChange(e.target.value)}
         placeholder="Anote livremente…"
-        className="flex-1 w-full resize-none bg-transparent text-xs text-slate-700 leading-relaxed placeholder-slate-300 outline-none min-h-[100px] cursor-text"
+        rows={5}
+        className="w-full resize-none rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 text-xs text-slate-700 leading-relaxed placeholder-slate-400 outline-none focus:border-slate-300 focus:bg-white transition-colors cursor-text"
       />
     </div>
   );
