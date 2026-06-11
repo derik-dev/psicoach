@@ -216,7 +216,7 @@ function SessionRow({
               rows={3}
               value={draft}
               onChange={e => setDraft(e.target.value)}
-              placeholder="O que aconteceu nessa sessão? Ex: paciente trouxe melhora no sono, ainda resistente ao tema do pai..."
+              placeholder="O que aconteceu nessa sessão?"
               className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
             <div className="flex items-center gap-2">
@@ -236,21 +236,21 @@ function SessionRow({
               </button>
             </div>
           </div>
-        ) : session.therapist_notes ? (
-          <p
-            onClick={() => setEditing(true)}
-            className="mt-1 text-xs text-slate-500 leading-relaxed line-clamp-2 cursor-pointer hover:text-slate-700 transition-colors"
-            title="Clique para editar"
-          >
-            {session.therapist_notes}
-          </p>
         ) : (
-          <button
+          <div
             onClick={() => setEditing(true)}
-            className="mt-1 text-[11px] text-slate-300 italic hover:text-blue-500 transition-colors"
+            className="mt-1 w-full cursor-text group/note"
           >
-            Sem anotação. Clique para adicionar →
-          </button>
+            {session.therapist_notes ? (
+              <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 group-hover/note:text-slate-700 transition-colors">
+                {session.therapist_notes}
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-300 italic group-hover/note:text-blue-400 transition-colors">
+                Clique para adicionar anotação…
+              </p>
+            )}
+          </div>
         )}
       </div>
 
