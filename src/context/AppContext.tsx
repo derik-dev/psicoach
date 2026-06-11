@@ -3,6 +3,20 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
+function isMissingCasePatientLinkColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+
+  const message = error.message?.toLowerCase() || '';
+  const mentionsLinkColumn = message.includes('patient_id') || message.includes('session_number');
+
+  return mentionsLinkColumn && (
+    error.code === 'PGRST204' ||
+    error.code === '42703' ||
+    message.includes('schema cache') ||
+    message.includes('does not exist')
+  );
+}
+
 export interface CaseContext {
   sessions_count?: string;
   current_diagnosis?: string;
@@ -454,7 +468,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       messages: [],
     };
 
-    const insertPayload: Record<string, unknown> = {
+    const baseInsertPayload: Record<string, unknown> = {
       id: newCase.id,
       user_id: userIdRef.current,
       title: newCase.title,
@@ -465,10 +479,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       notes: newCase.notes,
       tags: newCase.tags,
     };
+    const insertPayload = { ...baseInsertPayload };
     if (options.patient_id) insertPayload.patient_id = options.patient_id;
     if (options.session_number != null) insertPayload.session_number = options.session_number;
 
-    const { error: caseError } = await supabase.from('cases').insert(insertPayload);
+    let { error: caseError } = await supabase.from('cases').insert(insertPayload);
+
+    // Older environments may not have the patient-link migration yet. The
+    // session still keeps the relationship, so do not discard a valid analysis.
+    if (caseError && options.patient_id && isMissingCasePatientLinkColumn(caseError)) {
+      const retry = await supabase.from('cases').insert(baseInsertPayload);
+      caseError = retry.error;
+
+      if (!caseError) {
+        newCase.patient_id = undefined;
+        newCase.session_number = undefined;
+        console.warn('[AppContext] Caso salvo sem patient_id; aplique a migração de vínculo de pacientes.');
+      }
+    }
 
     if (caseError) {
       throw new Error(`Falha ao salvar caso no Supabase: ${caseError.message}`);
@@ -510,6 +538,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (updates.session_number !== undefined) dbUpdates.session_number = updates.session_number;
 
     const { error } = await supabase.from('cases').update(dbUpdates).eq('id', id);
+
+    if (isMissingCasePatientLinkColumn(error)) {
+      throw new Error('O banco do Supabase precisa da migração de vínculo entre casos e pacientes.');
+    }
 
     if (error) {
       throw new Error(`Falha ao atualizar caso no Supabase: ${error.message}`);
