@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { supabase } from '@/lib/supabase/client';
 import {
   FolderHeart,
   Search,
@@ -11,15 +12,33 @@ import {
   ArrowRight,
   Trash2,
   Calendar,
-  Tag
+  Tag,
+  User,
+  Link2,
+  ChevronDown,
+  X,
+  Check,
 } from 'lucide-react';
 
 export default function CaseHistory() {
-  const { cases, deleteCase } = useApp();
+  const { cases, deleteCase, patients, updateCase } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [approachFilter, setApproachFilter] = useState('All');
   const [tagFilter, setTagFilter] = useState('All');
+  const [linkingCaseId, setLinkingCaseId] = useState<string | null>(null);
+  const [linkingLoading, setLinkingLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setLinkingCaseId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const uniqueApproaches = useMemo(() => {
     const approaches = new Set<string>();
@@ -58,6 +77,65 @@ export default function CaseHistory() {
     setSearchTerm('');
     setApproachFilter('All');
     setTagFilter('All');
+  };
+
+  const handleLinkPatient = async (caseId: string, patientId: string) => {
+    setLinkingLoading(true);
+    try {
+      const { data: existingSessions } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('patient_id', patientId);
+
+      const nextSessionNumber = (existingSessions?.length || 0) + 1;
+
+      const clinicalCase = cases.find(c => c.id === caseId);
+      const nivel = clinicalCase?.analysis?.nivel_atencao || 'baixo';
+
+      const { data: newSession } = await supabase
+        .from('sessions')
+        .insert({
+          patient_id: patientId,
+          analysis_id: caseId,
+          session_number: nextSessionNumber,
+          therapist_notes: '',
+        })
+        .select('id')
+        .single();
+
+      void newSession;
+
+      const { data: existingMemory } = await supabase
+        .from('patient_memory')
+        .select('id, attention_history')
+        .eq('patient_id', patientId)
+        .single();
+
+      const newEntry = {
+        date: clinicalCase?.created_at || new Date().toISOString(),
+        level: nivel,
+        session_number: nextSessionNumber,
+      };
+
+      if (existingMemory) {
+        const history = (existingMemory.attention_history as typeof newEntry[]) || [];
+        await supabase
+          .from('patient_memory')
+          .update({ attention_history: [...history, newEntry], updated_at: new Date().toISOString() })
+          .eq('patient_id', patientId);
+      } else {
+        await supabase
+          .from('patient_memory')
+          .insert({ patient_id: patientId, attention_history: [newEntry] });
+      }
+
+      await updateCase(caseId, { patient_id: patientId, session_number: nextSessionNumber });
+      setLinkingCaseId(null);
+    } catch (err) {
+      console.error('Erro ao vincular caso:', err);
+    } finally {
+      setLinkingLoading(false);
+    }
   };
 
   return (
@@ -157,69 +235,133 @@ export default function CaseHistory() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredCases.map((c) => (
-            <div
-              key={c.id}
-              className="group p-5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-700 uppercase tracking-wide">
-                    {c.approach_used}
-                  </span>
-                  <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
+          {filteredCases.map((c) => {
+            const linkedPatient = c.patient_id ? patients.find(p => p.id === c.patient_id) : null;
+            const isLinking = linkingCaseId === c.id;
+
+            return (
+              <div
+                key={c.id}
+                className="group p-5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-700 uppercase tracking-wide">
+                      {c.approach_used}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {linkedPatient ? (
+                        <Link
+                          href={`/pacientes/${linkedPatient.id}`}
+                          className="flex items-center gap-1 text-[10px] font-semibold text-violet-700 bg-violet-50 border border-violet-100 px-2 py-0.5 rounded-full hover:bg-violet-100 transition-colors"
+                        >
+                          <User className="w-2.5 h-2.5" />
+                          {linkedPatient.pseudonym}
+                        </Link>
+                      ) : null}
+                      <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-slate-800 group-hover:text-blue-700 transition-colors line-clamp-1">
+                      {c.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
+                      {c.input_text}
+                    </p>
+                  </div>
+
+                  {c.tags && c.tags.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {c.tags.map((t) => (
+                        <span
+                          key={t}
+                          className="text-[9px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1"
+                        >
+                          <Tag className="w-2.5 h-2.5" />
+                          <span>{t}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-slate-800 group-hover:text-blue-700 transition-colors line-clamp-1">
-                    {c.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
-                    {c.input_text}
-                  </p>
-                </div>
+                <div className="flex items-center justify-between border-t border-slate-100 pt-3 gap-2">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        if (confirm('Deseja realmente arquivar/deletar este caso clínico?')) {
+                          deleteCase(c.id);
+                        }
+                      }}
+                      className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                      title="Arquivar/Deletar Caso"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
 
-                {c.tags && c.tags.length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {c.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="text-[9px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1"
-                      >
-                        <Tag className="w-2.5 h-2.5" />
-                        <span>{t}</span>
-                      </span>
-                    ))}
+                    {/* Vincular a paciente */}
+                    {!linkedPatient && patients.length > 0 && (
+                      <div className="relative" ref={isLinking ? dropdownRef : undefined}>
+                        <button
+                          onClick={() => setLinkingCaseId(isLinking ? null : c.id)}
+                          className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-100 hover:border-blue-100 rounded-xl transition-all"
+                        >
+                          <Link2 className="w-3.5 h-3.5" />
+                          Vincular
+                          <ChevronDown className={`w-3 h-3 transition-transform ${isLinking ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isLinking && (
+                          <div className="absolute bottom-full mb-1 left-0 z-30 w-52 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                            <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                                Vincular a paciente
+                              </span>
+                              <button onClick={() => setLinkingCaseId(null)}>
+                                <X className="w-3.5 h-3.5 text-slate-400" />
+                              </button>
+                            </div>
+                            <div className="max-h-48 overflow-y-auto">
+                              {patients.map(p => (
+                                <button
+                                  key={p.id}
+                                  onClick={() => handleLinkPatient(c.id, p.id)}
+                                  disabled={linkingLoading}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                >
+                                  <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                    {p.pseudonym.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <span className="block text-xs font-medium text-slate-800 truncate">{p.pseudonym}</span>
+                                    {p.age_range && <span className="block text-[10px] text-slate-400">{p.age_range}</span>}
+                                  </div>
+                                  <Check className="w-3.5 h-3.5 text-blue-600 opacity-0 group-hover:opacity-100" />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                <button
-                  onClick={() => {
-                    if (confirm('Deseja realmente arquivar/deletar este caso clínico?')) {
-                      deleteCase(c.id);
-                    }
-                  }}
-                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                  title="Arquivar/Deletar Caso"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-
-                <Link
-                  href={`/historico/${c.id}`}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 text-slate-600 hover:text-blue-700 rounded-xl text-xs font-semibold transition-all"
-                >
-                  <span>Revisar caso</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                  <Link
+                    href={`/historico/${c.id}`}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 text-slate-600 hover:text-blue-700 rounded-xl text-xs font-semibold transition-all"
+                  >
+                    <span>Revisar caso</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

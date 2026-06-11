@@ -334,11 +334,18 @@ export default function PatientProfilePage() {
                   )}
                 </div>
               </div>
-              <Link
-                href={`/nova-analise?patient=${patient.id}`}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(37,99,235,0.25)] hover:bg-blue-500 hover:-translate-y-0.5 transition-all shrink-0">
-                <PlusCircle className="h-4 w-4" /> Nova análise
-              </Link>
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  href={`/pacientes/${patient.id}/progressao`}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:-translate-y-0.5 transition-all">
+                  <TrendingUp className="h-4 w-4" /> Progressão
+                </Link>
+                <Link
+                  href={`/nova-analise?patient=${patient.id}`}
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(37,99,235,0.25)] hover:bg-blue-500 hover:-translate-y-0.5 transition-all">
+                  <PlusCircle className="h-4 w-4" /> Nova análise
+                </Link>
+              </div>
             </div>
 
             {/* Metadata grid */}

@@ -1053,9 +1053,15 @@ export default function NovaAnalise() {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [showPatientModal, setShowPatientModal] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
+  const [patientSessionInfo, setPatientSessionInfo] = useState<{
+    sessionCount: number;
+    lastDate: string | null;
+    lastLevel: string | null;
+  } | null>(null);
 
   const handlePatientSelect = (id: string | null) => {
     setSelectedPatientId(id);
+    setPatientSessionInfo(null);
     if (!id) return;
     const pat = patients.find(p => p.id === id);
     if (!pat) return;
@@ -1063,6 +1069,27 @@ export default function NovaAnalise() {
     if (pat.initial_diagnosis) setCurrentDiagnosis(pat.initial_diagnosis);
     if (pat.previous_therapy_notes) setAlreadyTried(pat.previous_therapy_notes);
     if (pat.entry_reason) setInputText(pat.entry_reason);
+
+    supabase
+      .from('sessions')
+      .select('id, created_at')
+      .eq('patient_id', id)
+      .order('created_at', { ascending: false })
+      .then(({ data: sess }) => {
+        if (!sess) return;
+        const count = sess.length;
+        const lastDate = count > 0 ? sess[0].created_at : null;
+        supabase
+          .from('patient_memory')
+          .select('attention_history')
+          .eq('patient_id', id)
+          .single()
+          .then(({ data: mem }) => {
+            const hist = (mem?.attention_history as Array<{ level: string }>) || [];
+            const lastLevel = hist.length > 0 ? hist[hist.length - 1].level : null;
+            setPatientSessionInfo({ sessionCount: count, lastDate, lastLevel });
+          });
+      });
   };
 
   /* shared config */
@@ -1164,7 +1191,10 @@ export default function NovaAnalise() {
       if (!res.ok)          setErrorMessage(data?.error || 'Não foi possível gerar a análise no momento.');
       else if (data?.analysis) {
         const analysis = data.analysis as CaseAnalysis;
-        const savedCase = await addCase(title, inputText, approach, clinicalContext, analysis, { incrementUsage: false });
+        const savedCase = await addCase(title, inputText, approach, clinicalContext, analysis, {
+          incrementUsage: false,
+          patient_id: selectedPatientId || undefined,
+        });
         if (data.session_id && savedCase?.id) {
           await supabase.from('sessions').update({ analysis_id: savedCase.id }).eq('id', data.session_id);
           setSavedSessionId(data.session_id);
@@ -1318,7 +1348,10 @@ export default function NovaAnalise() {
       const data = await res.json();
       if (!res.ok) setAudioError(data?.error || 'Não foi possível gerar a análise.');
       else if (data?.analysis) {
-        const savedCase = await addCase('Análise por áudio', audioTranscript, approach, clinicalContext, data.analysis as CaseAnalysis, { incrementUsage: false });
+        const savedCase = await addCase('Análise por áudio', audioTranscript, approach, clinicalContext, data.analysis as CaseAnalysis, {
+          incrementUsage: false,
+          patient_id: selectedPatientId || undefined,
+        });
         if (data.session_id && savedCase?.id) {
           await supabase.from('sessions').update({ analysis_id: savedCase.id }).eq('id', data.session_id);
           setSavedSessionId(data.session_id);
@@ -1415,11 +1448,40 @@ export default function NovaAnalise() {
                   const diffMs = Date.now() - createdAt.getTime();
                   const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
                   const timeLabel = weeks === 0 ? 'menos de 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
+                  const nextSession = patientSessionInfo ? patientSessionInfo.sessionCount + 1 : null;
+                  const lastDate = patientSessionInfo?.lastDate
+                    ? new Date(patientSessionInfo.lastDate).toLocaleDateString('pt-BR')
+                    : null;
+                  const lastLevelCfg = patientSessionInfo?.lastLevel
+                    ? { baixo: { label: 'Baixa', color: 'text-emerald-600' }, moderado: { label: 'Moderada', color: 'text-amber-600' }, alto: { label: 'Alta', color: 'text-rose-600' } }[patientSessionInfo.lastLevel as 'baixo' | 'moderado' | 'alto']
+                    : null;
                   return (
-                    <p className="text-[11px] text-blue-600 font-medium mt-1 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Em acompanhamento há {timeLabel}
-                    </p>
+                    <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2.5 space-y-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {nextSession && (
+                          <span className="text-[11px] font-semibold text-blue-700">Sessão {nextSession}</span>
+                        )}
+                        <span className="text-[10px] text-blue-500">•</span>
+                        <span className="text-[11px] font-medium text-blue-700">{pat.pseudonym}</span>
+                        {lastDate && (
+                          <>
+                            <span className="text-[10px] text-blue-400">•</span>
+                            <span className="text-[11px] text-blue-500">Última: {lastDate}</span>
+                          </>
+                        )}
+                        {lastLevelCfg && (
+                          <>
+                            <span className="text-[10px] text-blue-400">•</span>
+                            <span className={`text-[11px] font-semibold ${lastLevelCfg.color}`}>
+                              Atenção: {lastLevelCfg.label}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-blue-500 flex items-center gap-1">
+                        <Clock className="h-2.5 w-2.5" /> Em acompanhamento há {timeLabel}
+                      </p>
+                    </div>
                   );
                 })()}
               </div>

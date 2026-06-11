@@ -99,6 +99,8 @@ export interface ClinicalCase {
   analysis: CaseAnalysis;
   notes: string;
   tags: string[];
+  patient_id?: string;
+  session_number?: number;
   created_at: string;
   updated_at: string;
   messages: CaseMessage[];
@@ -147,7 +149,7 @@ interface AppContextType {
     approach: string,
     context: CaseContext,
     analysis: CaseAnalysis,
-    options?: { incrementUsage?: boolean }
+    options?: { incrementUsage?: boolean; patient_id?: string; session_number?: number }
   ) => Promise<ClinicalCase>;
   updateCase: (id: string, updates: Partial<ClinicalCase>) => Promise<void>;
   deleteCase: (id: string) => Promise<void>;
@@ -263,6 +265,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           analysis: (c.analysis as CaseAnalysis) || { hypothesis: '', approaches: [], questions: [], references: [], blind_spot: '', alerts: [] },
           notes: c.notes || '',
           tags: c.tags || [],
+          patient_id: c.patient_id || undefined,
+          session_number: c.session_number || undefined,
           created_at: c.created_at,
           updated_at: c.updated_at,
           messages: ((c.messages as CaseMessage[]) || [])
@@ -427,7 +431,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     approach: string,
     context: CaseContext,
     analysis: CaseAnalysis,
-    options: { incrementUsage?: boolean } = {}
+    options: { incrementUsage?: boolean; patient_id?: string; session_number?: number } = {}
   ): Promise<ClinicalCase> => {
     if (!userIdRef.current) {
       throw new Error('Usuário não autenticado. Não foi possível salvar no Supabase.');
@@ -443,12 +447,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       analysis,
       notes: '',
       tags: [approach.toLowerCase().replace(/[^a-z]/g, '')],
+      patient_id: options.patient_id,
+      session_number: options.session_number,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       messages: [],
     };
 
-    const { error: caseError } = await supabase.from('cases').insert({
+    const insertPayload: Record<string, unknown> = {
       id: newCase.id,
       user_id: userIdRef.current,
       title: newCase.title,
@@ -458,7 +464,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       analysis: newCase.analysis,
       notes: newCase.notes,
       tags: newCase.tags,
-    });
+    };
+    if (options.patient_id) insertPayload.patient_id = options.patient_id;
+    if (options.session_number != null) insertPayload.session_number = options.session_number;
+
+    const { error: caseError } = await supabase.from('cases').insert(insertPayload);
 
     if (caseError) {
       throw new Error(`Falha ao salvar caso no Supabase: ${caseError.message}`);
@@ -496,6 +506,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (updates.approach_used !== undefined) dbUpdates.approach_used = updates.approach_used;
     if (updates.context !== undefined) dbUpdates.context = updates.context;
     if (updates.analysis !== undefined) dbUpdates.analysis = updates.analysis;
+    if (updates.patient_id !== undefined) dbUpdates.patient_id = updates.patient_id;
+    if (updates.session_number !== undefined) dbUpdates.session_number = updates.session_number;
 
     const { error } = await supabase.from('cases').update(dbUpdates).eq('id', id);
 
