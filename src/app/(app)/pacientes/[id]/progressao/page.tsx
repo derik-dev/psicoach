@@ -116,6 +116,7 @@ function NotesCard({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { setDraft(value.join('\n')); }, [value]);
 
@@ -133,7 +134,10 @@ function NotesCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex flex-col gap-3 h-full min-h-[160px]">
+    <div
+      className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex flex-col gap-3 h-full min-h-[160px] cursor-text"
+      onClick={() => textareaRef.current?.focus()}
+    >
       <div className={`flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest ${accentClass}`}>
         <div className="flex items-center gap-2">
           <Icon className="h-3.5 w-3.5" />
@@ -143,10 +147,11 @@ function NotesCard({
         {saved && !saving && <CheckCircle2 className="h-3 w-3 text-emerald-500" />}
       </div>
       <textarea
+        ref={textareaRef}
         value={draft}
         onChange={e => handleChange(e.target.value)}
-        placeholder="Anote livremente o que funcionou neste caso…"
-        className="flex-1 w-full resize-none bg-transparent text-xs text-slate-700 leading-relaxed placeholder-slate-300 outline-none min-h-[100px]"
+        placeholder="Anote livremente…"
+        className="flex-1 w-full resize-none bg-transparent text-xs text-slate-700 leading-relaxed placeholder-slate-300 outline-none min-h-[100px] cursor-text"
       />
     </div>
   );
