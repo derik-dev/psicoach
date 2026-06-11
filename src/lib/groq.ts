@@ -72,6 +72,7 @@ export interface PatientMemoryContext {
   referral_source?: string;
   medication_use?: string;
   intake_sessions_count?: string;
+  last_session_notes?: string;
 }
 
 /* ─── therapist profile shape (sent from frontend) ─── */
@@ -204,6 +205,8 @@ export function buildAnalysisUserMessage(
         .join(' → ');
       lines.push(`Histórico de atenção: ${histStr}`);
     }
+    if (patientMemory.last_session_notes?.trim())
+      lines.push(`Nota da última sessão: ${patientMemory.last_session_notes.trim()}`);
     lines.push('');
   }
 

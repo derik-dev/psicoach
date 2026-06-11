@@ -13,6 +13,7 @@ import {
 import { CaseContext } from '@/context/AppContext';
 import { getAuthenticatedUser } from '@/lib/supabase/server';
 import { getSubscriptionAccess } from '@/lib/subscriptions/server';
+import { appendUnique, extractFirstParagraph, extractFirstSentence } from '@/lib/memory-utils';
 
 export async function POST(req: NextRequest) {
   const { user, error: authError } = await getAuthenticatedUser(req);
@@ -58,17 +59,23 @@ export async function POST(req: NextRequest) {
       const [patientResult, memoryResult, sessionsResult] = await Promise.all([
         access.admin.from('patients').select('*').eq('id', patient_id).single(),
         access.admin.from('patient_memory').select('*').eq('patient_id', patient_id).single(),
-        access.admin.from('sessions').select('id').eq('patient_id', patient_id),
+        access.admin
+          .from('sessions')
+          .select('id, therapist_notes, session_number')
+          .eq('patient_id', patient_id)
+          .order('session_number', { ascending: false }),
       ]);
 
       const patient = patientResult.data;
       const memory = memoryResult.data;
-      existingSessionsCount = sessionsResult.data?.length || 0;
+      const sessionsArr = sessionsResult.data || [];
+      existingSessionsCount = sessionsArr.length;
 
       if (patient) {
         const createdAt = new Date(patient.created_at);
         const diffMs = Date.now() - createdAt.getTime();
         const weeksDiff = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+        const lastNote = sessionsArr.find(s => s.therapist_notes?.trim())?.therapist_notes;
 
         patientMemoryContext = {
           pseudonym: patient.pseudonym,
@@ -85,6 +92,7 @@ export async function POST(req: NextRequest) {
           recurring_patterns: memory?.recurring_patterns || [],
           central_themes: memory?.central_themes || [],
           attention_history: (memory?.attention_history || []) as PatientMemoryContext['attention_history'],
+          last_session_notes: lastNote || undefined,
         };
       }
     }
@@ -176,20 +184,40 @@ export async function POST(req: NextRequest) {
 
       session_id = newSession?.id;
 
+      /* derive new memory items from analysis */
+      const newHypothesis = extractFirstParagraph(analysis.hipotese_central || analysis.hypothesis || '');
+      const newTheme = extractFirstSentence(analysis.sintese || '');
+      const newPatterns = (analysis.fatores_relevantes || []).map((f: string) => f.trim()).filter(Boolean);
+
       const existingHistory = patientMemoryContext?.attention_history || [];
+      const updatedConfirmed = appendUnique(
+        patientMemoryContext?.confirmed_hypotheses || [],
+        newHypothesis ? [newHypothesis] : [],
+      );
+      const updatedPatterns = appendUnique(
+        patientMemoryContext?.recurring_patterns || [],
+        newPatterns,
+      );
+      const updatedThemes = appendUnique(
+        patientMemoryContext?.central_themes || [],
+        newTheme ? [newTheme] : [],
+      );
+
       const { data: existingMemory } = await access.admin
         .from('patient_memory').select('id').eq('patient_id', patient_id).single();
 
+      const memoryPayload = {
+        attention_history: [...existingHistory, newAttentionEntry],
+        confirmed_hypotheses: updatedConfirmed,
+        recurring_patterns: updatedPatterns,
+        central_themes: updatedThemes,
+        updated_at: new Date().toISOString(),
+      };
+
       if (existingMemory) {
-        await access.admin.from('patient_memory').update({
-          attention_history: [...existingHistory, newAttentionEntry],
-          updated_at: new Date().toISOString(),
-        }).eq('patient_id', patient_id);
+        await access.admin.from('patient_memory').update(memoryPayload).eq('patient_id', patient_id);
       } else {
-        await access.admin.from('patient_memory').insert({
-          patient_id,
-          attention_history: [newAttentionEntry],
-        });
+        await access.admin.from('patient_memory').insert({ patient_id, ...memoryPayload });
       }
     }
 

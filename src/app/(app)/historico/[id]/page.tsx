@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp, planCanAccess } from '@/context/AppContext';
+import { supabase } from '@/lib/supabase/client';
 import {
   ArrowLeft,
   ArrowRight,
@@ -35,6 +36,20 @@ export default function IndividualCase() {
   const [newTag, setNewTag] = useState('');
   const [saveNotesSuccess, setSaveNotesSuccess] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [whatWorked, setWhatWorked] = useState<string[]>([]);
+  const [togglingItem, setTogglingItem] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!c?.patient_id) return;
+    supabase
+      .from('patient_memory')
+      .select('what_worked')
+      .eq('patient_id', c.patient_id)
+      .single()
+      .then(({ data }) => {
+        if (data?.what_worked) setWhatWorked(data.what_worked as string[]);
+      });
+  }, [c?.patient_id]);
 
   if (!c) {
     return (
@@ -53,6 +68,28 @@ export default function IndividualCase() {
       </div>
     );
   }
+
+  const toggleWhatWorked = async (item: string) => {
+    if (!c?.patient_id) return;
+    setTogglingItem(item);
+    try {
+      const isChecked = whatWorked.includes(item);
+      const updated = isChecked ? whatWorked.filter(w => w !== item) : [...whatWorked, item];
+      setWhatWorked(updated);
+      const { data: existing } = await supabase
+        .from('patient_memory').select('id').eq('patient_id', c.patient_id).single();
+      if (existing) {
+        await supabase.from('patient_memory')
+          .update({ what_worked: updated, updated_at: new Date().toISOString() })
+          .eq('patient_id', c.patient_id);
+      } else {
+        await supabase.from('patient_memory')
+          .insert({ patient_id: c.patient_id, what_worked: updated });
+      }
+    } finally {
+      setTogglingItem(null);
+    }
+  };
 
   // suppress unused router warning
   void router;
@@ -256,19 +293,50 @@ ${c.analysis.alerts.map((a) => `- ${a}`).join('\n')}
 
               {/* Approaches */}
               <div className="space-y-2">
-                <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
-                  <span className="p-1 rounded bg-blue-50 text-blue-600"><TrendingUp className="w-3.5 h-3.5" /></span>
-                  <span>Intervenções & Diretrizes</span>
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-semibold text-slate-500 flex items-center gap-2 uppercase tracking-widest">
+                    <span className="p-1 rounded bg-blue-50 text-blue-600"><TrendingUp className="w-3.5 h-3.5" /></span>
+                    <span>Intervenções & Diretrizes</span>
+                  </h4>
+                  {c.patient_id && (
+                    <span className="text-[9px] text-slate-400 italic">Marque o que funcionou neste caso</span>
+                  )}
+                </div>
                 <div className="space-y-2">
-                  {c.analysis.approaches.map((app, idx) => (
-                    <div key={idx} className="flex gap-3 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs text-slate-700">
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold shrink-0 text-[10px]">
-                        {idx + 1}
-                      </span>
-                      <p className="leading-relaxed">{app}</p>
-                    </div>
-                  ))}
+                  {c.analysis.approaches.map((app, idx) => {
+                    const isWorked = whatWorked.includes(app);
+                    const isToggling = togglingItem === app;
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex gap-3 p-4 border rounded-2xl text-xs text-slate-700 transition-colors ${
+                          isWorked
+                            ? 'bg-emerald-50 border-emerald-200'
+                            : 'bg-slate-50 border-slate-100'
+                        }`}
+                      >
+                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold shrink-0 text-[10px] mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <p className="leading-relaxed flex-1">{app}</p>
+                        {c.patient_id && (
+                          <button
+                            onClick={() => toggleWhatWorked(app)}
+                            disabled={isToggling}
+                            title={isWorked ? 'Remover de "O que funcionou"' : 'Marcar como "Funcionou neste caso"'}
+                            className={`shrink-0 flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold border transition-all ${
+                              isWorked
+                                ? 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                : 'border-slate-200 bg-white text-slate-400 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50'
+                            } disabled:opacity-50`}
+                          >
+                            <CheckCircle className={`w-3 h-3 ${isWorked ? 'text-emerald-600' : 'text-slate-300'}`} />
+                            {isWorked ? 'Funcionou' : 'Funcionou?'}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
