@@ -100,6 +100,58 @@ function MemoryCard({
   );
 }
 
+/* ── NotesCard — free-text notepad for manual memory fields ── */
+
+function NotesCard({
+  title, icon: Icon, accentClass, value, onSave,
+}: {
+  title: string;
+  icon: React.ElementType;
+  accentClass: string;
+  value: string[];
+  onSave: (text: string) => Promise<void>;
+}) {
+  const text = value.join('\n');
+  const [draft, setDraft] = useState(text);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { setDraft(value.join('\n')); }, [value]);
+
+  const handleChange = (val: string) => {
+    setDraft(val);
+    setSaved(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      setSaving(true);
+      await onSave(val);
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }, 800);
+  };
+
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex flex-col gap-3 h-full min-h-[160px]">
+      <div className={`flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest ${accentClass}`}>
+        <div className="flex items-center gap-2">
+          <Icon className="h-3.5 w-3.5" />
+          {title}
+        </div>
+        {saving && <span className="text-[9px] text-slate-400 normal-case tracking-normal font-normal">salvando…</span>}
+        {saved && !saving && <CheckCircle2 className="h-3 w-3 text-emerald-500" />}
+      </div>
+      <textarea
+        value={draft}
+        onChange={e => handleChange(e.target.value)}
+        placeholder="Anote livremente o que funcionou neste caso…"
+        className="flex-1 w-full resize-none bg-transparent text-xs text-slate-700 leading-relaxed placeholder-slate-300 outline-none min-h-[100px]"
+      />
+    </div>
+  );
+}
+
 /* ── SessionRow — inline note editing ── */
 
 function SessionRow({
@@ -272,6 +324,20 @@ export default function ProgressaoPage() {
       }
     }).finally(() => setLoading(false));
   }, [id]);
+
+  const saveManualField = async (field: 'what_worked' | 'what_didnt_work', text: string) => {
+    if (!id) return;
+    const items = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const payload = { [field]: items, updated_at: new Date().toISOString() };
+    if (memory?.id) {
+      await supabase.from('patient_memory').update(payload).eq('patient_id', id);
+      setMemory(prev => prev ? { ...prev, [field]: items } : null);
+    } else {
+      const { data } = await supabase.from('patient_memory')
+        .insert({ patient_id: id, ...payload }).select('*').single();
+      if (data) setMemory(data as PatientMemory);
+    }
+  };
 
   const handleNoteSaved = (sessionId: string, note: string) => {
     setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, therapist_notes: note } : s));
@@ -521,8 +587,8 @@ export default function ProgressaoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <MemoryCard title="Hipóteses confirmadas" icon={Brain} accentClass="text-blue-600"
               items={memory?.confirmed_hypotheses || []} emptyText="Nenhuma hipótese confirmada ainda." />
-            <MemoryCard title="O que funcionou" icon={CheckCircle2} accentClass="text-emerald-600"
-              items={memory?.what_worked || []} emptyText="Nenhuma intervenção eficaz registrada." />
+            <NotesCard title="O que funcionou" icon={CheckCircle2} accentClass="text-emerald-600"
+              value={memory?.what_worked || []} onSave={text => saveManualField('what_worked', text)} />
             <MemoryCard title="Padrões recorrentes" icon={TrendingUp} accentClass="text-amber-600"
               items={memory?.recurring_patterns || []} emptyText="Nenhum padrão registrado ainda." />
             <MemoryCard title="Temas centrais" icon={BookOpen} accentClass="text-violet-600"
@@ -538,8 +604,8 @@ export default function ProgressaoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <MemoryCard title="Hipóteses descartadas" icon={X} accentClass="text-slate-400"
               items={memory?.discarded_hypotheses || []} emptyText="Nenhuma hipótese descartada." />
-            <MemoryCard title="O que não funcionou" icon={Zap} accentClass="text-rose-500"
-              items={memory?.what_didnt_work || []} emptyText="Nenhuma intervenção descartada." />
+            <NotesCard title="O que não funcionou" icon={Zap} accentClass="text-rose-500"
+              value={memory?.what_didnt_work || []} onSave={text => saveManualField('what_didnt_work', text)} />
           </div>
         </section>
       ) : null}
