@@ -2,8 +2,9 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useApp } from '@/context/AppContext';
+import { useApp, CaseAnalysis, AttentionHistoryEntry } from '@/context/AppContext';
 import { supabase } from '@/lib/supabase/client';
+import { appendUnique, extractFirstParagraph, extractFirstSentence } from '@/lib/memory-utils';
 import {
   FolderHeart,
   Search,
@@ -15,9 +16,12 @@ import {
   Tag,
   User,
   Link2,
+  Link2Off,
   ChevronDown,
   X,
   Check,
+  ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function CaseHistory() {
@@ -28,6 +32,8 @@ export default function CaseHistory() {
   const [tagFilter, setTagFilter] = useState('All');
   const [linkingCaseId, setLinkingCaseId] = useState<string | null>(null);
   const [linkingLoading, setLinkingLoading] = useState(false);
+  const [confirmUnlink, setConfirmUnlink] = useState<{ caseId: string; patientName: string } | null>(null);
+  const [relinkingCaseId, setRelinkingCaseId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -133,6 +139,143 @@ export default function CaseHistory() {
       setLinkingCaseId(null);
     } catch (err) {
       console.error('Erro ao vincular caso:', err);
+    } finally {
+      setLinkingLoading(false);
+    }
+  };
+
+  const rebuildPatientMemory = async (patientId: string) => {
+    const { data: sessData } = await supabase
+      .from('sessions')
+      .select('analysis_id, session_number, created_at')
+      .eq('patient_id', patientId)
+      .not('analysis_id', 'is', null)
+      .order('session_number', { ascending: true });
+
+    const emptyPayload = {
+      confirmed_hypotheses: [] as string[],
+      recurring_patterns: [] as string[],
+      central_themes: [] as string[],
+      attention_history: [] as AttentionHistoryEntry[],
+      updated_at: new Date().toISOString(),
+    };
+
+    if (!sessData?.length) {
+      await supabase.from('patient_memory').update(emptyPayload).eq('patient_id', patientId);
+      return;
+    }
+
+    const analysisIds = sessData.map(s => s.analysis_id as string);
+    const { data: casesData } = await supabase
+      .from('cases').select('id, analysis, created_at').in('id', analysisIds);
+
+    if (!casesData) return;
+
+    let confirmedHyps: string[] = [];
+    let patterns: string[] = [];
+    let themes: string[] = [];
+    const attHistory: AttentionHistoryEntry[] = [];
+    const caseMap = new Map(casesData.map(c => [c.id as string, c]));
+
+    for (const sess of sessData) {
+      const caseData = caseMap.get(sess.analysis_id as string);
+      if (!caseData) continue;
+      const analysis = caseData.analysis as CaseAnalysis & { hipotese_central?: string; fatores_relevantes?: string[]; sintese?: string };
+
+      const hyp = extractFirstParagraph(analysis.hipotese_central || analysis.hypothesis || '');
+      if (hyp) confirmedHyps = appendUnique(confirmedHyps, [hyp]);
+
+      const factors = (analysis.fatores_relevantes || []).map(f => f.trim()).filter(Boolean);
+      patterns = appendUnique(patterns, factors);
+
+      const theme = extractFirstSentence(analysis.sintese || '');
+      if (theme) themes = appendUnique(themes, [theme]);
+
+      attHistory.push({
+        date: caseData.created_at as string,
+        level: (analysis.nivel_atencao || 'baixo') as AttentionHistoryEntry['level'],
+        session_number: sess.session_number as number,
+      });
+    }
+
+    const payload = {
+      confirmed_hypotheses: confirmedHyps,
+      recurring_patterns: patterns,
+      central_themes: themes,
+      attention_history: attHistory,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: existingMem } = await supabase
+      .from('patient_memory').select('id').eq('patient_id', patientId).single();
+
+    if (existingMem) {
+      await supabase.from('patient_memory').update(payload).eq('patient_id', patientId);
+    } else {
+      await supabase.from('patient_memory').insert({ patient_id: patientId, ...payload });
+    }
+  };
+
+  const handleRelinkPatient = async (caseId: string, oldPatientId: string, newPatientId: string) => {
+    setLinkingLoading(true);
+    try {
+      await supabase.from('sessions').delete()
+        .eq('patient_id', oldPatientId).eq('analysis_id', caseId);
+      await rebuildPatientMemory(oldPatientId);
+
+      const { data: existingSessions } = await supabase
+        .from('sessions').select('id').eq('patient_id', newPatientId);
+      const nextSessionNumber = (existingSessions?.length || 0) + 1;
+      const clinicalCase = cases.find(cc => cc.id === caseId);
+      const nivel = clinicalCase?.analysis?.nivel_atencao || 'baixo';
+
+      await supabase.from('sessions').insert({
+        patient_id: newPatientId,
+        analysis_id: caseId,
+        session_number: nextSessionNumber,
+        therapist_notes: '',
+      });
+
+      const { data: existingMemory } = await supabase
+        .from('patient_memory').select('id, attention_history').eq('patient_id', newPatientId).single();
+      const newEntry = {
+        date: clinicalCase?.created_at || new Date().toISOString(),
+        level: nivel,
+        session_number: nextSessionNumber,
+      };
+
+      if (existingMemory) {
+        const history = (existingMemory.attention_history as typeof newEntry[]) || [];
+        await supabase.from('patient_memory')
+          .update({ attention_history: [...history, newEntry], updated_at: new Date().toISOString() })
+          .eq('patient_id', newPatientId);
+      } else {
+        await supabase.from('patient_memory').insert({ patient_id: newPatientId, attention_history: [newEntry] });
+      }
+
+      await updateCase(caseId, { patient_id: newPatientId, session_number: nextSessionNumber });
+      setLinkingCaseId(null);
+      setRelinkingCaseId(null);
+    } catch (err) {
+      console.error('Erro ao revincular caso:', err);
+    } finally {
+      setLinkingLoading(false);
+    }
+  };
+
+  const handleUnlinkPatient = async (caseId: string, patientId: string) => {
+    setLinkingLoading(true);
+    try {
+      await supabase.from('sessions').delete()
+        .eq('patient_id', patientId).eq('analysis_id', caseId);
+
+      await updateCase(caseId, { patient_id: undefined, session_number: undefined });
+      await rebuildPatientMemory(patientId);
+
+      setLinkingCaseId(null);
+      setConfirmUnlink(null);
+    } catch (err) {
+      console.error('Erro ao desvincular caso:', err);
     } finally {
       setLinkingLoading(false);
     }
@@ -251,13 +394,109 @@ export default function CaseHistory() {
                     </span>
                     <div className="flex items-center gap-2">
                       {linkedPatient ? (
-                        <Link
-                          href={`/pacientes/${linkedPatient.id}`}
-                          className="flex items-center gap-1 text-[10px] font-semibold text-violet-700 bg-violet-50 border border-violet-100 px-2 py-0.5 rounded-full hover:bg-violet-100 transition-colors"
-                        >
-                          <User className="w-2.5 h-2.5" />
-                          {linkedPatient.pseudonym}
-                        </Link>
+                        <div className="relative" ref={isLinking ? dropdownRef : undefined}>
+                          <button
+                            onClick={() => {
+                              setConfirmUnlink(null);
+                              setRelinkingCaseId(null);
+                              setLinkingCaseId(isLinking ? null : c.id);
+                            }}
+                            className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full hover:bg-emerald-100 transition-colors"
+                          >
+                            <User className="w-2.5 h-2.5" />
+                            {linkedPatient.pseudonym}
+                            <ChevronDown className={`w-2.5 h-2.5 transition-transform ${isLinking ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {isLinking && (
+                            <div className="absolute top-full mt-1 right-0 z-30 w-56 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                              {confirmUnlink?.caseId === c.id ? (
+                                <div className="p-3 space-y-2.5">
+                                  <div className="flex items-start gap-2">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-slate-700 leading-snug">
+                                      Desvincular este caso de <strong>{linkedPatient.pseudonym}</strong>?
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => setConfirmUnlink(null)}
+                                      className="flex-1 py-1.5 text-[10px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                                    >
+                                      Cancelar
+                                    </button>
+                                    <button
+                                      onClick={() => handleUnlinkPatient(c.id, linkedPatient.id)}
+                                      disabled={linkingLoading}
+                                      className="flex-1 py-1.5 text-[10px] font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                      Desvincular
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : relinkingCaseId === c.id ? (
+                                <>
+                                  <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                                      Vincular a outro
+                                    </span>
+                                    <button onClick={() => setRelinkingCaseId(null)}>
+                                      <X className="w-3.5 h-3.5 text-slate-400" />
+                                    </button>
+                                  </div>
+                                  <div className="max-h-48 overflow-y-auto">
+                                    {patients.filter(p => p.id !== linkedPatient.id).map(p => (
+                                      <button
+                                        key={p.id}
+                                        onClick={() => handleRelinkPatient(c.id, linkedPatient.id, p.id)}
+                                        disabled={linkingLoading}
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                      >
+                                        <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                          {p.pseudonym.slice(0, 2).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <span className="block text-xs font-medium text-slate-800 truncate">{p.pseudonym}</span>
+                                          {p.age_range && <span className="block text-[10px] text-slate-400">{p.age_range}</span>}
+                                        </div>
+                                      </button>
+                                    ))}
+                                    {patients.filter(p => p.id !== linkedPatient.id).length === 0 && (
+                                      <p className="px-3 py-3 text-[10px] text-slate-400">Nenhum outro paciente.</p>
+                                    )}
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <Link
+                                    href={`/pacientes/${linkedPatient.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-50 transition-colors text-xs text-slate-700 font-medium"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                                    Ver perfil
+                                  </Link>
+                                  {patients.length > 1 && (
+                                    <button
+                                      onClick={() => setRelinkingCaseId(c.id)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-blue-50 transition-colors text-xs text-slate-700 font-medium"
+                                    >
+                                      <Link2 className="w-3.5 h-3.5 text-blue-500" />
+                                      Vincular a outro paciente
+                                    </button>
+                                  )}
+                                  <div className="border-t border-slate-100" />
+                                  <button
+                                    onClick={() => setConfirmUnlink({ caseId: c.id, patientName: linkedPatient.pseudonym })}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-rose-50 transition-colors text-xs text-rose-600 font-medium"
+                                  >
+                                    <Link2Off className="w-3.5 h-3.5" />
+                                    Desvincular
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       ) : null}
                       <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
                         <Calendar className="w-3.5 h-3.5" />
