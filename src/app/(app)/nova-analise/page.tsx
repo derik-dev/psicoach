@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { Suspense, useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useApp, CaseAnalysis, Patient, planCanAccess } from '@/context/AppContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
   Brain, Sparkles, ChevronDown, Play, RotateCcw, Copy,
@@ -1043,14 +1043,15 @@ function SessionNotes({ sessionId, patientName }: SessionNotesProps) {
 
 /* ════════════════════ main page ════════════════════ */
 
-export default function NovaAnalise() {
+function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string | null }) {
   const { user, cases, addCase, updateCase, setAnalysesUsed, patients, addPatient } = useApp();
   const router = useRouter();
+  const initialPatient = patients.find(patient => patient.id === requestedPatientId);
 
   const [mode, setMode] = useState<Mode>('standard');
 
   /* patient */
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(initialPatient?.id || null);
   const [showPatientModal, setShowPatientModal] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
   const [patientSessionInfo, setPatientSessionInfo] = useState<{
@@ -1069,40 +1070,19 @@ export default function NovaAnalise() {
     if (pat.initial_diagnosis) setCurrentDiagnosis(pat.initial_diagnosis);
     if (pat.previous_therapy_notes) setAlreadyTried(pat.previous_therapy_notes);
     if (pat.entry_reason) setInputText(pat.entry_reason);
-
-    supabase
-      .from('sessions')
-      .select('id, created_at')
-      .eq('patient_id', id)
-      .order('created_at', { ascending: false })
-      .then(({ data: sess }) => {
-        if (!sess) return;
-        const count = sess.length;
-        const lastDate = count > 0 ? sess[0].created_at : null;
-        supabase
-          .from('patient_memory')
-          .select('attention_history')
-          .eq('patient_id', id)
-          .single()
-          .then(({ data: mem }) => {
-            const hist = (mem?.attention_history as Array<{ level: string }>) || [];
-            const lastLevel = hist.length > 0 ? hist[hist.length - 1].level : null;
-            setPatientSessionInfo({ sessionCount: count, lastDate, lastLevel });
-          });
-      });
   };
 
   /* shared config */
-  const [sessionsCount, setSessionsCount]   = useState('1-5');
-  const [currentDiagnosis, setCurrentDiagnosis] = useState('');
-  const [alreadyTried, setAlreadyTried]     = useState('');
+  const [sessionsCount, setSessionsCount]   = useState(initialPatient?.sessions_count || '1-5');
+  const [currentDiagnosis, setCurrentDiagnosis] = useState(initialPatient?.initial_diagnosis || '');
+  const [alreadyTried, setAlreadyTried]     = useState(initialPatient?.previous_therapy_notes || '');
   const [specificQuestion, setSpecificQuestion] = useState('');
-  const [customApproach, setCustomApproach] = useState('');
+  const [customApproach, setCustomApproach] = useState(user?.mainApproach || '');
   const [useCustomApproach, setUseCustomApproach] = useState(false);
 
   /* standard mode */
   const [title, setTitle]                   = useState('');
-  const [inputText, setInputText]           = useState('');
+  const [inputText, setInputText]           = useState(initialPatient?.entry_reason || '');
   const [isAnalyzing, setIsAnalyzing]       = useState(false);
   const [analysisResult, setAnalysisResult] = useState<CaseAnalysis | null>(null);
   const [errorMessage, setErrorMessage]     = useState<string | null>(null);
@@ -1124,10 +1104,42 @@ export default function NovaAnalise() {
   const [audioCopySuccess, setAudioCopySuccess] = useState(false);
 
   const bottomRef      = useRef<HTMLDivElement>(null);
+  const [pageOpenedAt] = useState(() => Date.now());
 
   useEffect(() => {
-    if (user && !useCustomApproach) setCustomApproach(user.mainApproach);
-  }, [user, useCustomApproach]);
+    if (!selectedPatientId) return;
+
+    let cancelled = false;
+
+    supabase
+      .from('sessions')
+      .select('id, created_at')
+      .eq('patient_id', selectedPatientId)
+      .order('created_at', { ascending: false })
+      .then(({ data: sessions }) => {
+        if (cancelled || !sessions) return;
+
+        const sessionCount = sessions.length;
+        const lastDate = sessionCount > 0 ? sessions[0].created_at : null;
+
+        supabase
+          .from('patient_memory')
+          .select('attention_history')
+          .eq('patient_id', selectedPatientId)
+          .single()
+          .then(({ data: memory }) => {
+            if (cancelled) return;
+
+            const history = (memory?.attention_history as Array<{ level: string }>) || [];
+            const lastLevel = history.length > 0 ? history[history.length - 1].level : null;
+            setPatientSessionInfo({ sessionCount, lastDate, lastLevel });
+          });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPatientId]);
 
   /* ── auth token helper ── */
   const getAuthHeaders = async (): Promise<Record<string, string> | null> => {
@@ -1445,7 +1457,7 @@ export default function NovaAnalise() {
                   const pat = patients.find(p => p.id === selectedPatientId);
                   if (!pat) return null;
                   const createdAt = new Date(pat.created_at);
-                  const diffMs = Date.now() - createdAt.getTime();
+                  const diffMs = pageOpenedAt - createdAt.getTime();
                   const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
                   const timeLabel = weeks === 0 ? 'menos de 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
                   const nextSession = patientSessionInfo ? patientSessionInfo.sessionCount + 1 : null;
@@ -1838,5 +1850,33 @@ export default function NovaAnalise() {
         />
       )}
     </div>
+  );
+}
+
+export default function NovaAnalise() {
+  return (
+    <Suspense fallback={<div className="min-h-[420px] animate-pulse rounded-3xl bg-slate-100" />}>
+      <NovaAnaliseFromUrl />
+    </Suspense>
+  );
+}
+
+function NovaAnaliseFromUrl() {
+  const searchParams = useSearchParams();
+  const { patients } = useApp();
+  const requestedPatientId = searchParams.get('patient');
+  const requestedPatient = requestedPatientId
+    ? patients.find(patient => patient.id === requestedPatientId)
+    : null;
+
+  if (requestedPatientId && !requestedPatient) {
+    return <div className="min-h-[420px] animate-pulse rounded-3xl bg-slate-100" />;
+  }
+
+  return (
+    <NovaAnaliseContent
+      key={requestedPatient?.updated_at || requestedPatientId || 'new-analysis'}
+      requestedPatientId={requestedPatientId}
+    />
   );
 }
