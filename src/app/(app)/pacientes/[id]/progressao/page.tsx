@@ -152,7 +152,7 @@ function NotesCard({
         onChange={e => handleChange(e.target.value)}
         placeholder="Anote livremente…"
         rows={5}
-        className="w-full resize-none rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 text-xs text-slate-700 leading-relaxed placeholder-slate-400 outline-none focus:border-slate-300 focus:bg-white transition-colors cursor-text"
+        className="w-full resize-none bg-white text-xs text-slate-700 leading-relaxed placeholder-slate-300 outline-none cursor-text"
       />
     </div>
   );
