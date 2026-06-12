@@ -1581,7 +1581,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
           </div>
 
           {/* ── Coluna direita — Resultado ── */}
-          <div className="flex h-full flex-col xl:sticky xl:top-6">
+          <div className="flex flex-col xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
             {errorMessage ? (
               <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
@@ -1640,7 +1640,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
               </div>
 
             ) : analysisResult ? (
-              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6 max-h-[80vh] overflow-y-auto">
+              <div className="flex-1 overflow-y-auto rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
                 <AnalysisCard
                   result={analysisResult}
                   onCopy={handleCopyText}
@@ -1825,7 +1825,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                 </div>
               </div>
             ) : audioResult ? (
-              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6 max-h-[80vh] overflow-y-auto">
+              <div className="flex-1 overflow-y-auto rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
                 <AnalysisCard
                   result={audioResult}
                   onCopy={handleAudioCopy}
