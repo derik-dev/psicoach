@@ -1069,7 +1069,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     if (pat.sessions_count) setSessionsCount(pat.sessions_count);
     if (pat.initial_diagnosis) setCurrentDiagnosis(pat.initial_diagnosis);
     if (pat.previous_therapy_notes) setAlreadyTried(pat.previous_therapy_notes);
-    if (pat.entry_reason) setInputText(pat.entry_reason);
+    setInputText('');
   };
 
   /* shared config */
@@ -1082,7 +1082,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
 
   /* standard mode */
   const [title, setTitle]                   = useState('');
-  const [inputText, setInputText]           = useState(initialPatient?.entry_reason || '');
+  const [inputText, setInputText]           = useState('');
   const [isAnalyzing, setIsAnalyzing]       = useState(false);
   const [analysisResult, setAnalysisResult] = useState<CaseAnalysis | null>(null);
   const [errorMessage, setErrorMessage]     = useState<string | null>(null);
