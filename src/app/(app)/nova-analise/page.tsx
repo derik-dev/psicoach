@@ -1581,7 +1581,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
           </div>
 
           {/* ── Coluna direita — Resultado ── */}
-          <div className="flex flex-col xl:sticky xl:top-6 xl:h-[calc(100vh-4rem)]">
+          <div className="flex h-full flex-col">
             {errorMessage ? (
               <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
