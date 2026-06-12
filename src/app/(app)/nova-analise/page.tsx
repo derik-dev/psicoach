@@ -1640,7 +1640,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
               </div>
 
             ) : analysisResult ? (
-              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6 max-h-[80vh] overflow-y-auto">
                 <AnalysisCard
                   result={analysisResult}
                   onCopy={handleCopyText}
@@ -1825,7 +1825,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                 </div>
               </div>
             ) : audioResult ? (
-              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6 max-h-[80vh] overflow-y-auto">
                 <AnalysisCard
                   result={audioResult}
                   onCopy={handleAudioCopy}
