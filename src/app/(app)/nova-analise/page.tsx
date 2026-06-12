@@ -1264,59 +1264,54 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                 </div>
               </div>
 
-              {/* Área principal: relato (esquerda) + contexto/abordagem (direita) */}
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[3fr_2fr]">
-                {/* Relato clínico */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                      Relato clínico <span className="text-rose-500">*</span>
-                    </label>
-                    <span className={`text-[10px] font-medium ${inputText.length >= 200 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      {inputText.length} car.
-                    </span>
-                  </div>
-                  <textarea
-                    required
-                    rows={7}
-                    value={inputText}
-                    onChange={e => setInputText(e.target.value)}
-                    placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
-                    className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                  />
-                  {inputText.length > 0 && inputText.length < 200 && (
-                    <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
-                  )}
+              {/* Relato clínico */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                    Relato clínico <span className="text-rose-500">*</span>
+                  </label>
+                  <span className={`text-[10px] font-medium ${inputText.length >= 200 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {inputText.length} car.
+                  </span>
                 </div>
+                <textarea
+                  required
+                  rows={6}
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
+                  className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+                {inputText.length > 0 && inputText.length < 200 && (
+                  <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
+                )}
+              </div>
 
-                {/* Botões + aviso */}
-                <div className="flex flex-col gap-3">
-                  <div className="mt-auto space-y-2 pt-1">
-                    <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                      <Shield className="h-3 w-3 shrink-0 text-slate-400" />
-                      <p className="text-[10px] text-slate-500">Use apenas dados anonimizados.</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleReset}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        <RotateCcw className="h-4 w-4" /> Limpar
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={inputText.trim().length < 10 || isAnalyzing}
-                        className="inline-flex flex-[2] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-                      >
-                        {isAnalyzing ? (
-                          <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Processando...</>
-                        ) : (
-                          <><Play className="h-4 w-4 fill-current" /> Gerar análise</>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+              {/* Rodapé: aviso + botões */}
+              <div className="flex items-center gap-3 pt-1">
+                <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                  <Shield className="h-3 w-3 shrink-0 text-slate-400" />
+                  <p className="text-[10px] text-slate-500">Use apenas dados anonimizados.</p>
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    <RotateCcw className="h-4 w-4" /> Limpar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={inputText.trim().length < 10 || isAnalyzing}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+                  >
+                    {isAnalyzing ? (
+                      <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Processando...</>
+                    ) : (
+                      <><Play className="h-4 w-4 fill-current" /> Gerar análise</>
+                    )}
+                  </button>
                 </div>
               </div>
             </form>
