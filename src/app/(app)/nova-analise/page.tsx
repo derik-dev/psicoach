@@ -236,15 +236,15 @@ function AnalysisCard({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 
         {/* Resumo rápido — 1 frase, máx 20 palavras */}
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 flex flex-col h-40 overflow-hidden">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 flex flex-col min-h-40">
           <span className="shrink-0 text-[11px] font-semibold uppercase text-blue-600" style={{ letterSpacing: '0.8px' }}>
             Resumo rápido
           </span>
-          <p className="mt-3 text-[14px] leading-[1.6] text-blue-950 line-clamp-5">{resumo}</p>
+          <p className="mt-3 text-[14px] leading-[1.6] text-blue-950 line-clamp-4">{resumo}</p>
         </div>
 
         {/* Atenção clínica — badge + 2 bullets */}
-        <div className={`rounded-2xl border p-4 flex flex-col h-40 overflow-hidden ${cfg.bg} ${cfg.border}`}>
+        <div className={`rounded-2xl border p-4 flex flex-col min-h-40 ${cfg.bg} ${cfg.border}`}>
           <span className={`shrink-0 text-[11px] font-semibold uppercase ${cfg.color}`} style={{ letterSpacing: '0.8px' }}>
             Atenção clínica
           </span>
@@ -255,27 +255,27 @@ function AnalysisCard({
             {cfg.bullets.slice(0, 2).map((b, i) => (
               <li key={i} className={`flex items-start gap-1.5 text-[12px] leading-snug ${cfg.color} opacity-85`}>
                 <span className="mt-1.5 w-1 h-1 rounded-full bg-current shrink-0" />
-                <span>{b}</span>
+                <span className="line-clamp-2">{b}</span>
               </li>
             ))}
           </ul>
         </div>
 
         {/* Foco inicial — 1 frase de decisão */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col h-40 overflow-hidden">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col min-h-40">
           <span className="shrink-0 text-[11px] font-semibold uppercase text-slate-500" style={{ letterSpacing: '0.8px' }}>
             Foco inicial
           </span>
-          <p className="mt-3 text-[14px] leading-[1.6] text-slate-700 line-clamp-5">{focoInicial}</p>
+          <p className="mt-3 text-[14px] leading-[1.6] text-slate-700 line-clamp-4">{focoInicial}</p>
         </div>
 
         {/* Próxima pergunta — a pergunta em itálico */}
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 flex flex-col h-40 overflow-hidden">
+        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 flex flex-col min-h-40">
           <span className="shrink-0 text-[11px] font-semibold uppercase text-amber-600" style={{ letterSpacing: '0.8px' }}>
             Próxima pergunta
           </span>
           <p
-            className="mt-3 text-[14px] italic leading-[1.6] text-slate-700 line-clamp-5"
+            className="mt-3 text-[14px] italic leading-[1.6] text-slate-700 line-clamp-4"
             style={{ fontFamily: 'Georgia, serif' }}
           >
             &ldquo;{proxPergunta}&rdquo;
