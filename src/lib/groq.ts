@@ -73,6 +73,7 @@ export interface PatientMemoryContext {
   medication_use?: string;
   intake_sessions_count?: string;
   last_session_notes?: string;
+  previous_relatos?: { session_number: number; input_text: string }[];
 }
 
 /* ─── therapist profile shape (sent from frontend) ─── */
@@ -207,6 +208,13 @@ export function buildAnalysisUserMessage(
     }
     if (patientMemory.last_session_notes?.trim())
       lines.push(`Nota da última sessão: ${patientMemory.last_session_notes.trim()}`);
+    if (patientMemory.previous_relatos && patientMemory.previous_relatos.length > 0) {
+      lines.push('');
+      lines.push('RELATOS ANTERIORES:');
+      for (const r of patientMemory.previous_relatos) {
+        lines.push(`Sessão ${r.session_number}: ${r.input_text.trim()}`);
+      }
+    }
     lines.push('');
   }
 

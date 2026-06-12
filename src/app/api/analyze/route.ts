@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         access.admin.from('patient_memory').select('*').eq('patient_id', patient_id).single(),
         access.admin
           .from('sessions')
-          .select('id, therapist_notes, session_number')
+          .select('id, therapist_notes, session_number, input_text')
           .eq('patient_id', patient_id)
           .order('session_number', { ascending: false }),
       ]);
@@ -76,6 +76,11 @@ export async function POST(req: NextRequest) {
         const diffMs = Date.now() - createdAt.getTime();
         const weeksDiff = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
         const lastNote = sessionsArr.find(s => s.therapist_notes?.trim())?.therapist_notes;
+        const previousRelatos = sessionsArr
+          .filter(s => s.input_text?.trim())
+          .slice(0, 3)
+          .reverse()
+          .map(s => ({ session_number: s.session_number, input_text: s.input_text as string }));
 
         patientMemoryContext = {
           pseudonym: patient.pseudonym,
@@ -93,6 +98,7 @@ export async function POST(req: NextRequest) {
           central_themes: memory?.central_themes || [],
           attention_history: (memory?.attention_history || []) as PatientMemoryContext['attention_history'],
           last_session_notes: lastNote || undefined,
+          previous_relatos: previousRelatos.length > 0 ? previousRelatos : undefined,
         };
       }
     }
@@ -178,7 +184,7 @@ export async function POST(req: NextRequest) {
 
       const { data: newSession } = await access.admin
         .from('sessions')
-        .insert({ patient_id, session_number: newSessionNumber, therapist_notes: '' })
+        .insert({ patient_id, session_number: newSessionNumber, therapist_notes: '', input_text })
         .select('id')
         .single();
 
