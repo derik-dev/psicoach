@@ -1444,138 +1444,144 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
             </div>
 
             <form onSubmit={handleAnalyze} className="space-y-3">
-              {/* Seletor de paciente */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  Paciente
-                </label>
-                <PatientSelector
-                  patients={patients}
-                  selectedId={selectedPatientId}
-                  onSelect={handlePatientSelect}
-                  onNewPatient={() => setShowPatientModal(true)}
-                />
-                {selectedPatientId && (() => {
-                  const pat = patients.find(p => p.id === selectedPatientId);
-                  if (!pat) return null;
-                  const createdAt = new Date(pat.created_at);
-                  const diffMs = pageOpenedAt - createdAt.getTime();
-                  const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-                  const timeLabel = weeks === 0 ? 'menos de 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
-                  const nextSession = patientSessionInfo ? patientSessionInfo.sessionCount + 1 : null;
-                  const lastDate = patientSessionInfo?.lastDate
-                    ? new Date(patientSessionInfo.lastDate).toLocaleDateString('pt-BR')
-                    : null;
-                  const lastLevelCfg = patientSessionInfo?.lastLevel
-                    ? { baixo: { label: 'Baixa', color: 'text-emerald-600' }, moderado: { label: 'Moderada', color: 'text-amber-600' }, alto: { label: 'Alta', color: 'text-rose-600' } }[patientSessionInfo.lastLevel as 'baixo' | 'moderado' | 'alto']
-                    : null;
-                  return (
-                    <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2.5 space-y-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {nextSession && (
-                          <span className="text-[11px] font-semibold text-blue-700">Sessão {nextSession}</span>
-                        )}
-                        <span className="text-[10px] text-blue-500">•</span>
-                        <span className="text-[11px] font-medium text-blue-700">{pat.pseudonym}</span>
-                        {lastDate && (
-                          <>
-                            <span className="text-[10px] text-blue-400">•</span>
-                            <span className="text-[11px] text-blue-500">Última: {lastDate}</span>
-                          </>
-                        )}
-                        {lastLevelCfg && (
-                          <>
-                            <span className="text-[10px] text-blue-400">•</span>
-                            <span className={`text-[11px] font-semibold ${lastLevelCfg.color}`}>
-                              Atenção: {lastLevelCfg.label}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-blue-500 flex items-center gap-1">
-                        <Clock className="h-2.5 w-2.5" /> Em acompanhamento há {timeLabel}
-                      </p>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Pseudônimo */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  Título do caso (opcional)
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder="Ex: Caso G. — Fobia Social"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-
-              {/* Relato clínico */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                    Relato clínico <span className="text-rose-500">*</span>
+              {/* Linha superior: paciente + título */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {/* Seletor de paciente */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                    Paciente
                   </label>
-                  <span className={`text-[10px] font-medium ${inputText.length >= 200 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                    {inputText.length} car.
-                  </span>
+                  <PatientSelector
+                    patients={patients}
+                    selectedId={selectedPatientId}
+                    onSelect={handlePatientSelect}
+                    onNewPatient={() => setShowPatientModal(true)}
+                  />
+                  {selectedPatientId && (() => {
+                    const pat = patients.find(p => p.id === selectedPatientId);
+                    if (!pat) return null;
+                    const createdAt = new Date(pat.created_at);
+                    const diffMs = pageOpenedAt - createdAt.getTime();
+                    const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+                    const timeLabel = weeks === 0 ? 'menos de 1 semana' : weeks >= 8 ? `${Math.round(weeks / 4)} meses` : `${weeks} semanas`;
+                    const nextSession = patientSessionInfo ? patientSessionInfo.sessionCount + 1 : null;
+                    const lastDate = patientSessionInfo?.lastDate
+                      ? new Date(patientSessionInfo.lastDate).toLocaleDateString('pt-BR')
+                      : null;
+                    const lastLevelCfg = patientSessionInfo?.lastLevel
+                      ? { baixo: { label: 'Baixa', color: 'text-emerald-600' }, moderado: { label: 'Moderada', color: 'text-amber-600' }, alto: { label: 'Alta', color: 'text-rose-600' } }[patientSessionInfo.lastLevel as 'baixo' | 'moderado' | 'alto']
+                      : null;
+                    return (
+                      <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2.5 space-y-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {nextSession && (
+                            <span className="text-[11px] font-semibold text-blue-700">Sessão {nextSession}</span>
+                          )}
+                          <span className="text-[10px] text-blue-500">•</span>
+                          <span className="text-[11px] font-medium text-blue-700">{pat.pseudonym}</span>
+                          {lastDate && (
+                            <>
+                              <span className="text-[10px] text-blue-400">•</span>
+                              <span className="text-[11px] text-blue-500">Última: {lastDate}</span>
+                            </>
+                          )}
+                          {lastLevelCfg && (
+                            <>
+                              <span className="text-[10px] text-blue-400">•</span>
+                              <span className={`text-[11px] font-semibold ${lastLevelCfg.color}`}>
+                                Atenção: {lastLevelCfg.label}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-blue-500 flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" /> Em acompanhamento há {timeLabel}
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
-                <textarea
-                  required
-                  rows={8}
-                  value={inputText}
-                  onChange={e => setInputText(e.target.value)}
-                  placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
-                  className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                />
-                {inputText.length > 0 && inputText.length < 200 && (
-                  <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
-                )}
+
+                {/* Título do caso */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                    Título do caso (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="Ex: Caso G. — Fobia Social"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
               </div>
 
-              <ContextPanel
-
-                sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
-                currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
-                alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
-                specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
-              />
-              <ApproachPanel
-                useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
-                customApproach={customApproach} setCustomApproach={setCustomApproach}
-                mainApproach={user?.mainApproach}
-              />
-
-              {/* Aviso anonimização */}
-              <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                <Shield className="h-3 w-3 shrink-0 text-slate-400" />
-                <p className="text-[10px] text-slate-500">Use apenas dados anonimizados.</p>
-              </div>
-
-              {/* Botões */}
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
-                >
-                  <RotateCcw className="h-4 w-4" /> Limpar
-                </button>
-                <button
-                  type="submit"
-                  disabled={inputText.trim().length < 10 || isAnalyzing}
-                  className="inline-flex flex-[2] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-                >
-                  {isAnalyzing ? (
-                    <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Processando...</>
-                  ) : (
-                    <><Play className="h-4 w-4 fill-current" /> Gerar análise</>
+              {/* Área principal: relato (esquerda) + contexto/abordagem (direita) */}
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[3fr_2fr]">
+                {/* Relato clínico */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                      Relato clínico <span className="text-rose-500">*</span>
+                    </label>
+                    <span className={`text-[10px] font-medium ${inputText.length >= 200 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {inputText.length} car.
+                    </span>
+                  </div>
+                  <textarea
+                    required
+                    rows={7}
+                    value={inputText}
+                    onChange={e => setInputText(e.target.value)}
+                    placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
+                    className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                  {inputText.length > 0 && inputText.length < 200 && (
+                    <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
                   )}
-                </button>
+                </div>
+
+                {/* Contexto + Abordagem + Botões */}
+                <div className="flex flex-col gap-3">
+                  <ContextPanel
+                    sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
+                    currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
+                    alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
+                    specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
+                  />
+                  <ApproachPanel
+                    useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
+                    customApproach={customApproach} setCustomApproach={setCustomApproach}
+                    mainApproach={user?.mainApproach}
+                  />
+                  <div className="mt-auto space-y-2 pt-1">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                      <Shield className="h-3 w-3 shrink-0 text-slate-400" />
+                      <p className="text-[10px] text-slate-500">Use apenas dados anonimizados.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
+                      >
+                        <RotateCcw className="h-4 w-4" /> Limpar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={inputText.trim().length < 10 || isAnalyzing}
+                        className="inline-flex flex-[2] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+                      >
+                        {isAnalyzing ? (
+                          <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Processando...</>
+                        ) : (
+                          <><Play className="h-4 w-4 fill-current" /> Gerar análise</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </form>
           </div>
