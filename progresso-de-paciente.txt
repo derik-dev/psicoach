@@ -1,0 +1,80 @@
+COMO FUNCIONA O PROGRESSO DE PACIENTE NO PSICOACH
+===================================================
+
+Imagine que o PsiCoach é como um caderno inteligente que o terapeuta usa para
+acompanhar a evolução de cada paciente ao longo do tempo. Veja como funciona:
+
+
+1. CADA ANÁLISE VIRA UMA "SESSÃO"
+----------------------------------
+Toda vez que o terapeuta descreve um caso e pede uma análise para um paciente
+específico, o sistema registra isso como uma sessão numerada (Sessão 1, Sessão 2,
+Sessão 3...). É como marcar páginas no caderno.
+
+
+2. O SISTEMA "LEMBRA" O QUE ACONTECEU
+---------------------------------------
+Para cada paciente, o PsiCoach guarda uma memória clínica que vai crescendo com
+o tempo. Essa memória inclui:
+
+  - Hipóteses confirmadas: o que a IA e o terapeuta já concluíram sobre o paciente
+  - Hipóteses descartadas: o que foi testado mas não se confirmou
+  - O que funcionou: intervenções e abordagens que deram resultado
+  - O que não funcionou: tentativas que não surtiram efeito
+  - Padrões recorrentes: comportamentos ou situações que aparecem com frequência
+  - Temas centrais: os assuntos principais que permeiam a terapia
+
+
+3. O NÍVEL DE ATENÇÃO
+----------------------
+A cada sessão, a IA atribui um nível de atenção ao paciente:
+
+  - BAIXO (verde): situação estável, sem alertas
+  - MODERADO (amarelo): há pontos de atenção que merecem acompanhamento
+  - ALTO (vermelho): situação de risco — qualquer menção a suicídio, automutilação
+    ou risco de vida eleva automaticamente para esse nível
+
+Esse nível fica registrado em cada sessão, formando um histórico.
+
+
+4. O QUE O TERAPEUTA VÊ NA TELA
+---------------------------------
+Na página de progressão do paciente, o terapeuta encontra:
+
+  - Uma LINHA DO TEMPO com bolinhas coloridas (uma por sessão), mostrando como
+    o nível de atenção variou ao longo do tempo
+
+  - Um GRÁFICO que desenha a evolução — se o paciente estava em nível alto e
+    foi caindo para moderado e depois baixo, dá para ver essa melhora visualmente
+
+  - A MEMÓRIA CLÍNICA acumulada: todas as hipóteses, padrões e aprendizados
+    reunidos em um só lugar
+
+
+5. A SINCRONIZAÇÃO (ponto importante)
+---------------------------------------
+A memória clínica NÃO se atualiza sozinha a cada análise. O terapeuta precisa
+clicar no botão "Sincronizar memória" para que o sistema releia todas as sessões
+anteriores e atualize o histórico de progresso.
+
+Pense assim: é como pedir para o assistente reler todas as anotações do caderno
+e fazer um resumo atualizado. Se o terapeuta não sincronizar, o histórico pode
+estar desatualizado.
+
+
+6. O CONTEXTO PASSA PARA A IA
+-------------------------------
+Quando o terapeuta cria uma nova análise para um paciente que já tem histórico,
+a IA recebe automaticamente um resumo do que já foi aprendido sobre aquele
+paciente (hipóteses, padrões, número de sessões, etc.). Isso faz com que as
+análises mais recentes sejam mais precisas e contextualizadas — a IA não começa
+do zero a cada vez.
+
+
+RESUMO SIMPLIFICADO
+====================
+O PsiCoach transforma cada análise em um registro histórico. Com o tempo,
+ele monta uma visão completa da evolução do paciente: o que melhorou, o que
+preocupa, o que funcionou na terapia. Tudo isso fica disponível em uma página
+visual de progressão, ajudando o terapeuta a enxergar o caminho percorrido
+e tomar decisões clínicas mais embasadas.

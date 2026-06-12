@@ -1,6 +1,6 @@
 /* Shared helpers for building/merging patient_memory from analysis data */
 
-export function extractFirstParagraph(text: string, maxLen = 600): string {
+export function extractFirstParagraph(text: string, maxLen = 2000): string {
   if (!text?.trim()) return '';
   const para = text.split(/\n\n/)[0].replace(/\*\*/g, '').trim();
   if (para.length <= maxLen) return para;
@@ -9,7 +9,7 @@ export function extractFirstParagraph(text: string, maxLen = 600): string {
   return (lastSpace > 80 ? truncated.slice(0, lastSpace) : truncated) + '…';
 }
 
-export function extractFirstSentence(text: string, maxLen = 400): string {
+export function extractFirstSentence(text: string, maxLen = 1200): string {
   if (!text?.trim()) return '';
   const clean = text.replace(/\*\*/g, '').trim();
   const match = clean.match(/[^.!?\n]+[.!?]/);
