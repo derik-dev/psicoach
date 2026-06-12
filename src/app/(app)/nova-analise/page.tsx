@@ -1431,9 +1431,9 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
 
       {/* ══════════════ STANDARD MODE ══════════════ */}
       {mode === 'standard' && (
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_4fr]">
+        <div className="flex flex-col gap-4">
 
-          {/* ── Coluna esquerda — Entrada do caso ── */}
+          {/* ── Entrada do caso ── */}
           <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm lg:p-5">
             {/* Section header */}
             <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1580,8 +1580,8 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
             </form>
           </div>
 
-          {/* ── Coluna direita — Resultado ── */}
-          <div className="flex h-full flex-col">
+          {/* ── Resultado (dossiê) ── */}
+          <div className="flex flex-col">
             {errorMessage ? (
               <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
@@ -1608,7 +1608,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
               </div>
 
             ) : !isAnalyzing && !analysisResult ? (
-              <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-16 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
                   <Brain className="h-7 w-7" />
                 </div>
@@ -1619,7 +1619,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
               </div>
 
             ) : isAnalyzing ? (
-              <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white p-16 text-center shadow-sm">
                 <div className="relative mb-5">
                   <div className="absolute -inset-4 animate-ping rounded-full bg-blue-100 blur-2xl" />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white">
@@ -1640,7 +1640,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
               </div>
 
             ) : analysisResult ? (
-              <div className="flex-1 min-h-0 overflow-y-auto rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
                 <AnalysisCard
                   result={analysisResult}
                   onCopy={handleCopyText}
@@ -1659,7 +1659,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
 
       {/* ══════════════ AUDIO MODE ══════════════ */}
       {mode === 'audio' && (
-        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[3fr_4fr]">
+        <div className="flex flex-col gap-4">
 
           {/* ── Coluna esquerda — Gravação ── */}
           <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm lg:p-5">
@@ -1782,10 +1782,10 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
             </div>
           </div>
 
-          {/* ── Coluna direita — Resultado ── */}
-          <div className="xl:sticky xl:top-6">
+          {/* ── Resultado áudio ── */}
+          <div>
             {audioError ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-rose-200 bg-rose-50/40 p-8 text-center">
+              <div className="flex flex-col items-center justify-center rounded-3xl py-16 border border-rose-200 bg-rose-50/40 p-8 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
                   <AlertTriangle className="h-7 w-7" />
                 </div>
@@ -1801,7 +1801,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                 ) : null}
               </div>
             ) : !isAudioAnalyzing && !audioResult ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
+              <div className="flex flex-col items-center justify-center rounded-3xl py-16 border border-dashed border-slate-200 bg-white p-8 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
                   <Mic className="h-7 w-7" />
                 </div>
@@ -1811,7 +1811,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                 </p>
               </div>
             ) : isAudioAnalyzing ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+              <div className="flex flex-col items-center justify-center rounded-3xl py-16 border border-slate-100 bg-white p-8 text-center shadow-sm">
                 <div className="relative mb-5">
                   <div className="absolute -inset-4 animate-ping rounded-full bg-blue-100 blur-2xl" />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white">
@@ -1825,7 +1825,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                 </div>
               </div>
             ) : audioResult ? (
-              <div className="flex-1 min-h-0 overflow-y-auto rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
+              <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm lg:p-6">
                 <AnalysisCard
                   result={audioResult}
                   onCopy={handleAudioCopy}
