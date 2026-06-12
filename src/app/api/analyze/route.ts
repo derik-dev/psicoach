@@ -118,9 +118,7 @@ export async function POST(req: NextRequest) {
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
       temperature: 0.35,
-      max_completion_tokens: 4096,
-      reasoning_effort: 'medium',
-      reasoning_format: 'hidden',
+      max_tokens: 4096,
       response_format: ANALYSIS_RESPONSE_FORMAT,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -143,9 +141,7 @@ export async function POST(req: NextRequest) {
       const repairCompletion = await groq.chat.completions.create({
         model: GROQ_MODEL,
         temperature: 0.1,
-        max_completion_tokens: 4096,
-        reasoning_effort: 'low',
-        reasoning_format: 'hidden',
+        max_tokens: 4096,
         response_format: ANALYSIS_RESPONSE_FORMAT,
         messages: [
           {
