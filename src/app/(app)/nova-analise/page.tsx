@@ -67,39 +67,6 @@ const ATENCAO_CFG: Record<AtencaoNivel, {
   },
 };
 
-const APPROACH_OPTIONS = [
-  {
-    value: 'TCC (Terapia Cognitivo-Comportamental)',
-    label: 'TCC',
-    description: 'Pensamentos, crenças e experimentos comportamentais',
-  },
-  {
-    value: 'Psicanálise',
-    label: 'Psicanálise',
-    description: 'Inconsciente, transferência e elaboração',
-  },
-  {
-    value: 'Humanista / Fenomenologia',
-    label: 'Humanista',
-    description: 'Experiência vivida, vínculo e autenticidade',
-  },
-  {
-    value: 'Sistêmica / Terapia Familiar',
-    label: 'Sistêmica',
-    description: 'Relações, padrões familiares e contexto',
-  },
-  {
-    value: 'Gestalt-terapia',
-    label: 'Gestalt',
-    description: 'Awareness, contato e aqui-agora',
-  },
-  {
-    value: 'Junguiana / Psicologia Analítica',
-    label: 'Junguiana',
-    description: 'Símbolos, arquétipos e individuação',
-  },
-] as const;
-
 /* ══════════════════════ Markdown helpers ══════════════════════ */
 
 function renderMd(text: string) {
@@ -565,210 +532,6 @@ function AnalysisCard({
   );
 }
 
-/* ══════════════════ shared sub-panels ══════════════════ */
-
-interface ContextPanelProps {
-  sessionsCount: string;
-  setSessionsCount: (v: string) => void;
-  currentDiagnosis: string;
-  setCurrentDiagnosis: (v: string) => void;
-  alreadyTried: string;
-  setAlreadyTried: (v: string) => void;
-  specificQuestion: string;
-  setSpecificQuestion: (v: string) => void;
-}
-
-function ContextPanel({
-  sessionsCount, setSessionsCount,
-  currentDiagnosis, setCurrentDiagnosis,
-  alreadyTried, setAlreadyTried,
-  specificQuestion, setSpecificQuestion,
-}: ContextPanelProps) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/40">
-      <div className="flex w-full items-center bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
-        <span className="flex items-center gap-2">
-          <FileText className="h-3.5 w-3.5 text-blue-600" />
-          Configurações adicionais
-        </span>
-      </div>
-      <div className="space-y-3 border-t border-slate-100 bg-white p-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Sessões <span className="normal-case font-normal">(opcional)</span></label>
-              <select
-                value={sessionsCount}
-                onChange={e => setSessionsCount(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-              >
-                <option value="1-5">Acolhimento (1-5)</option>
-                <option value="5-10">Aliança (5-10)</option>
-                <option value="10-20">Processamento (10-20)</option>
-                <option value="20-50">Elaboração (20-50)</option>
-                <option value="+50">Longa duração (+50)</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Diagnóstico <span className="normal-case font-normal">(opcional)</span></label>
-              <input
-                type="text"
-                value={currentDiagnosis}
-                onChange={e => setCurrentDiagnosis(e.target.value)}
-                placeholder="Ex: F41.1"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Já foi trabalhado <span className="normal-case font-normal">(opcional)</span></label>
-            <input
-              type="text"
-              value={alreadyTried}
-              onChange={e => setAlreadyTried(e.target.value)}
-              placeholder="Ex: Psicoeducação do pânico..."
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Dúvida específica <span className="normal-case font-normal">(opcional)</span></label>
-            <input
-              type="text"
-              value={specificQuestion}
-              onChange={e => setSpecificQuestion(e.target.value)}
-              placeholder="Ex: Como lidar com a racionalização?"
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-            />
-          </div>
-        </div>
-    </div>
-  );
-}
-
-interface ApproachPanelProps {
-  useCustomApproach: boolean;
-  setUseCustomApproach: (v: boolean) => void;
-  customApproach: string;
-  setCustomApproach: (v: string) => void;
-  mainApproach: string | undefined;
-}
-
-function ApproachPanel({
-  useCustomApproach, setUseCustomApproach,
-  customApproach, setCustomApproach,
-  mainApproach,
-}: ApproachPanelProps) {
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const selectedApproach = APPROACH_OPTIONS.find(option => option.value === customApproach);
-
-  const handleToggleCustom = (checked: boolean) => {
-    setUseCustomApproach(checked);
-    if (checked && !customApproach) {
-      setCustomApproach(mainApproach || APPROACH_OPTIONS[0].value);
-    }
-  };
-
-  return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="text-[13px] font-semibold text-slate-800">Diretriz teórica</h4>
-          <p className="text-[10px] text-slate-400">O vocabulário se adapta à escolha.</p>
-        </div>
-        <label className="flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
-            checked={useCustomApproach}
-            onChange={e => handleToggleCustom(e.target.checked)}
-            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-          />
-          <span className="text-xs font-semibold text-blue-600">Mudar</span>
-        </label>
-      </div>
-      <div className="mt-2">
-        {!useCustomApproach ? (
-          <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 p-2.5 text-xs font-medium text-blue-700">
-            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>Padrão: {mainApproach || 'Não definida'}</span>
-          </div>
-        ) : (
-          <div
-            className="relative"
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-                setIsSelectorOpen(false);
-              }
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setIsSelectorOpen(open => !open)}
-              className={`flex w-full items-center justify-between rounded-xl border bg-white px-3 py-2.5 text-left transition-all ${
-                isSelectorOpen
-                  ? 'border-blue-300 shadow-[0_0_0_3px_rgba(37,99,235,0.10)]'
-                  : 'border-slate-200 hover:border-blue-200 hover:bg-blue-50/30'
-              }`}
-              aria-haspopup="listbox"
-              aria-expanded={isSelectorOpen}
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-xs font-semibold text-slate-800">
-                  {selectedApproach?.label || 'Escolha uma abordagem'}
-                </span>
-                <span className="mt-0.5 block truncate text-[10px] text-slate-400">
-                  {selectedApproach?.description || 'Selecione o referencial para esta análise'}
-                </span>
-              </span>
-              <ChevronDown className={`ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform ${isSelectorOpen ? 'rotate-180 text-blue-600' : ''}`} />
-            </button>
-
-            {isSelectorOpen && (
-              <div
-                role="listbox"
-                className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
-              >
-                {APPROACH_OPTIONS.map((option) => {
-                  const selected = customApproach === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="option"
-                      aria-selected={selected}
-                      onClick={() => {
-                        setCustomApproach(option.value);
-                        setIsSelectorOpen(false);
-                      }}
-                      className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-colors ${
-                        selected
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                      }`}
-                    >
-                      <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                        selected ? 'border-blue-500 bg-blue-600 text-white' : 'border-slate-200 bg-white text-transparent'
-                      }`}>
-                        <Check className="h-2.5 w-2.5" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-xs font-semibold leading-tight">{option.label}</span>
-                        <span className={`mt-0.5 block text-[10px] leading-snug ${
-                          selected ? 'text-blue-500' : 'text-slate-400'
-                        }`}>
-                          {option.description}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /* ════════════════════ PatientSelector ════════════════════ */
 
 interface PatientSelectorProps {
@@ -1066,21 +829,8 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     setSelectedPatientId(id);
     setPatientSessionInfo(null);
     if (!id) return;
-    const pat = patients.find(p => p.id === id);
-    if (!pat) return;
-    if (pat.sessions_count) setSessionsCount(pat.sessions_count);
-    if (pat.initial_diagnosis) setCurrentDiagnosis(pat.initial_diagnosis);
-    if (pat.previous_therapy_notes) setAlreadyTried(pat.previous_therapy_notes);
     setInputText('');
   };
-
-  /* shared config */
-  const [sessionsCount, setSessionsCount]   = useState(initialPatient?.sessions_count || '1-5');
-  const [currentDiagnosis, setCurrentDiagnosis] = useState(initialPatient?.initial_diagnosis || '');
-  const [alreadyTried, setAlreadyTried]     = useState(initialPatient?.previous_therapy_notes || '');
-  const [specificQuestion, setSpecificQuestion] = useState('');
-  const [customApproach, setCustomApproach] = useState(user?.mainApproach || '');
-  const [useCustomApproach, setUseCustomApproach] = useState(false);
 
   /* standard mode */
   const [title, setTitle]                   = useState('');
@@ -1156,10 +906,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
   /* ── standard handlers ── */
 
   const handleReset = () => {
-    setTitle(''); setInputText(''); setSessionsCount('1-5');
-    setCurrentDiagnosis(''); setAlreadyTried(''); setSpecificQuestion('');
-    setUseCustomApproach(false);
-    setCustomApproach(user?.mainApproach || '');
+    setTitle(''); setInputText('');
     setAnalysisResult(null); setErrorMessage(null);
     setSavedSessionId(null);
   };
@@ -1169,12 +916,12 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     if (!inputText || inputText.trim().length < 10) return;
     setIsAnalyzing(true); setAnalysisResult(null); setErrorMessage(null);
 
-    const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
+    const approach = user?.mainApproach || '';
     const clinicalContext = {
-      sessions_count: sessionsCount,
-      current_diagnosis: currentDiagnosis,
-      already_tried: alreadyTried,
-      specific_question: specificQuestion,
+      sessions_count: '',
+      current_diagnosis: '',
+      already_tried: '',
+      specific_question: '',
     };
 
     try {
@@ -1230,7 +977,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
   };
 
   const buildCopyText = (result: CaseAnalysis) =>
-    `PsiCoach AI — Análise\nAbordagem: ${useCustomApproach ? customApproach : user?.mainApproach}\n\nHIPÓTESE\n${result.hypothesis}\n\nABORDAGENS\n${result.approaches.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\nPERGUNTAS\n${result.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nREFERÊNCIAS\n${result.references.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nPONTO CEGO\n${result.blind_spot}\n\nALERTAS\n${result.alerts.map(a => `- ${a}`).join('\n')}`;
+    `PsiCoach AI — Análise\nAbordagem: ${user?.mainApproach}\n\nHIPÓTESE\n${result.hypothesis}\n\nABORDAGENS\n${result.approaches.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\nPERGUNTAS\n${result.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nREFERÊNCIAS\n${result.references.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nPONTO CEGO\n${result.blind_spot}\n\nALERTAS\n${result.alerts.map(a => `- ${a}`).join('\n')}`;
 
   const handleCopyText = () => {
     if (!analysisResult) return;
@@ -1331,12 +1078,12 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     setAudioResult(null);
     setAudioError(null);
 
-    const approach = useCustomApproach ? customApproach : user?.mainApproach || '';
+    const approach = user?.mainApproach || '';
     const clinicalContext = {
-      sessions_count: sessionsCount,
-      current_diagnosis: currentDiagnosis,
-      already_tried: alreadyTried,
-      specific_question: specificQuestion,
+      sessions_count: '',
+      current_diagnosis: '',
+      already_tried: '',
+      specific_question: '',
     };
 
     try {
@@ -1542,19 +1289,8 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                   )}
                 </div>
 
-                {/* Contexto + Abordagem + Botões */}
+                {/* Botões + aviso */}
                 <div className="flex flex-col gap-3">
-                  <ContextPanel
-                    sessionsCount={sessionsCount} setSessionsCount={setSessionsCount}
-                    currentDiagnosis={currentDiagnosis} setCurrentDiagnosis={setCurrentDiagnosis}
-                    alreadyTried={alreadyTried} setAlreadyTried={setAlreadyTried}
-                    specificQuestion={specificQuestion} setSpecificQuestion={setSpecificQuestion}
-                  />
-                  <ApproachPanel
-                    useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
-                    customApproach={customApproach} setCustomApproach={setCustomApproach}
-                    mainApproach={user?.mainApproach}
-                  />
                   <div className="mt-auto space-y-2 pt-1">
                     <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
                       <Shield className="h-3 w-3 shrink-0 text-slate-400" />
@@ -1637,7 +1373,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                 <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-slate-500">
                   Mapeando afetos no modelo de{' '}
                   <span className="font-semibold text-blue-600">
-                    {useCustomApproach ? customApproach : user?.mainApproach}
+                    {user?.mainApproach}
                   </span>.
                 </p>
                 <div className="mt-5 h-1 w-40 overflow-hidden rounded-full bg-slate-100">
@@ -1752,12 +1488,6 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                   <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
                 )}
               </div>
-
-              <ApproachPanel
-                useCustomApproach={useCustomApproach} setUseCustomApproach={setUseCustomApproach}
-                customApproach={customApproach} setCustomApproach={setCustomApproach}
-                mainApproach={user?.mainApproach}
-              />
 
               <div className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
                 <Shield className="h-3 w-3 shrink-0 text-slate-400" />
