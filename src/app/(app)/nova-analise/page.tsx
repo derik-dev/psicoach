@@ -107,7 +107,31 @@ function FormattedText({ text }: { text: string }) {
 
 /* ══════════════════════ AnalysisCard ══════════════════════ */
 
-type TabId = 'sintese' | 'formulacao' | 'fatores' | 'risco' | 'intervencoes' | 'prontuario' | 'referencias';
+type TabId = 'sintese' | 'formulacao' | 'risco' | 'intervencoes' | 'prontuario' | 'referencias';
+
+/* ── helper: extrai ciclo clínico de texto com → ou -> ── */
+function extractClinicalCycle(text: string): string[] | null {
+  const arrowPattern = /([^→\->]{3,50})\s*(?:→|->)\s*/g;
+  const parts: string[] = [];
+  let match;
+  const combined = text.replace(/->/g, '→');
+  // tenta linha com sequência de setas
+  const lines = combined.split('\n');
+  for (const line of lines) {
+    if ((line.match(/→/g) || []).length >= 2) {
+      const segments = line.split('→').map(s => s.trim()).filter(s => s.length > 1 && s.length < 50);
+      if (segments.length >= 3) return segments;
+    }
+  }
+  // tenta no texto todo
+  const fullMatch = combined.match(/([^→]{2,40}→){2,}[^→]{2,40}/);
+  if (fullMatch) {
+    const segments = fullMatch[0].split('→').map(s => s.trim()).filter(s => s.length > 1 && s.length < 50);
+    if (segments.length >= 3) return segments;
+  }
+  void arrowPattern; void match;
+  return null;
+}
 
 function AnalysisCard({
   result, onCopy, copySuccess,
@@ -120,6 +144,9 @@ function AnalysisCard({
   const [activeTab, setActiveTab] = useState<TabId>('sintese');
   const [modalOpen, setModalOpen] = useState(false);
   const [questionsModalOpen, setQuestionsModalOpen] = useState(false);
+  const [hipoteseExpanded, setHipoteseExpanded] = useState(false);
+  const [planoExpanded, setPlanoExpanded] = useState(false);
+  const [perguntasExpanded, setPerguntasExpanded] = useState(false);
 
   const tabGate: Partial<Record<TabId, 'risco' | 'prontuario' | 'referencias'>> = {
     risco: 'risco',
@@ -156,26 +183,34 @@ function AnalysisCard({
   const plano        = result.plano_imediato    || result.approaches.slice(0, 3);
   const perguntas    = result.perguntas_clinicas || result.questions.slice(0, 5);
 
-  const fatoresContent = fatores.map((f, i) => `${i + 1}. ${f}`).join('\n');
+  // ciclo clínico extraído da hipótese
+  const clinicalCycle = extractClinicalCycle(hipotese);
+  // parágrafos da hipótese
+  const hipoteseParagraphs = hipotese.split(/\n{1,2}/).filter(p => p.trim());
 
   const tabs: { id: TabId; label: string; content: string }[] = [
-    { id: 'sintese',      label: 'Síntese',             content: result.sintese          || result.blind_spot },
-    { id: 'formulacao',   label: 'Formulação',           content: result.formulacao       || result.hypothesis },
-    { id: 'fatores',      label: 'Fatores relevantes',   content: fatoresContent },
-    { id: 'risco',        label: 'Risco e proteção',     content: result.risco_e_protecao || (result.alerts || []).join('\n') || 'Sem alertas identificados.' },
-    { id: 'intervencoes', label: 'Intervenções',         content: result.intervencoes     || result.approaches.join('\n') },
-    { id: 'prontuario',   label: 'Prontuário',           content: result.prontuario       || '' },
-    { id: 'referencias',  label: 'Referências',          content: result.referencias_texto || result.references.join('\n') },
+    { id: 'sintese',      label: 'Síntese',         content: result.sintese          || result.blind_spot },
+    { id: 'formulacao',   label: 'Formulação',       content: result.formulacao       || result.hypothesis },
+    { id: 'risco',        label: 'Risco e proteção', content: result.risco_e_protecao || (result.alerts || []).join('\n') || 'Sem alertas identificados.' },
+    { id: 'intervencoes', label: 'Intervenções',     content: result.intervencoes     || result.approaches.join('\n') },
+    { id: 'prontuario',   label: 'Prontuário',       content: result.prontuario       || '' },
+    { id: 'referencias',  label: 'Referências',      content: result.referencias_texto || result.references.join('\n') },
   ];
 
   const activeContent = tabs.find(t => t.id === activeTab)?.content || '';
 
+  const PLANO_VISIBLE = 3;
+  const PERGUNTAS_VISIBLE = 3;
+  const planoVisiveis = planoExpanded ? plano : plano.slice(0, PLANO_VISIBLE);
+  const perguntasVisiveis = perguntasExpanded ? perguntas : perguntas.slice(0, PERGUNTAS_VISIBLE);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* ── Banner de risco alto ── */}
       {nivel === 'alto' && (
-        <div className="rounded-xl border-l-4 border-red-600 bg-red-50 px-4 py-4 text-[14px] font-medium text-red-700 leading-snug">
-          ⚠️ Risco identificado — Avalie protocolo de segurança antes da próxima sessão
+        <div className="rounded-xl border-l-4 border-red-500 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-700 leading-snug flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
+          Risco identificado — Avalie protocolo de segurança antes da próxima sessão
         </div>
       )}
 
@@ -190,72 +225,30 @@ function AnalysisCard({
             <h3 className="text-sm font-semibold text-slate-800 leading-none mt-0.5">Formulação compacta</h3>
           </div>
         </div>
-        <button
-          onClick={onCopy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-        >
-          <Copy className="w-3.5 h-3.5" />
-          {copySuccess ? 'Copiado!' : 'Copiar'}
-        </button>
-      </div>
-
-      {/* ── Hipótese central — largura total ── */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
-        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
-          <Brain className="h-4 w-4 text-blue-600" />
-          Hipótese central
-        </h4>
-        <div style={{ fontFamily: 'Georgia, serif' }}>
-          {hipotese.split(/\n{1,2}/).filter(p => p.trim()).map((para, i) => (
-            <div key={i} className="clinical-hypothesis-paragraph-wrapper">
-              {i === 0 ? (
-                <div
-                  className="clinical-hypothesis-highlight"
-                  style={{
-                    padding: '12px 16px',
-                    marginBottom: '20px',
-                  }}
-                >
-                  {renderMd(para)}
-                </div>
-              ) : (
-                <div
-                  className="clinical-hypothesis-paragraph"
-                  style={{
-                    paddingTop: '16px',
-                    paddingBottom: '16px',
-                  }}
-                >
-                  {renderMd(para)}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ── 4 cards de resumo ── */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
-        {/* Resumo rápido — 1 frase, máx 20 palavras */}
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 flex flex-col min-h-40">
-          <span className="shrink-0 text-[11px] font-semibold uppercase text-blue-600" style={{ letterSpacing: '0.8px' }}>
+        {/* Resumo rápido */}
+        <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 flex flex-col min-h-[120px] shadow-sm">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-blue-500">
             Resumo rápido
           </span>
-          <p className="mt-3 text-[14px] leading-[1.6] text-blue-950 line-clamp-4">{resumo}</p>
+          <p className="mt-2 text-[13px] leading-[1.55] text-blue-950 line-clamp-3">{resumo}</p>
         </div>
 
-        {/* Atenção clínica — badge + 2 bullets */}
-        <div className={`rounded-2xl border p-4 flex flex-col min-h-40 ${cfg.bg} ${cfg.border}`}>
-          <span className={`shrink-0 text-[11px] font-semibold uppercase ${cfg.color}`} style={{ letterSpacing: '0.8px' }}>
+        {/* Atenção clínica */}
+        <div className={`rounded-xl border p-3 flex flex-col min-h-[120px] shadow-sm ${cfg.bg} ${cfg.border}`}>
+          <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-widest ${cfg.color}`}>
             Atenção clínica
           </span>
-          <span className={`mt-2 shrink-0 inline-block self-start rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${cfg.badge}`}>
+          <span className={`mt-2 shrink-0 inline-block self-start rounded-full px-2 py-0.5 text-[11px] font-semibold ${cfg.badge}`}>
             {cfg.label}
           </span>
-          <ul className="mt-2.5 space-y-1.5">
+          <ul className="mt-2 space-y-1">
             {cfg.bullets.slice(0, 2).map((b, i) => (
-              <li key={i} className={`flex items-start gap-1.5 text-[12px] leading-snug ${cfg.color} opacity-85`}>
+              <li key={i} className={`flex items-start gap-1.5 text-[11px] leading-snug ${cfg.color} opacity-80`}>
                 <span className="mt-1.5 w-1 h-1 rounded-full bg-current shrink-0" />
                 <span className="line-clamp-2">{b}</span>
               </li>
@@ -263,21 +256,21 @@ function AnalysisCard({
           </ul>
         </div>
 
-        {/* Foco inicial — 1 frase de decisão */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col min-h-40">
-          <span className="shrink-0 text-[11px] font-semibold uppercase text-slate-500" style={{ letterSpacing: '0.8px' }}>
+        {/* Foco inicial */}
+        <div className="rounded-xl border border-slate-200 bg-white p-3 flex flex-col min-h-[120px] shadow-sm">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
             Foco inicial
           </span>
-          <p className="mt-3 text-[14px] leading-[1.6] text-slate-700 line-clamp-4">{focoInicial}</p>
+          <p className="mt-2 text-[13px] leading-[1.55] text-slate-700 line-clamp-3">{focoInicial}</p>
         </div>
 
-        {/* Próxima pergunta — a pergunta em itálico */}
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 flex flex-col min-h-40">
-          <span className="shrink-0 text-[11px] font-semibold uppercase text-amber-600" style={{ letterSpacing: '0.8px' }}>
+        {/* Próxima pergunta */}
+        <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 flex flex-col min-h-[120px] shadow-sm">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-amber-600">
             Próxima pergunta
           </span>
           <p
-            className="mt-3 text-[14px] italic leading-[1.6] text-slate-700 line-clamp-4"
+            className="mt-2 text-[13px] italic leading-[1.55] text-slate-700 line-clamp-3"
             style={{ fontFamily: 'Georgia, serif' }}
           >
             &ldquo;{proxPergunta}&rdquo;
@@ -286,46 +279,114 @@ function AnalysisCard({
 
       </div>
 
-      {/* ── Plano imediato — cards individuais ── */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
-        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
-          <TrendingUp className="h-4 w-4 text-emerald-600" />
+      {/* ── Hipótese central ── */}
+      <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 shadow-sm">
+        <h4 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+          <Brain className="h-3.5 w-3.5 text-blue-600" />
+          Hipótese central
+        </h4>
+
+        {/* Primeiras 2 linhas do primeiro parágrafo */}
+        <div className={`text-[14px] leading-[1.65] text-slate-700 ${hipoteseExpanded ? '' : 'line-clamp-2'}`} style={{ fontFamily: 'Georgia, serif' }}>
+          {renderMd(hipoteseParagraphs[0] || hipotese)}
+        </div>
+
+        {/* Ciclo clínico ou chips de fatores */}
+        {clinicalCycle ? (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {clinicalCycle.map((step, i) => (
+              <React.Fragment key={i}>
+                <span className="rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1 text-[12px] font-medium text-blue-700">
+                  {step}
+                </span>
+                {i < clinicalCycle.length - 1 && (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        ) : fatores.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {fatores.slice(0, 4).map((f, i) => (
+              <span key={i} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm">
+                {f.length > 35 ? f.slice(0, 35) + '…' : f}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Expansão */}
+        {hipoteseParagraphs.length > 1 && (
+          <button
+            onClick={() => setHipoteseExpanded(v => !v)}
+            className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            {hipoteseExpanded ? (
+              <><ChevronDown className="w-3.5 h-3.5 rotate-180" /> Recolher</>
+            ) : (
+              <><ChevronDown className="w-3.5 h-3.5" /> Ver hipótese completa</>
+            )}
+          </button>
+        )}
+        {hipoteseExpanded && hipoteseParagraphs.slice(1).map((para, i) => (
+          <div key={i} className="mt-3 text-[14px] leading-[1.65] text-slate-600" style={{ fontFamily: 'Georgia, serif' }}>
+            {renderMd(para)}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Plano imediato ── */}
+      <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 shadow-sm">
+        <h4 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+          <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
           Plano imediato
         </h4>
-        <ol className="flex flex-col gap-3">
-          {plano.map((p, i) => (
+        <ol className="flex flex-col gap-2">
+          {planoVisiveis.map((p, i) => (
             <li
               key={i}
-              className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4"
+              className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
             >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[12px] font-bold text-white mt-0.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white mt-0.5">
                 {i + 1}
               </span>
-              <div className="text-[14px] leading-[1.7] text-slate-700">
+              <div className="text-[13px] leading-[1.6] text-slate-700 line-clamp-2">
                 {renderMd(p)}
               </div>
             </li>
           ))}
         </ol>
+        {plano.length > PLANO_VISIBLE && (
+          <button
+            onClick={() => setPlanoExpanded(v => !v)}
+            className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            {planoExpanded ? (
+              <><ChevronDown className="w-3.5 h-3.5 rotate-180" /> Recolher passos</>
+            ) : (
+              <><ChevronDown className="w-3.5 h-3.5" /> Ver mais {plano.length - PLANO_VISIBLE} passos</>
+            )}
+          </button>
+        )}
       </div>
 
-      {/* ── Perguntas clínicas — largura total ── */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
-        <h4 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
-          <HelpCircle className="h-4 w-4 text-amber-600" />
+      {/* ── Perguntas clínicas ── */}
+      <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 shadow-sm">
+        <h4 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+          <HelpCircle className="h-3.5 w-3.5 text-amber-600" />
           Perguntas clínicas
         </h4>
         <ul className="divide-y divide-slate-100">
-          {perguntas.slice(0, 5).map((q, i) => (
-            <li key={i} className="flex items-start gap-3 py-2.5 first:pt-1">
+          {perguntasVisiveis.map((q, i) => (
+            <li key={i} className="flex items-start gap-3 py-2.5 first:pt-0">
               <span
-                className="shrink-0 mt-0.5 text-[22px] font-serif leading-none"
-                style={{ color: '#93C5FD', lineHeight: 1 }}
+                className="shrink-0 mt-0.5 text-[20px] font-serif leading-none text-blue-200"
+                style={{ lineHeight: 1 }}
               >
                 &ldquo;
               </span>
               <p
-                className="text-[15px] italic leading-[1.7] text-slate-700"
+                className="text-[13px] italic leading-[1.6] text-slate-700 line-clamp-2"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
                 {q}
@@ -333,10 +394,22 @@ function AnalysisCard({
             </li>
           ))}
         </ul>
+        {perguntas.length > PERGUNTAS_VISIBLE && (
+          <button
+            onClick={() => setPerguntasExpanded(v => !v)}
+            className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            {perguntasExpanded ? (
+              <><ChevronDown className="w-3.5 h-3.5 rotate-180" /> Recolher perguntas</>
+            ) : (
+              <><ChevronDown className="w-3.5 h-3.5" /> Ver mais {perguntas.length - PERGUNTAS_VISIBLE} perguntas</>
+            )}
+          </button>
+        )}
       </div>
 
       {/* ── Abas ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200">
+      <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
         <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50">
           {tabs.map((tab) => {
             const locked = isTabLocked(tab.id);
@@ -345,12 +418,12 @@ function AnalysisCard({
               <button
                 key={tab.id}
                 onClick={() => !locked && setActiveTab(tab.id)}
-                className={`shrink-0 border-b-2 px-4 py-2.5 text-[12px] font-semibold transition-colors flex items-center gap-1.5 ${
+                className={`shrink-0 py-3 px-5 text-[12px] font-semibold transition-all flex items-center gap-1.5 ${
                   locked
-                    ? 'border-transparent text-slate-400 cursor-not-allowed'
+                    ? 'text-slate-400 cursor-not-allowed opacity-60'
                     : isActive
-                    ? 'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'border-transparent text-slate-500 hover:bg-white/70 hover:text-slate-700'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-500 hover:bg-white/80 hover:text-slate-700'
                 }`}
               >
                 {tab.label}
@@ -359,7 +432,7 @@ function AnalysisCard({
             );
           })}
         </div>
-        <div className="min-h-[96px] bg-white p-6">
+        <div className="min-h-[96px] bg-white p-5">
           {isTabLocked(activeTab) ? (
             <div className="flex flex-col items-center justify-center gap-2 py-6">
               <Lock className="w-5 h-5 text-slate-300" />
@@ -372,59 +445,63 @@ function AnalysisCard({
             </div>
           ) : activeContent ? (
             <div>
-              <div className="line-clamp-6 text-[15px]">
+              <div className="line-clamp-8 text-[14px] text-slate-600">
                 <FormattedText text={activeContent} />
               </div>
               {activeContent.length > 200 && (
                 <button
                   onClick={() => setModalOpen(true)}
-                  className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                  className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                 >
-                  Ver análise detalhada <ChevronRight className="w-3.5 h-3.5" />
+                  Ver completo <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-[14px] italic text-slate-400">Não disponível para este caso.</p>
+            <p className="text-[13px] italic text-slate-400">Não disponível para este caso.</p>
           )}
         </div>
       </div>
 
-      {/* ── Botões de ação rápida ── */}
-      <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-        <button
-          onClick={onCopy}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-        >
-          <Copy className="w-3.5 h-3.5" /> Copiar síntese
-        </button>
+      {/* ── Botões de ação — hierarquia visual ── */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+        {/* Primário */}
         {planCanAccess(activePlan, 'prontuario') ? (
           <button
             onClick={() => { setActiveTab('prontuario'); setModalOpen(true); }}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_6px_16px_rgba(37,99,235,0.25)] transition-all hover:bg-blue-500 hover:-translate-y-0.5"
           >
             <Zap className="w-3.5 h-3.5" /> Gerar nota de evolução
           </button>
         ) : (
-          <a href="/pricing" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-[13px] font-semibold text-slate-400 cursor-not-allowed">
+          <a href="/pricing" className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2.5 text-[13px] font-semibold text-slate-400 cursor-not-allowed">
             <Lock className="w-3.5 h-3.5" /> Gerar nota de evolução
           </a>
         )}
+        {/* Secundário */}
+        <button
+          onClick={onCopy}
+          className="inline-flex items-center gap-2 rounded-lg border border-blue-200 px-4 py-2.5 text-[13px] font-semibold text-blue-600 transition-all hover:bg-blue-50 hover:border-blue-300"
+        >
+          {copySuccess ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          {copySuccess ? 'Copiado!' : 'Copiar síntese'}
+        </button>
+        {/* Terciários */}
         {planCanAccess(activePlan, 'perguntas_roteiro') ? (
           <button
             onClick={() => setQuestionsModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-[13px] font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
           >
             <HelpCircle className="w-3.5 h-3.5" /> Gerar roteiro de perguntas
           </button>
         ) : (
-          <a href="/pricing" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-[13px] font-semibold text-slate-400 cursor-not-allowed">
+          <a href="/pricing" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-[13px] font-semibold text-slate-400 cursor-not-allowed">
             <Lock className="w-3.5 h-3.5" /> Gerar roteiro de perguntas
           </a>
         )}
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-[13px] font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50"
         >
           <Eye className="w-3.5 h-3.5" /> Ver análise detalhada
         </button>
@@ -435,7 +512,6 @@ function AnalysisCard({
         const tabMeta: Record<TabId, { icon: React.ReactNode; accent: string; bg: string; border: string }> = {
           sintese:      { icon: <Brain className="w-4 h-4" />,         accent: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100' },
           formulacao:   { icon: <FileText className="w-4 h-4" />,      accent: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
-          fatores:      { icon: <Target className="w-4 h-4" />,        accent: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
           risco:        { icon: <AlertTriangle className="w-4 h-4" />, accent: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-100' },
           intervencoes: { icon: <Zap className="w-4 h-4" />,           accent: 'text-emerald-600',bg: 'bg-emerald-50',border: 'border-emerald-100' },
           prontuario:   { icon: <BookOpen className="w-4 h-4" />,      accent: 'text-slate-600',  bg: 'bg-slate-50',  border: 'border-slate-200' },
