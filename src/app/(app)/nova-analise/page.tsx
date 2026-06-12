@@ -432,7 +432,10 @@ function AnalysisCard({
           <Copy className="w-3.5 h-3.5" /> Copiar síntese
         </button>
         {planCanAccess(activePlan, 'prontuario') ? (
-          <button className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+          <button
+            onClick={() => { setActiveTab('prontuario'); setModalOpen(true); }}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-[13px] font-semibold text-slate-600 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          >
             <Zap className="w-3.5 h-3.5" /> Gerar nota de evolução
           </button>
         ) : (
@@ -476,7 +479,6 @@ function AnalysisCard({
         return (
           <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-backdrop-in"
-            style={{ background: 'transparent' }}
             onClick={() => setModalOpen(false)}
           >
             <div
