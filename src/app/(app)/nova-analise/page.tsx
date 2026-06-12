@@ -232,7 +232,42 @@ function AnalysisCard({
         </button>
       </div>
 
-      {/* ── 4 cards superiores — altura fixa 160px ── */}
+      {/* ── Hipótese central — largura total ── */}
+      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
+        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
+          <Brain className="h-4 w-4 text-blue-600" />
+          Hipótese central
+        </h4>
+        <div style={{ fontFamily: 'Georgia, serif' }}>
+          {hipotese.split(/\n{1,2}/).filter(p => p.trim()).map((para, i) => (
+            <div key={i} className="clinical-hypothesis-paragraph-wrapper">
+              {i === 0 ? (
+                <div
+                  className="clinical-hypothesis-highlight"
+                  style={{
+                    padding: '12px 16px',
+                    marginBottom: '20px',
+                  }}
+                >
+                  {renderMd(para)}
+                </div>
+              ) : (
+                <div
+                  className="clinical-hypothesis-paragraph"
+                  style={{
+                    paddingTop: '16px',
+                    paddingBottom: '16px',
+                  }}
+                >
+                  {renderMd(para)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 4 cards de resumo ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 
         {/* Resumo rápido — 1 frase, máx 20 palavras */}
@@ -282,41 +317,6 @@ function AnalysisCard({
           </p>
         </div>
 
-      </div>
-
-      {/* ── Hipótese central — largura total ── */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
-        <h4 className="mb-4 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-widest text-slate-500">
-          <Brain className="h-4 w-4 text-blue-600" />
-          Hipótese central
-        </h4>
-        <div style={{ fontFamily: 'Georgia, serif' }}>
-          {hipotese.split(/\n{1,2}/).filter(p => p.trim()).map((para, i) => (
-            <div key={i} className="clinical-hypothesis-paragraph-wrapper">
-              {i === 0 ? (
-                <div
-                  className="clinical-hypothesis-highlight"
-                  style={{
-                    padding: '12px 16px',
-                    marginBottom: '20px',
-                  }}
-                >
-                  {renderMd(para)}
-                </div>
-              ) : (
-                <div
-                  className="clinical-hypothesis-paragraph"
-                  style={{
-                    paddingTop: '16px',
-                    paddingBottom: '16px',
-                  }}
-                >
-                  {renderMd(para)}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ── Plano imediato — cards individuais ── */}
