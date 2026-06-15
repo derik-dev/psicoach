@@ -18,6 +18,7 @@ import {
   FolderHeart,
   Search,
   ChevronDown,
+  Loader2,
   TrendingUp,
   Zap,
 } from 'lucide-react';
