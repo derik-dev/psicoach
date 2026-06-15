@@ -333,7 +333,7 @@ export default function ContratransferenciaPage() {
 
       {/* Case selector modal */}
       {caseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
@@ -408,7 +408,7 @@ export default function ContratransferenciaPage() {
 
       {/* CT form modal */}
       {formModal && selectedCase && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-100 flex items-start justify-between">
               <div className="space-y-1">
