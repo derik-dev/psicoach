@@ -904,7 +904,10 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
   const handlePatientSelect = (id: string | null) => {
     setSelectedPatientId(id);
     setPatientSessionInfo(null);
-    if (!id) return;
+    if (!id) {
+      if (!isTitleManualRef.current) setTitle('');
+      return;
+    }
     setInputText('');
   };
 
@@ -942,6 +945,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
   const [specificQuestion, setSpecificQuestion] = useState('');
   const [overrideApproach, setOverrideApproach] = useState(false);
   const [selectedApproach, setSelectedApproach] = useState('');
+  const isTitleManualRef = useRef(false);
 
   useEffect(() => {
     if (!selectedPatientId) return;
@@ -970,6 +974,10 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
             const history = (memory?.attention_history as Array<{ level: string }>) || [];
             const lastLevel = history.length > 0 ? history[history.length - 1].level : null;
             setPatientSessionInfo({ sessionCount, lastDate, lastLevel });
+            if (!isTitleManualRef.current) {
+              const pat = patients.find(p => p.id === selectedPatientId);
+              if (pat) setTitle(`${pat.pseudonym} — Sessão ${sessionCount + 1}`);
+            }
           });
       });
 
@@ -997,6 +1005,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     setSessionsCount(''); setCurrentDiagnosis('');
     setAlreadyTried(''); setSpecificQuestion('');
     setOverrideApproach(false); setSelectedApproach('');
+    isTitleManualRef.current = false;
   };
 
   const handleAnalyze = async (e: React.FormEvent) => {
@@ -1368,7 +1377,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                   <input
                     type="text"
                     value={title}
-                    onChange={e => setTitle(e.target.value)}
+                    onChange={e => { setTitle(e.target.value); isTitleManualRef.current = true; }}
                     placeholder="Ex: Caso G. — Fobia Social"
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                   />
