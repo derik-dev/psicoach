@@ -1300,8 +1300,8 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
               {/* Linha superior: paciente + título */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {/* Seletor de paciente */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-widest text-slate-500">
                     Paciente
                   </label>
                   <PatientSelector
@@ -1311,56 +1311,49 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                     onNewPatient={() => setShowPatientModal(true)}
                   />
                   {selectedPat && (
-                    <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 space-y-1.5">
-                      {/* Linha 1: nome + faixa etária + abordagem */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[12px] font-semibold text-slate-800">{selectedPat.pseudonym}</span>
-                        {selectedPat.age_range && (
-                          <>
-                            <span className="text-[10px] text-slate-400">•</span>
-                            <span className="text-[11px] text-slate-500">{selectedPat.age_range}</span>
-                          </>
-                        )}
-                        {selectedPat.approach && (
-                          <>
-                            <span className="text-[10px] text-slate-400">•</span>
-                            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">{selectedPat.approach}</span>
-                          </>
-                        )}
-                      </div>
-                      {/* Linha 2: sessão + última data */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {nextSessionNumber ? (
-                          <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded-md">
-                            Sessão {nextSessionNumber}
+                    <div className="animate-fade-in border-l-[3px] border-l-blue-500 bg-blue-50/30 pl-4 pr-3 py-2 flex items-center gap-1.5 flex-wrap min-h-[36px]">
+                      <span className="text-[13px] font-medium text-slate-700">{selectedPat.pseudonym}</span>
+                      {selectedPat.age_range && (
+                        <>
+                          <span className="text-[11px] text-slate-400">•</span>
+                          <span className="text-[13px] text-slate-500">{selectedPat.age_range}</span>
+                        </>
+                      )}
+                      {selectedPat.approach && (
+                        <>
+                          <span className="text-[11px] text-slate-400">•</span>
+                          <span className="text-[12px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">{selectedPat.approach}</span>
+                        </>
+                      )}
+                      {nextSessionNumber && (
+                        <>
+                          <span className="text-[11px] text-slate-400">•</span>
+                          <span className="text-[13px] text-slate-500">Sessão {nextSessionNumber}</span>
+                        </>
+                      )}
+                      {patientSessionInfo?.lastDate && (
+                        <>
+                          <span className="text-[11px] text-slate-400">•</span>
+                          <span className="text-[13px] text-slate-500">
+                            Última: {new Date(patientSessionInfo.lastDate).toLocaleDateString('pt-BR')}
                           </span>
-                        ) : (
-                          <span className="text-[11px] text-slate-400">Carregando...</span>
-                        )}
-                        {patientSessionInfo?.lastDate && (
-                          <>
-                            <span className="text-[10px] text-slate-400">•</span>
-                            <span className="text-[11px] text-slate-500">
-                              Última: {new Date(patientSessionInfo.lastDate).toLocaleDateString('pt-BR')}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {/* Linha 3: nível de atenção */}
+                        </>
+                      )}
                       {patientSessionInfo?.lastLevel && (() => {
                         const lvlCfg = {
-                          baixo:   { label: 'Baixo',    dot: 'bg-emerald-500', text: 'text-emerald-700' },
-                          moderado:{ label: 'Moderado', dot: 'bg-amber-500',   text: 'text-amber-700'   },
-                          alto:    { label: 'Alto',     dot: 'bg-rose-500',    text: 'text-rose-700'    },
+                          baixo:    { label: 'Baixo',    dot: 'bg-emerald-500' },
+                          moderado: { label: 'Moderado', dot: 'bg-amber-500'   },
+                          alto:     { label: 'Alto',     dot: 'bg-rose-500'    },
                         }[patientSessionInfo.lastLevel as 'baixo' | 'moderado' | 'alto'];
                         if (!lvlCfg) return null;
                         return (
-                          <div className="flex items-center gap-1.5">
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${lvlCfg.dot}`} />
-                            <span className={`text-[11px] font-semibold ${lvlCfg.text}`}>
+                          <>
+                            <span className="text-[11px] text-slate-400">•</span>
+                            <span className="flex items-center gap-1 text-[13px] text-slate-500">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${lvlCfg.dot}`} />
                               Atenção: {lvlCfg.label}
                             </span>
-                          </div>
+                          </>
                         );
                       })()}
                     </div>
@@ -1428,13 +1421,10 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                       <div className="space-y-1">
                         <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Sessões</label>
                         {selectedPat ? (
-                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-blue-800 px-3 py-2 text-[12px] font-medium text-blue-100">
-                            <span>📅</span>
-                            <span>
-                              {nextSessionNumber ? `Sessão ${nextSessionNumber}` : 'Carregando...'}
-                              <em className="ml-1 font-normal opacity-75">— carregado automaticamente</em>
-                            </span>
-                          </div>
+                          <span className="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[12px] font-medium text-blue-700">
+                            {nextSessionNumber ? `Sessão ${nextSessionNumber}` : 'Carregando...'}
+                            <em className="ml-1 font-normal not-italic text-blue-400"> • automático</em>
+                          </span>
                         ) : (
                           <select
                             value={sessionsCount}
@@ -1453,13 +1443,10 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                       <div className="space-y-1">
                         <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Diagnóstico</label>
                         {selectedPat?.initial_diagnosis?.trim() ? (
-                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-600 px-3 py-2 text-[12px] font-medium text-slate-100">
-                            <span>🏷</span>
-                            <span>
-                              {selectedPat.initial_diagnosis}
-                              <em className="ml-1 font-normal opacity-75">— do perfil do paciente</em>
-                            </span>
-                          </div>
+                          <span className="inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-[12px] font-medium text-slate-600">
+                            {selectedPat.initial_diagnosis}
+                            <em className="ml-1 font-normal not-italic text-slate-400"> • do perfil</em>
+                          </span>
                         ) : (
                           <input
                             type="text"
@@ -1502,13 +1489,11 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                       <div className="flex flex-wrap items-center gap-3">
                         {!overrideApproach && effectiveApproach && (
                           selectedPat ? (
-                            <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-800 px-3 py-2 text-[12px] font-medium text-emerald-100">
+                            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[12px] font-medium text-emerald-700">
                               <Check className="h-3 w-3" />
-                              <span>
-                                {effectiveApproach}
-                                <em className="ml-1 font-normal opacity-75">— do perfil do paciente</em>
-                              </span>
-                            </div>
+                              {effectiveApproach}
+                              <em className="ml-1 font-normal not-italic text-emerald-500"> • do perfil</em>
+                            </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[12px] font-semibold text-emerald-700">
                               <Check className="h-3 w-3" /> {effectiveApproach}
