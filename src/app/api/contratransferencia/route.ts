@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       sentimento_apos,
       tema_evitado,
       percepcao_paciente,
+      observacoes_livres,
     }: {
       case_id: string;
       case_summary: string;
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       sentimento_apos: string;
       tema_evitado?: string;
       percepcao_paciente?: string;
+      observacoes_livres?: string;
     } = body;
 
     if (!case_id || !sentimento_durante?.trim() || !momento_dificil?.trim() || !sentimento_apos?.trim()) {
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
       `Como saiu da sessão: ${sentimento_apos}`,
       tema_evitado?.trim() ? `Tema evitado: ${tema_evitado}` : null,
       percepcao_paciente?.trim() ? `Percepção do paciente sobre ela: ${percepcao_paciente}` : null,
+      observacoes_livres?.trim() ? `Observações adicionais: ${observacoes_livres}` : null,
     ].filter(Boolean).join('\n');
 
     const completion = await groq.chat.completions.create({
@@ -88,6 +91,7 @@ export async function POST(req: NextRequest) {
         sentimento_apos,
         tema_evitado: tema_evitado || null,
         percepcao_paciente: percepcao_paciente || null,
+        observacoes_livres: observacoes_livres || null,
         resultado,
       })
       .select('id, created_at')

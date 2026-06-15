@@ -71,6 +71,7 @@ const emptyForm = {
   sentimento_apos: '',
   tema_evitado: '',
   percepcao_paciente: '',
+  observacoes_livres: '',
 };
 
 const formFields = [
@@ -79,6 +80,7 @@ const formFields = [
   { key: 'sentimento_apos', label: 'Como você saiu da sessão emocionalmente?', placeholder: 'Ex: Com sensação de que não fiz o suficiente…', required: true },
   { key: 'tema_evitado', label: 'Teve algum tema que você evitou aprofundar?', placeholder: 'Ex: Não aprofundei o tema do relacionamento com a mãe…', required: false },
   { key: 'percepcao_paciente', label: 'O que você acha que o paciente sente em relação a você?', placeholder: 'Ex: Acho que ele me idealiza e tem medo de me decepcionar…', required: false },
+  { key: 'observacoes_livres', label: 'Observações livres', placeholder: 'Qualquer outra coisa que queira registrar sobre essa sessão…', required: false },
 ];
 
 export default function ContratransferenciaPage() {
