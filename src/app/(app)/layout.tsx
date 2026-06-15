@@ -16,6 +16,7 @@ import {
   Moon,
   Sun,
   Users,
+  Activity,
 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'Nova Análise', href: '/nova-analise', icon: PlusCircle, highlight: true },
     { name: 'Pacientes', href: '/pacientes', icon: Users },
     { name: 'Histórico', href: '/historico', icon: FolderHeart },
+    { name: 'Contratransferência', href: '/contratransferencia', icon: Activity },
     { name: 'Configurações', href: '/configuracoes', icon: Settings },
   ];
 
