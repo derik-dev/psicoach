@@ -366,30 +366,41 @@ export default function ContratransferenciaPage() {
               {filteredCases.length === 0 && (
                 <p className="text-xs text-slate-400 text-center py-8">Nenhum caso encontrado.</p>
               )}
-              {filteredCases.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    setSelectedCase(c as unknown as typeof selectedCase);
-                    setCaseModal(false);
-                    setFormModal(true);
-                    setFormError('');
-                  }}
-                  className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-blue-50 transition-colors text-left"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                    {c.title.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-800 truncate">{c.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] font-semibold text-blue-600 uppercase">{c.approach_used}</span>
-                      <span className="text-[10px] text-slate-400">{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
+              {filteredCases.map((c) => {
+                const approachAbbr = c.approach_used?.split(' ')[0]?.slice(0, 3).toUpperCase() ?? '?';
+                const snippet = c.input_text?.slice(0, 80).trim();
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setSelectedCase(c as unknown as typeof selectedCase);
+                      setCaseModal(false);
+                      setFormModal(true);
+                      setFormError('');
+                    }}
+                    className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-blue-50 transition-colors text-left group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                      {approachAbbr}
                     </div>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-300 shrink-0 mt-2" />
-                </button>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-slate-800 truncate">{c.title}</p>
+                      {snippet && (
+                        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                          {snippet}{c.input_text?.length > 80 ? '…' : ''}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-700">
+                          {c.approach_used}
+                        </span>
+                        <span className="text-[9px] text-slate-400">{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 shrink-0 mt-2 transition-colors" />
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
