@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -15,10 +16,8 @@ import {
   AlertTriangle,
   Clock,
   FolderHeart,
-  X,
   Search,
   ChevronDown,
-  Loader2,
   TrendingUp,
   Zap,
 } from 'lucide-react';
@@ -65,37 +64,14 @@ const nivelConfig = {
   },
 };
 
-const emptyForm = {
-  sentimento_durante: '',
-  momento_dificil: '',
-  sentimento_apos: '',
-  tema_evitado: '',
-  percepcao_paciente: '',
-  observacoes_livres: '',
-};
-
-const formFields = [
-  { key: 'sentimento_durante', label: 'Como você se sentiu durante a sessão?', placeholder: 'Ex: Me senti impaciente, queria que acabasse logo…', required: true },
-  { key: 'momento_dificil', label: 'Teve algum momento que te travou ou incomodou?', placeholder: 'Ex: Quando ele falou do pai, mudei de assunto sem perceber…', required: true },
-  { key: 'sentimento_apos', label: 'Como você saiu da sessão emocionalmente?', placeholder: 'Ex: Com sensação de que não fiz o suficiente…', required: true },
-  { key: 'tema_evitado', label: 'Teve algum tema que você evitou aprofundar?', placeholder: 'Ex: Não aprofundei o tema do relacionamento com a mãe…', required: false },
-  { key: 'percepcao_paciente', label: 'O que você acha que o paciente sente em relação a você?', placeholder: 'Ex: Acho que ele me idealiza e tem medo de me decepcionar…', required: false },
-  { key: 'observacoes_livres', label: 'Observações livres', placeholder: 'Qualquer outra coisa que queira registrar sobre essa sessão…', required: false },
-];
-
 export default function ContratransferenciaPage() {
   const { cases } = useApp();
+  const router = useRouter();
 
   const [analyses, setAnalyses] = useState<CtAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
-
   const [caseSearch, setCaseSearch] = useState('');
-  const [selectedCase, setSelectedCase] = useState<{ id: string; title: string; approach_used: string; input_text: string; analysis: Record<string, unknown> } | null>(null);
-  const [formModal, setFormModal] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [formError, setFormError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     supabase
@@ -112,73 +88,8 @@ export default function ContratransferenciaPage() {
     c.title.toLowerCase().includes(caseSearch.toLowerCase())
   );
 
-  const buildCaseSummary = (c: typeof selectedCase) => {
-    if (!c) return '';
-    const a = c.analysis as { hypothesis?: string; approaches?: string[]; blind_spot?: string; alerts?: string[] };
-    const parts = [
-      `Relato: ${c.input_text}`,
-      `Hipótese clínica: ${a.hypothesis || ''}`,
-      `Intervenções: ${(a.approaches || []).join('; ')}`,
-      `Ponto cego: ${a.blind_spot || ''}`,
-    ];
-    if (a.alerts?.length) parts.push(`Alertas: ${a.alerts.join('; ')}`);
-    return parts.join('\n');
-  };
-
   const openForm = (c: typeof cases[0]) => {
-    setSelectedCase(c as unknown as typeof selectedCase);
-    setFormError('');
-    setForm(emptyForm);
-    setFormModal(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError('');
-    if (!form.sentimento_durante.trim() || !form.momento_dificil.trim() || !form.sentimento_apos.trim()) {
-      setFormError('Preencha os três campos obrigatórios.');
-      return;
-    }
-    setFormModal(false);
-    setSubmitting(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Sessão expirada.');
-
-      const res = await fetch('/api/contratransferencia', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          case_id: selectedCase!.id,
-          case_summary: buildCaseSummary(selectedCase),
-          ...form,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erro ao analisar.');
-
-      const newEntry: CtAnalysis = {
-        id: data.id || crypto.randomUUID(),
-        case_id: selectedCase!.id,
-        created_at: data.created_at || new Date().toISOString(),
-        sentimento_durante: form.sentimento_durante,
-        resultado: data.resultado,
-        cases: { title: selectedCase!.title, approach_used: selectedCase!.approach_used },
-      };
-      setAnalyses((prev) => [newEntry, ...prev]);
-      setExpanded(newEntry.id);
-      setSelectedCase(null);
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Erro inesperado.');
-      setFormModal(true);
-    } finally {
-      setSubmitting(false);
-    }
+    router.push(`/contratransferencia/nova?case_id=${c.id}`);
   };
 
   const total = analyses.length;
@@ -302,17 +213,15 @@ export default function ContratransferenciaPage() {
         <div className="lg:col-span-3 space-y-3">
 
           {/* Loading */}
-          {(loading || submitting) && (
+          {loading && (
             <div className="bg-white rounded-2xl border border-slate-100 p-10 flex flex-col items-center gap-3">
               <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-              <p className="text-xs text-slate-400 font-medium">
-                {submitting ? 'Analisando seus processos internos…' : 'Carregando…'}
-              </p>
+              <p className="text-xs text-slate-400 font-medium">Carregando…</p>
             </div>
           )}
 
           {/* Empty */}
-          {!loading && !submitting && analyses.length === 0 && (
+          {!loading && analyses.length === 0 && (
             <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center space-y-3">
               <div className="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center mx-auto">
                 <Activity className="w-5 h-5 text-slate-300" />
@@ -325,7 +234,7 @@ export default function ContratransferenciaPage() {
           )}
 
           {/* Cards */}
-          {!loading && !submitting && analyses.map((a) => {
+          {!loading && analyses.map((a) => {
             const nivel = nivelConfig[a.resultado.nivel_processo] ?? nivelConfig.leve;
             const isOpen = expanded === a.id;
 
@@ -427,77 +336,6 @@ export default function ContratransferenciaPage() {
         </div>
       </div>
 
-      {/* ── Form modal ── */}
-      {formModal && selectedCase && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80">
-          <div
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg flex flex-col"
-            style={{ maxHeight: 'min(700px, 92vh)' }}
-          >
-            <div className="p-6 pb-5 border-b border-slate-100 shrink-0">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-base font-semibold text-slate-900">Como você se sentiu?</h2>
-                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
-                    {selectedCase.title}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setFormModal(false)}
-                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-              <div className="overflow-y-auto flex-1 p-6 space-y-4">
-                {formError && (
-                  <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
-                    {formError}
-                  </div>
-                )}
-                {formFields.map(({ key, label, placeholder, required }) => (
-                  <div key={key} className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                      {label}
-                      {required
-                        ? <span className="text-rose-500">*</span>
-                        : <span className="text-[10px] font-normal text-slate-400 ml-0.5">(opcional)</span>
-                      }
-                    </label>
-                    <textarea
-                      value={form[key as keyof typeof form]}
-                      onChange={(e) => setForm(f => ({ ...f, [key]: e.target.value }))}
-                      placeholder={placeholder}
-                      rows={required ? 3 : 2}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-blue-400 focus:bg-white rounded-xl p-3.5 text-xs text-slate-700 placeholder-slate-400 outline-none transition-all resize-none leading-relaxed"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-3 p-6 pt-4 border-t border-slate-100 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setFormModal(false)}
-                  className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-semibold transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-[0_6px_16px_rgba(37,99,235,0.3)] hover:-translate-y-0.5"
-                >
-                  Analisar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
