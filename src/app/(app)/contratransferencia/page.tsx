@@ -18,6 +18,7 @@ import {
   X,
   Search,
   ChevronDown,
+  Loader2,
 } from 'lucide-react';
 
 interface CtResult {
@@ -39,9 +40,24 @@ interface CtAnalysis {
 }
 
 const nivelConfig = {
-  leve: { label: 'Processo leve', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  atencao: { label: 'Atenção ao processo', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  significativo: { label: 'Processo significativo', color: 'bg-rose-50 text-rose-700 border-rose-200' },
+  leve: {
+    label: 'Processo leve',
+    bar: 'bg-emerald-400',
+    badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    icon: 'text-emerald-500',
+  },
+  atencao: {
+    label: 'Atenção ao processo',
+    bar: 'bg-amber-400',
+    badge: 'bg-amber-50 text-amber-700 border-amber-200',
+    icon: 'text-amber-500',
+  },
+  significativo: {
+    label: 'Processo significativo',
+    bar: 'bg-rose-400',
+    badge: 'bg-rose-50 text-rose-700 border-rose-200',
+    icon: 'text-rose-500',
+  },
 };
 
 const emptyForm = {
@@ -52,6 +68,14 @@ const emptyForm = {
   percepcao_paciente: '',
 };
 
+const formFields = [
+  { key: 'sentimento_durante', label: 'Como você se sentiu durante a sessão?', placeholder: 'Ex: Me senti impaciente, queria que acabasse logo…', required: true },
+  { key: 'momento_dificil', label: 'Teve algum momento que te travou ou incomodou?', placeholder: 'Ex: Quando ele falou do pai, mudei de assunto sem perceber…', required: true },
+  { key: 'sentimento_apos', label: 'Como você saiu da sessão emocionalmente?', placeholder: 'Ex: Com sensação de que não fiz o suficiente…', required: true },
+  { key: 'tema_evitado', label: 'Teve algum tema que você evitou aprofundar?', placeholder: 'Ex: Não aprofundei o tema do relacionamento com a mãe…', required: false },
+  { key: 'percepcao_paciente', label: 'O que você acha que o paciente sente em relação a você?', placeholder: 'Ex: Acho que ele me idealiza e tem medo de me decepcionar…', required: false },
+];
+
 export default function ContratransferenciaPage() {
   const { cases } = useApp();
 
@@ -59,7 +83,6 @@ export default function ContratransferenciaPage() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  // new analysis flow
   const [caseModal, setCaseModal] = useState(false);
   const [caseSearch, setCaseSearch] = useState('');
   const [selectedCase, setSelectedCase] = useState<{ id: string; title: string; approach_used: string; input_text: string; analysis: Record<string, unknown> } | null>(null);
@@ -148,7 +171,8 @@ export default function ContratransferenciaPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="surface-card p-7 lg:p-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-4 max-w-2xl">
           <div className="section-badge">
@@ -159,10 +183,9 @@ export default function ContratransferenciaPage() {
             <span className="page-headline-accent">Contra</span>transferência.
           </h1>
           <p className="text-slate-500 text-sm leading-relaxed">
-            Identifique como suas reações emocionais podem estar influenciando a condução dos seus casos.
+            Identifique como suas reações emocionais influenciam a condução dos seus casos.
           </p>
         </div>
-
         <button
           onClick={() => { setCaseModal(true); setCaseSearch(''); }}
           className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5 self-start shrink-0"
@@ -172,41 +195,47 @@ export default function ContratransferenciaPage() {
         </button>
       </div>
 
-      {/* Loading */}
+      {/* ── Loading ── */}
       {(loading || submitting) && (
-        <div className="space-y-3 animate-pulse">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-white rounded-2xl border border-slate-100" />
-          ))}
-          {submitting && (
-            <p className="text-xs text-center text-slate-400 font-medium pt-1">Analisando seus processos internos...</p>
+        <div className="space-y-3">
+          {submitting ? (
+            <div className="bg-white rounded-2xl border border-slate-100 p-8 flex flex-col items-center gap-3">
+              <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+              <p className="text-xs text-slate-500 font-medium">Analisando seus processos internos…</p>
+            </div>
+          ) : (
+            [1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+            ))
           )}
         </div>
       )}
 
-      {/* Empty state */}
+      {/* ── Empty state ── */}
       {!loading && !submitting && analyses.length === 0 && (
-        <div className="p-16 rounded-3xl border border-dashed border-slate-200 bg-white text-center space-y-4 max-w-xl mx-auto">
-          <Activity className="w-12 h-12 text-slate-300 mx-auto" />
+        <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-16 text-center space-y-4 max-w-lg mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto">
+            <Activity className="w-6 h-6 text-blue-400" />
+          </div>
           <div className="space-y-1">
-            <h3 className="text-base font-semibold text-slate-800">Nenhuma análise ainda</h3>
-            <p className="text-xs text-slate-500 leading-normal">
-              Clique em &ldquo;Nova análise&rdquo; e selecione um caso para começar.
+            <h3 className="text-sm font-semibold text-slate-800">Nenhuma análise ainda</h3>
+            <p className="text-xs text-slate-500 leading-normal max-w-xs mx-auto">
+              Selecione um caso e registre como se sentiu para receber uma análise supervisionada.
             </p>
           </div>
           <button
             onClick={() => { setCaseModal(true); setCaseSearch(''); }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-xs font-semibold text-blue-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            Nova análise
+            Começar agora
           </button>
         </div>
       )}
 
-      {/* Analyses list */}
+      {/* ── Analyses list ── */}
       {!loading && !submitting && analyses.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
           {analyses.map((a) => {
             const nivel = nivelConfig[a.resultado.nivel_processo] ?? nivelConfig.leve;
             const isOpen = expanded === a.id;
@@ -214,72 +243,86 @@ export default function ContratransferenciaPage() {
             return (
               <div
                 key={a.id}
-                className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all overflow-hidden flex flex-col"
+                className="bg-white rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all overflow-hidden"
               >
-                {/* Card header */}
+                {/* Card row */}
                 <button
                   onClick={() => setExpanded(isOpen ? null : a.id)}
-                  className="p-5 flex items-start gap-4 text-left w-full"
+                  className="w-full flex items-center gap-0 text-left"
                 >
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${nivel.color}`}>
-                        {nivel.label}
-                      </span>
-                      {a.cases && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-700 uppercase tracking-wider">
-                          {a.cases.approach_used}
+                  {/* Level bar */}
+                  <div className={`w-1 self-stretch rounded-l-2xl shrink-0 ${nivel.bar}`} />
+
+                  <div className="flex-1 flex items-center gap-4 p-4 pl-5 min-w-0">
+                    {/* Text */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${nivel.badge}`}>
+                          {nivel.label}
                         </span>
-                      )}
+                        {a.cases && (
+                          <span className="text-[10px] font-medium text-slate-400">
+                            {a.cases.approach_used}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800 truncate">
+                        {a.cases?.title ?? 'Caso sem título'}
+                      </p>
+                      <p className="text-xs text-slate-500 line-clamp-1 leading-relaxed">
+                        {a.resultado.padrao_identificado}
+                      </p>
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-800 group-hover:text-blue-700 transition-colors line-clamp-1">
-                      {a.cases?.title ?? 'Caso sem título'}
-                    </h3>
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                      {a.resultado.padrao_identificado}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                      <Clock className="w-3 h-3" />
-                      <span>{new Date(a.created_at).toLocaleDateString('pt-BR')}</span>
+
+                    {/* Right meta */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="hidden sm:flex items-center gap-1 text-[10px] text-slate-400">
+                        <Clock className="w-3 h-3" />
+                        <span>{new Date(a.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                     </div>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </button>
 
                 {/* Expanded detail */}
                 {isOpen && (
-                  <div className="border-t border-slate-100 p-5 space-y-4">
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest">
-                        <Eye className="w-3 h-3 text-blue-600" />
-                        Padrão identificado
-                      </p>
-                      <p className="text-xs leading-relaxed text-slate-700 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                        {a.resultado.padrao_identificado}
-                      </p>
+                  <div className="border-t border-slate-100 mx-5 pt-5 pb-5 space-y-5">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Padrão */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest">
+                          <Eye className="w-3 h-3 text-blue-500" />
+                          Padrão identificado
+                        </p>
+                        <p className="text-xs leading-relaxed text-slate-700 p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+                          {a.resultado.padrao_identificado}
+                        </p>
+                      </div>
+
+                      {/* Impacto */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest">
+                          <Target className="w-3 h-3 text-blue-500" />
+                          Impacto no caso
+                        </p>
+                        <p className="text-xs leading-relaxed text-slate-700 p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+                          {a.resultado.impacto_no_caso}
+                        </p>
+                      </div>
                     </div>
 
+                    {/* O que observar */}
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest">
-                        <Target className="w-3 h-3 text-blue-600" />
-                        Como pode estar afetando o caso
-                      </p>
-                      <p className="text-xs leading-relaxed text-slate-700 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                        {a.resultado.impacto_no_caso}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest">
-                        <AlertTriangle className="w-3 h-3 text-amber-500" />
+                      <p className="text-[10px] font-semibold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest">
+                        <AlertTriangle className={`w-3 h-3 ${nivel.icon}`} />
                         O que observar na próxima sessão
                       </p>
-                      <div className="space-y-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {a.resultado.o_que_observar.map((item, idx) => (
-                          <div key={idx} className="flex gap-2.5 p-3 bg-amber-50/60 border border-amber-100 rounded-xl text-xs text-slate-700">
-                            <span className="w-4 h-4 rounded-full bg-amber-400 text-white flex items-center justify-center font-semibold shrink-0 text-[9px]">
+                          <div key={idx} className="flex gap-2 items-start p-3 bg-amber-50/70 border border-amber-100 rounded-xl text-xs text-slate-700 flex-1 min-w-[200px]">
+                            <span className="w-4 h-4 rounded-full bg-amber-400 text-white flex items-center justify-center font-bold shrink-0 text-[9px] mt-0.5">
                               {idx + 1}
                             </span>
                             <span className="leading-relaxed">{item}</span>
@@ -288,34 +331,38 @@ export default function ContratransferenciaPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest">
-                        <MessageSquare className="w-3 h-3 text-blue-600" />
-                        Pergunta reflexiva
-                      </p>
-                      <p className="text-xs leading-relaxed text-slate-700 p-4 bg-blue-50/60 border border-blue-100 rounded-2xl italic border-l-4 border-l-blue-600" style={{ fontFamily: 'Georgia, serif' }}>
-                        &ldquo;{a.resultado.pergunta_reflexiva}&rdquo;
-                      </p>
+                    {/* Pergunta + referência */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest">
+                          <MessageSquare className="w-3 h-3 text-blue-500" />
+                          Pergunta reflexiva
+                        </p>
+                        <p className="text-xs leading-relaxed text-slate-600 p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl italic border-l-4 border-l-blue-500" style={{ fontFamily: 'Georgia, serif' }}>
+                          &ldquo;{a.resultado.pergunta_reflexiva}&rdquo;
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest">
+                          <BookOpen className="w-3 h-3 text-blue-500" />
+                          Referência
+                        </p>
+                        <p className="text-xs text-slate-600 p-3.5 bg-slate-50 border border-slate-100 rounded-xl leading-relaxed">
+                          {a.resultado.referencia}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest">
-                        <BookOpen className="w-3 h-3 text-blue-600" />
-                        Referência
-                      </p>
-                      <p className="text-xs text-slate-600 p-3 bg-slate-50 border border-slate-100 rounded-xl leading-relaxed">
-                        {a.resultado.referencia}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                      <p className="text-[10px] text-slate-400 italic line-clamp-1 flex-1 mr-3">
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                      <p className="text-[10px] text-slate-400 italic line-clamp-1 flex-1 mr-4">
                         &ldquo;{a.sentimento_durante}&rdquo;
                       </p>
                       {a.cases && (
                         <Link
                           href={`/historico/${a.case_id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 text-slate-600 hover:text-blue-700 rounded-xl text-[10px] font-semibold transition-all shrink-0"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-200 text-slate-500 hover:text-blue-700 rounded-xl text-[10px] font-semibold transition-all shrink-0"
                         >
                           <FolderHeart className="w-3 h-3" />
                           <span>Ver caso</span>
@@ -331,44 +378,50 @@ export default function ContratransferenciaPage() {
         </div>
       )}
 
-      {/* Case selector modal */}
+      {/* ── Case selector modal ── */}
       {caseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col" style={{ maxHeight: 'min(600px, 85vh)' }}>
+
+            {/* Header */}
+            <div className="flex items-start justify-between p-6 pb-4 shrink-0">
               <div>
                 <h3 className="text-base font-semibold text-slate-800">Selecionar caso</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Escolha o caso para analisar a contratransferência.</p>
+                <p className="text-xs text-slate-400 mt-0.5">Escolha o caso para analisar a contratransferência</p>
               </div>
               <button
                 onClick={() => setCaseModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 border-b border-slate-100">
+            {/* Search */}
+            <div className="px-6 pb-3 shrink-0">
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
                   type="text"
                   value={caseSearch}
                   onChange={(e) => setCaseSearch(e.target.value)}
                   placeholder="Buscar caso..."
                   autoFocus
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-blue-600 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-700 placeholder-slate-400 outline-none transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-blue-400 focus:bg-white rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-700 placeholder-slate-400 outline-none transition-all"
                 />
               </div>
             </div>
 
-            <div className="overflow-y-auto flex-1 p-2">
+            {/* Divider */}
+            <div className="h-px bg-slate-100 mx-6 shrink-0" />
+
+            {/* List */}
+            <div className="overflow-y-auto flex-1 p-3">
               {filteredCases.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-8">Nenhum caso encontrado.</p>
+                <p className="text-xs text-slate-400 text-center py-10">Nenhum caso encontrado.</p>
               )}
               {filteredCases.map((c) => {
-                const approachAbbr = c.approach_used?.split(' ')[0]?.slice(0, 3).toUpperCase() ?? '?';
-                const snippet = c.input_text?.slice(0, 80).trim();
+                const abbr = c.approach_used?.split(' ')[0]?.slice(0, 3).toUpperCase() ?? '?';
                 return (
                   <button
                     key={c.id}
@@ -378,26 +431,20 @@ export default function ContratransferenciaPage() {
                       setFormModal(true);
                       setFormError('');
                     }}
-                    className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-blue-50 transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 active:bg-blue-50 transition-colors text-left group"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                      {approachAbbr}
+                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                      {abbr}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-slate-800 truncate">{c.title}</p>
-                      {snippet && (
-                        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
-                          {snippet}{c.input_text?.length > 80 ? '…' : ''}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-700">
-                          {c.approach_used}
-                        </span>
-                        <span className="text-[9px] text-slate-400">{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
-                      </div>
+                      <p className="text-xs font-semibold text-slate-800 truncate group-hover:text-blue-700 transition-colors">
+                        {c.title}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {c.approach_used} · {new Date(c.created_at).toLocaleDateString('pt-BR')}
+                      </p>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 shrink-0 mt-2 transition-colors" />
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 shrink-0 transition-colors" />
                   </button>
                 );
               })}
@@ -406,58 +453,60 @@ export default function ContratransferenciaPage() {
         </div>
       )}
 
-      {/* CT form modal */}
+      {/* ── CT form modal ── */}
       {formModal && selectedCase && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-100 flex items-start justify-between">
-              <div className="space-y-1">
-                <h3 className="text-base font-semibold text-slate-800">Como você se sentiu nessa sessão?</h3>
-                <p className="text-xs text-slate-500">
-                  Caso: <span className="font-medium text-slate-700">{selectedCase.title}</span>
-                </p>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg flex flex-col" style={{ maxHeight: 'min(700px, 90vh)' }}>
+
+            {/* Header */}
+            <div className="p-6 pb-4 shrink-0 border-b border-slate-100">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <h3 className="text-base font-semibold text-slate-800">Como você se sentiu nessa sessão?</h3>
+                  <p className="text-xs text-slate-400">
+                    Caso: <span className="font-semibold text-slate-600">{selectedCase.title}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFormModal(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={() => setFormModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {formError && (
-                <p className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
-                  {formError}
-                </p>
-              )}
+            {/* Form — scrollable */}
+            <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
+              <div className="p-6 space-y-4">
+                {formError && (
+                  <p className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
+                    {formError}
+                  </p>
+                )}
 
-              {[
-                { key: 'sentimento_durante', label: 'Como você se sentiu durante a sessão?', placeholder: 'Ex: Me senti impaciente, queria que acabasse logo...', required: true },
-                { key: 'momento_dificil', label: 'Teve algum momento que te travou ou incomodou?', placeholder: 'Ex: Quando ele falou do pai, mudei de assunto sem perceber...', required: true },
-                { key: 'sentimento_apos', label: 'Como você saiu da sessão emocionalmente?', placeholder: 'Ex: Com sensação de que não fiz o suficiente...', required: true },
-                { key: 'tema_evitado', label: 'Teve algum tema que você evitou aprofundar?', placeholder: 'Ex: Não aprofundei o tema do relacionamento com a mãe...', required: false },
-                { key: 'percepcao_paciente', label: 'O que você acha que o paciente sente em relação a você?', placeholder: 'Ex: Acho que ele me idealiza e tem medo de me decepcionar...', required: false },
-              ].map(({ key, label, placeholder, required }) => (
-                <div key={key} className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-slate-700">
-                    {label}
-                    {required
-                      ? <span className="text-rose-500 ml-1">*</span>
-                      : <span className="text-[10px] font-normal text-slate-400 ml-1">(opcional)</span>
-                    }
-                  </label>
-                  <textarea
-                    value={form[key as keyof typeof form]}
-                    onChange={(e) => setForm(f => ({ ...f, [key]: e.target.value }))}
-                    placeholder={placeholder}
-                    rows={required ? 3 : 2}
-                    className="w-full bg-slate-50 border border-slate-200 focus:border-blue-400 rounded-xl p-3 text-xs text-slate-700 placeholder-slate-400 outline-none transition-colors resize-none leading-relaxed"
-                  />
-                </div>
-              ))}
+                {formFields.map(({ key, label, placeholder, required }) => (
+                  <div key={key} className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
+                      {label}
+                      {required
+                        ? <span className="text-rose-500 ml-0.5">*</span>
+                        : <span className="text-[10px] font-normal text-slate-400 ml-1">(opcional)</span>
+                      }
+                    </label>
+                    <textarea
+                      value={form[key as keyof typeof form]}
+                      onChange={(e) => setForm(f => ({ ...f, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      rows={required ? 3 : 2}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-blue-400 focus:bg-white rounded-xl p-3 text-xs text-slate-700 placeholder-slate-400 outline-none transition-all resize-none leading-relaxed"
+                    />
+                  </div>
+                ))}
+              </div>
 
-              <div className="flex gap-2 pt-2">
+              {/* Actions — sticky footer */}
+              <div className="flex gap-2 p-6 pt-0 shrink-0">
                 <button
                   type="button"
                   onClick={() => setFormModal(false)}
@@ -467,7 +516,7 @@ export default function ContratransferenciaPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-colors shadow-[0_6px_16px_rgba(37,99,235,0.25)]"
                 >
                   Analisar
                 </button>
