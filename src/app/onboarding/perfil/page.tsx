@@ -1,0 +1,222 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useApp } from '@/context/AppContext';
+import { ArrowRight, Star, Users, AlertCircle, ShieldCheck } from 'lucide-react';
+
+const SPECIALTIES = [
+  'Ansiedade e Pânico',
+  'Depressão e Humor',
+  'Trauma e TEPT',
+  'Transtornos Alimentares',
+  'Dependência Química',
+  'Desenvolvimento Pessoal',
+  'Conflitos Amorosos',
+  'TDAH / Neurodiversidade'
+];
+
+export default function OnboardingPerfil() {
+  const { user, setUser } = useApp();
+  const router = useRouter();
+
+  const [crp, setCrp]                                 = useState(user?.crp || '');
+  const [gender, setGender]                           = useState(user?.gender || '');
+  const [experience, setExperience]                   = useState(user?.yearsExperience || '1-2');
+  const [selectedPatients, setSelectedPatients]       = useState<string[]>(user?.patientTypes || []);
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(user?.specialties || []);
+  const [saving, setSaving]                           = useState(false);
+  const [saveError, setSaveError]                     = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) { router.push('/login'); return; }
+  }, [user, router]);
+
+  if (!user) return null;
+
+  const togglePatient = (type: string) =>
+    setSelectedPatients(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+
+  const toggleSpecialty = (spec: string) =>
+    setSelectedSpecialties(prev =>
+      prev.includes(spec) ? prev.filter(s => s !== spec) : [...prev, spec]
+    );
+
+  const handleNext = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      await setUser({
+        ...user,
+        crp,
+        gender,
+        yearsExperience: experience,
+        patientTypes: selectedPatients,
+        specialties: selectedSpecialties,
+      });
+      router.push('/onboarding/abordagem');
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível salvar. Verifique sua conexão e tente novamente.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#FAFBFD] text-slate-900 min-h-screen flex items-center justify-center p-5 font-sans">
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-100 shadow-sm p-8 lg:p-10 space-y-7">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <span>Passo 1 de 3 · Perfil Clínico</span>
+            <span className="text-blue-600">33%</span>
+          </div>
+          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-1/3 h-full bg-blue-600 rounded-full transition-all duration-300" />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h1 className="page-headline">
+            Nos conte sobre seu <span className="page-headline-accent">consultório.</span>
+          </h1>
+          <p className="text-sm text-slate-500 leading-relaxed max-w-lg">
+            Personalizaremos o copiloto clínico com base na sua experiência e nas demandas que você mais atende.
+          </p>
+        </div>
+
+        {saveError && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+            <p className="text-sm text-rose-700">{saveError}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleNext} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              <span>Número CRP</span>
+            </label>
+            <div className="relative">
+              <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={crp}
+                onChange={e => setCrp(e.target.value)}
+                placeholder="06/112932"
+                className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>Gênero</span>
+            </label>
+            <select
+              value={gender}
+              onChange={e => setGender(e.target.value)}
+              className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all"
+            >
+              <option value="">Prefiro não informar</option>
+              <option value="feminino">Feminino</option>
+              <option value="masculino">Masculino</option>
+              <option value="nao-binario">Não-binário</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5 text-blue-600" />
+              <span>Tempo de Atendimento Clínico</span>
+            </label>
+            <select
+              value={experience}
+              onChange={e => setExperience(e.target.value)}
+              className="w-full bg-white border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all"
+            >
+              <option value="1-2">Recém-formada (1 a 2 anos)</option>
+              <option value="3-5">Experiente inicial (3 a 5 anos)</option>
+              <option value="5-10">Maturidade clínica (5 a 10 anos)</option>
+              <option value="+10">Sênior (+10 anos)</option>
+            </select>
+          </div>
+
+          <div className="space-y-2.5">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>Quem você atende?</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2.5">
+              {['Adultos', 'Adolescentes', 'Crianças', 'Casais'].map(type => {
+                const isSelected = selectedPatients.includes(type);
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => togglePatient(type)}
+                    className={`p-3.5 rounded-xl border text-sm font-medium text-left transition-all ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 hover:border-slate-300 bg-white text-slate-600'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2.5">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5 text-blue-600" />
+              <span>Áreas de foco / especialidades</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {SPECIALTIES.map(spec => {
+                const isSelected = selectedSpecialties.includes(spec);
+                return (
+                  <button
+                    key={spec}
+                    type="button"
+                    onClick={() => toggleSpecialty(spec)}
+                    className={`p-3 rounded-xl border text-[12px] font-medium text-left transition-all ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 hover:border-slate-300 bg-white text-slate-600'
+                    }`}
+                  >
+                    {spec}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:shadow-none"
+          >
+            {saving ? (
+              <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Salvando...</>
+            ) : (
+              <><span>Continuar para Abordagem</span><ArrowRight className="w-4 h-4" /></>
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
