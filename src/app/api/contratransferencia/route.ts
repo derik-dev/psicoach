@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     const {
       case_id,
       case_summary,
+      conversa,
       sentimento_durante,
       momento_dificil,
       sentimento_apos,
@@ -43,29 +44,40 @@ export async function POST(req: NextRequest) {
       observacoes_livres,
     }: {
       case_id: string;
-      case_summary: string;
-      sentimento_durante: string;
-      momento_dificil: string;
-      sentimento_apos: string;
+      case_summary?: string;
+      conversa?: string;
+      sentimento_durante?: string;
+      momento_dificil?: string;
+      sentimento_apos?: string;
       tema_evitado?: string;
       percepcao_paciente?: string;
       observacoes_livres?: string;
     } = body;
 
-    if (!case_id || !sentimento_durante?.trim() || !momento_dificil?.trim() || !sentimento_apos?.trim()) {
+    const isChatMode = !!conversa?.trim();
+
+    if (!case_id) {
+      return Response.json({ error: 'case_id ausente.' }, { status: 400 });
+    }
+    if (!isChatMode && (!sentimento_durante?.trim() || !momento_dificil?.trim() || !sentimento_apos?.trim())) {
       return Response.json({ error: 'Campos obrigatórios ausentes.' }, { status: 400 });
     }
 
-    const userMessage = [
-      `CASO CLÍNICO:\n${case_summary}`,
-      `\nRELATO DO TERAPEUTA:`,
-      `Como se sentiu durante: ${sentimento_durante}`,
-      `O que travou ou incomodou: ${momento_dificil}`,
-      `Como saiu da sessão: ${sentimento_apos}`,
-      tema_evitado?.trim() ? `Tema evitado: ${tema_evitado}` : null,
-      percepcao_paciente?.trim() ? `Percepção do paciente sobre ela: ${percepcao_paciente}` : null,
-      observacoes_livres?.trim() ? `Observações adicionais: ${observacoes_livres}` : null,
-    ].filter(Boolean).join('\n');
+    const userMessage = isChatMode
+      ? [
+          case_summary ? `CASO CLÍNICO:\n${case_summary}` : null,
+          `\nTRANSCRIÇÃO DA CONVERSA DE SUPERVISÃO:\n${conversa}`,
+        ].filter(Boolean).join('\n')
+      : [
+          case_summary ? `CASO CLÍNICO:\n${case_summary}` : null,
+          `\nRELATO DO TERAPEUTA:`,
+          `Como se sentiu durante: ${sentimento_durante}`,
+          `O que travou ou incomodou: ${momento_dificil}`,
+          `Como saiu da sessão: ${sentimento_apos}`,
+          tema_evitado?.trim() ? `Tema evitado: ${tema_evitado}` : null,
+          percepcao_paciente?.trim() ? `Percepção do paciente sobre ela: ${percepcao_paciente}` : null,
+          observacoes_livres?.trim() ? `Observações adicionais: ${observacoes_livres}` : null,
+        ].filter(Boolean).join('\n');
 
     const completion = await groq.chat.completions.create({
       model: GROQ_MODEL,
@@ -73,7 +85,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 1024,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userMessage },
+        { role: 'user', content: userMessage as string },
       ],
     });
 
@@ -87,12 +99,12 @@ export async function POST(req: NextRequest) {
       .insert({
         case_id,
         user_id: user.id,
-        sentimento_durante,
-        momento_dificil,
-        sentimento_apos,
+        sentimento_durante: sentimento_durante || (isChatMode ? '[via chat]' : ''),
+        momento_dificil: momento_dificil || (isChatMode ? '[via chat]' : ''),
+        sentimento_apos: sentimento_apos || (isChatMode ? '[via chat]' : ''),
         tema_evitado: tema_evitado || null,
         percepcao_paciente: percepcao_paciente || null,
-        observacoes_livres: observacoes_livres || null,
+        observacoes_livres: isChatMode ? conversa : (observacoes_livres || null),
         resultado,
       })
       .select('id, created_at')
