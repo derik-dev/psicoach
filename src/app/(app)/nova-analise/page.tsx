@@ -1338,10 +1338,8 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           messages: newMessages,
-          case_summary: [
-            chatPatient ? `PACIENTE EM CONTEXTO:\nPseudônimo: ${chatPatient.pseudonym}${chatPatient.age_range ? `, ${chatPatient.age_range}` : ''}${chatPatient.initial_diagnosis ? `\nDiagnóstico: ${chatPatient.initial_diagnosis}` : ''}${chatPatient.approach ? `\nAbordagem: ${chatPatient.approach}` : ''}` : '',
-            chatImportedCase ? `CASO IMPORTADO:\n${buildChatSummary(chatImportedCase)}` : '',
-          ].filter(Boolean).join('\n\n') || undefined,
+          patient_id: chatSelectedPatientId ?? undefined,
+          case_summary: chatImportedCase ? buildChatSummary(chatImportedCase) : undefined,
         }),
       });
       const data = await res.json();
