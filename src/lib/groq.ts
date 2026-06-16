@@ -117,6 +117,10 @@ Qualquer menção a morte, autolesão ou ideação suicida — mesmo negada — 
 SOBRE REFERÊNCIAS:
 Só cite autores e obras que realmente existem. Se não tiver certeza, não cite.
 
+SOBRE CONTINUIDADE DE CASO:
+Quando o relato vier com bloco "CONTINUIDADE DE CASO", você está na sessão N de um tratamento em andamento.
+Nesse caso: compare o relato atual com os anteriores, identifique o que mudou (melhora, piora, novo padrão), revisit as hipóteses anteriores à luz da sessão atual e ajuste o plano. Não trate como caso novo — o terapeuta já conhece o paciente.
+
 SOBRE CAMPOS VAZIOS:
 Não invente contexto. Aponte a lacuna e pergunte o que falta.
 
@@ -169,8 +173,15 @@ export function buildAnalysisUserMessage(
   const lines: string[] = [];
 
   if (patientMemory) {
-    lines.push('MEMÓRIA DO PACIENTE:');
-    lines.push(`Pseudônimo: ${patientMemory.pseudonym}`);
+    const sessionLabel = patientMemory.sessions_count > 0
+      ? `Sessão ${patientMemory.sessions_count + 1} — continuidade`
+      : 'Primeira sessão registrada';
+
+    lines.push(`CONTINUIDADE DE CASO — ${patientMemory.pseudonym} (${sessionLabel})`);
+    lines.push('');
+    lines.push('INSTRUÇÃO: Este é um caso em andamento. Analise como evolução do tratamento — considere o histórico abaixo para identificar progressos, padrões persistentes, hipóteses que devem ser revisadas e o que mudou desde a última sessão. Não trate como caso novo.');
+    lines.push('');
+    lines.push('HISTÓRICO DO PACIENTE:');
     if (patientMemory.gender) lines.push(`Gênero: ${patientMemory.gender}`);
     if (patientMemory.referral_source) lines.push(`Como chegou: ${patientMemory.referral_source}`);
     if (patientMemory.medication_use) lines.push(`Medicação psiquiátrica: ${patientMemory.medication_use}`);
@@ -182,28 +193,28 @@ export function buildAnalysisUserMessage(
     if (patientMemory.intake_sessions_count) lines.push(`Sessões informadas no cadastro: ${patientMemory.intake_sessions_count}`);
     lines.push(`Sessões realizadas: ${patientMemory.sessions_count}`);
     if (patientMemory.confirmed_hypotheses.length > 0)
-      lines.push(`Hipóteses confirmadas: ${patientMemory.confirmed_hypotheses.join('; ')}`);
+      lines.push(`Hipóteses confirmadas ao longo do tratamento: ${patientMemory.confirmed_hypotheses.join('; ')}`);
     if (patientMemory.discarded_hypotheses.length > 0)
       lines.push(`Hipóteses descartadas: ${patientMemory.discarded_hypotheses.join('; ')}`);
     if (patientMemory.what_worked.length > 0)
-      lines.push(`O que funcionou: ${patientMemory.what_worked.join('; ')}`);
+      lines.push(`O que funcionou no tratamento: ${patientMemory.what_worked.join('; ')}`);
     if (patientMemory.what_didnt_work.length > 0)
       lines.push(`O que não funcionou: ${patientMemory.what_didnt_work.join('; ')}`);
     if (patientMemory.recurring_patterns.length > 0)
-      lines.push(`Padrões recorrentes: ${patientMemory.recurring_patterns.join('; ')}`);
+      lines.push(`Padrões recorrentes identificados: ${patientMemory.recurring_patterns.join('; ')}`);
     if (patientMemory.central_themes.length > 0)
-      lines.push(`Temas centrais: ${patientMemory.central_themes.join('; ')}`);
+      lines.push(`Temas centrais do caso: ${patientMemory.central_themes.join('; ')}`);
     if (patientMemory.attention_history.length > 0) {
       const histStr = patientMemory.attention_history
         .map(h => `Sessão ${h.session_number}: ${h.level}`)
         .join(' → ');
-      lines.push(`Histórico de atenção: ${histStr}`);
+      lines.push(`Evolução do nível de atenção: ${histStr}`);
     }
     if (patientMemory.last_session_notes?.trim())
-      lines.push(`Nota da última sessão: ${patientMemory.last_session_notes.trim()}`);
+      lines.push(`Nota do terapeuta na última sessão: ${patientMemory.last_session_notes.trim()}`);
     if (patientMemory.previous_relatos && patientMemory.previous_relatos.length > 0) {
       lines.push('');
-      lines.push('RELATOS ANTERIORES:');
+      lines.push('RELATOS DAS SESSÕES ANTERIORES (para comparação de evolução):');
       for (const r of patientMemory.previous_relatos) {
         lines.push(`Sessão ${r.session_number}: ${r.input_text.trim()}`);
       }
@@ -211,7 +222,7 @@ export function buildAnalysisUserMessage(
     lines.push('');
   }
 
-  lines.push('CASO:');
+  lines.push(patientMemory ? 'RELATO DA SESSÃO ATUAL:' : 'CASO:');
   if (title?.trim()) lines.push(`Identificação: ${title.trim()}`);
   lines.push(`Relato: ${inputText}`);
   if (context.sessions_count?.trim()) lines.push(`Sessões: ${context.sessions_count.trim()}`);
