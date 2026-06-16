@@ -2014,7 +2014,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
 
               {/* Centered input box */}
               <div className="w-full max-w-xl">
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-4 pt-3.5 pb-3">
+                <div className="chat-input-box rounded-2xl border border-slate-200 bg-white shadow-sm px-4 pt-3.5 pb-3">
                   <textarea
                     ref={chatInputRef}
                     value={chatInput}
@@ -2131,7 +2131,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
 
               {/* Bottom input */}
               <div className="px-4 pb-3 shrink-0">
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-4 pt-3 pb-3">
+                <div className="chat-input-box rounded-2xl border border-slate-200 bg-white shadow-sm px-4 pt-3 pb-3">
                   <textarea
                     ref={chatInputRef}
                     value={chatInput}

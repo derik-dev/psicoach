@@ -518,3 +518,9 @@ body {
 .app-dark ::-webkit-scrollbar { width: 6px; }
 .app-dark ::-webkit-scrollbar-track { background: #0a0a0a; }
 .app-dark ::-webkit-scrollbar-thumb { background: #404040; border-radius: 4px; }
+
+/* Chat inline textarea — transparent so it blends with its card container */
+.app-dark .chat-input-box textarea {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
