@@ -1299,7 +1299,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
             <Mic className="h-4 w-4" /> Áudio
           </button>
           <Link
-            href="/contratransferencia/chat"
+            href="/nova-analise/chat"
             className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 text-slate-500 hover:text-slate-700"
           >
             <MessageSquare className="h-4 w-4" /> Chat
