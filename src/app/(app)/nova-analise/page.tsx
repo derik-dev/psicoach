@@ -1093,7 +1093,7 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     setIsTranscribing(true);
     try {
       const headers = await getAuthHeaders();
-      if (!headers) return;
+      if (!headers) { setAudioError('Sessão expirada. Faça login novamente.'); return; }
 
       const form = new FormData();
       form.append('audio', blob, 'recording.webm');
@@ -1106,7 +1106,11 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
       const data = await res.json();
       if (res.ok && data.text) {
         onTranscribedRef.current?.(data.text);
+      } else if (!res.ok) {
+        setAudioError(data?.error || 'Erro ao transcrever o áudio gravado.');
       }
+    } catch (err) {
+      setAudioError(err instanceof Error ? err.message : 'Falha de comunicação com o servidor.');
     } finally {
       setIsTranscribing(false);
     }
@@ -1146,10 +1150,11 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    setAudioError(null);
     setIsTranscribing(true);
     try {
       const headers = await getAuthHeaders();
-      if (!headers) return;
+      if (!headers) { setAudioError('Sessão expirada. Faça login novamente.'); return; }
       const form = new FormData();
       form.append('audio', file, file.name);
       const res = await fetch('/api/transcribe', {
@@ -1160,6 +1165,10 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
       const data = await res.json();
       if (res.ok && data.text)
         setAudioTranscript(prev => prev ? `${prev} ${data.text}` : data.text);
+      else if (!res.ok)
+        setAudioError(data?.error || 'Erro ao transcrever o arquivo de áudio.');
+    } catch (err) {
+      setAudioError(err instanceof Error ? err.message : 'Falha de comunicação com o servidor.');
     } finally {
       setIsTranscribing(false);
     }
@@ -1665,6 +1674,50 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
             </div>
 
             <div className="space-y-4">
+              {/* Seletor de paciente */}
+              <div>
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                  Paciente
+                </label>
+                <PatientSelector
+                  patients={patients}
+                  selectedId={selectedPatientId}
+                  onSelect={handlePatientSelect}
+                  onNewPatient={() => setShowPatientModal(true)}
+                />
+                {selectedPat && (
+                  <div className="animate-fade-in border-l-[3px] border-l-blue-500 bg-blue-50/30 pl-4 pr-3 py-2 flex items-center gap-1.5 flex-wrap min-h-[36px]">
+                    <span className="text-[13px] font-medium text-slate-700">{selectedPat.pseudonym}</span>
+                    {selectedPat.age_range && (
+                      <>
+                        <span className="text-[11px] text-slate-400">•</span>
+                        <span className="text-[13px] text-slate-500">{selectedPat.age_range}</span>
+                      </>
+                    )}
+                    {selectedPat.approach && (
+                      <>
+                        <span className="text-[11px] text-slate-400">•</span>
+                        <span className="text-[12px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">{selectedPat.approach}</span>
+                      </>
+                    )}
+                    {nextSessionNumber && (
+                      <>
+                        <span className="text-[11px] text-slate-400">•</span>
+                        <span className="text-[13px] text-slate-500">Sessão {nextSessionNumber}</span>
+                      </>
+                    )}
+                    {patientSessionInfo?.lastDate && (
+                      <>
+                        <span className="text-[11px] text-slate-400">•</span>
+                        <span className="text-[13px] text-slate-500">
+                          Última: {new Date(patientSessionInfo.lastDate).toLocaleDateString('pt-BR')}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Gravar + Upload */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Record */}
