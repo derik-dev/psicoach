@@ -12,7 +12,9 @@ import {
   Bookmark,
   Layers,
   Heart,
-  Quote
+  Quote,
+  Infinity,
+  AlertCircle,
 } from 'lucide-react';
 
 const CLINICAL_TIPS = [
@@ -25,13 +27,13 @@ const CLINICAL_TIPS = [
 ];
 
 export default function Dashboard() {
-  const { user, cases, activePlan, analysesUsed, analysesLimit } = useApp();
+  const { user, cases, analysesUsed, analysesLimit } = useApp();
   const [tipIndex, setTipIndex] = React.useState(() => new Date().getDate() % CLINICAL_TIPS.length);
 
   if (!user) return null;
 
   const totalCases = cases.length;
-  const remaining = analysesLimit !== null ? Math.max(0, analysesLimit - analysesUsed) : 'Ilimitado';
+  const remaining = analysesLimit !== null ? Math.max(0, analysesLimit - analysesUsed) : null;
   const recentCases = cases.slice(0, 5);
 
   const rotateTip = () => {
@@ -66,22 +68,70 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Consultas IA', value: analysesUsed, icon: FileText, sub: 'Total executadas', color: 'text-blue-600' },
-          { label: 'Disponíveis', value: remaining, icon: Layers, sub: activePlan === 'starter' ? 'No plano mensal' : 'Plano Pro', color: 'text-emerald-500' },
-          { label: 'Casos Salvos', value: totalCases, icon: Bookmark, sub: 'Sob sigilo', color: 'text-amber-500' },
-        ].map(({ label, value, icon: Icon, sub, color }) => (
-          <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</span>
-              <Icon className={`w-4 h-4 ${color}`} />
-            </div>
-            <div>
-              <span className="text-2xl font-light text-slate-900 tracking-tight">{value}</span>
-              <p className="text-[10px] text-slate-400 font-medium mt-1">{sub}</p>
-            </div>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Consultas IA</span>
+            <FileText className="w-4 h-4 text-blue-600" />
           </div>
-        ))}
+          <div>
+            <span className="text-2xl font-light text-slate-900 tracking-tight">{analysesUsed}</span>
+            <p className="text-[10px] text-slate-400 font-medium mt-1">Total executadas</p>
+          </div>
+        </div>
+
+        <div className={`rounded-2xl border shadow-sm p-5 flex flex-col gap-4 ${
+          remaining === null
+            ? 'bg-white border-slate-100'
+            : remaining === 0
+            ? 'bg-orange-50 border-orange-200'
+            : 'bg-white border-slate-100'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+              {remaining === null ? 'Análises' : remaining === 0 ? 'Limite' : 'Disponíveis'}
+            </span>
+            {remaining === null ? (
+              <Infinity className="w-4 h-4 text-emerald-500" />
+            ) : remaining === 0 ? (
+              <AlertCircle className="w-4 h-4 text-orange-500" />
+            ) : (
+              <Layers className="w-4 h-4 text-emerald-500" />
+            )}
+          </div>
+          <div>
+            {remaining === null ? (
+              <>
+                <span className="text-2xl font-light text-emerald-600 tracking-tight">∞</span>
+                <p className="text-[10px] text-emerald-500 font-medium mt-1">Análises ilimitadas</p>
+              </>
+            ) : remaining === 0 ? (
+              <>
+                <span className="text-base font-semibold text-orange-600 tracking-tight leading-tight">Limite atingido</span>
+                <p className="text-[10px] text-orange-500 font-medium mt-1">
+                  <a href="/pricing" className="underline hover:text-orange-600">Fazer upgrade →</a>
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="text-2xl font-light text-slate-900 tracking-tight">{remaining}</span>
+                <p className="text-[10px] text-slate-400 font-medium mt-1">
+                  {analysesUsed} de {analysesLimit} usadas
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Casos Salvos</span>
+            <Bookmark className="w-4 h-4 text-amber-500" />
+          </div>
+          <div>
+            <span className="text-2xl font-light text-slate-900 tracking-tight">{totalCases}</span>
+            <p className="text-[10px] text-slate-400 font-medium mt-1">Sob sigilo</p>
+          </div>
+        </div>
       </div>
 
       {/* Grid Body */}

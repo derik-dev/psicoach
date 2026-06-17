@@ -30,6 +30,7 @@ export default function CaseHistory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [approachFilter, setApproachFilter] = useState('All');
   const [tagFilter, setTagFilter] = useState('All');
+  const [showChats, setShowChats] = useState(false);
   const [linkingCaseId, setLinkingCaseId] = useState<string | null>(null);
   const [linkingLoading, setLinkingLoading] = useState(false);
   const [confirmUnlink, setConfirmUnlink] = useState<{ caseId: string; patientName: string } | null>(null);
@@ -64,6 +65,9 @@ export default function CaseHistory() {
 
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
+      const isChat = c.approach_used === 'Chat' || (c.tags && c.tags.includes('chat'));
+      if (isChat && !showChats) return false;
+
       const matchesSearch =
         c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.input_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,7 +81,7 @@ export default function CaseHistory() {
 
       return matchesSearch && matchesApproach && matchesTag;
     });
-  }, [cases, searchTerm, approachFilter, tagFilter]);
+  }, [cases, searchTerm, approachFilter, tagFilter, showChats]);
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -356,6 +360,16 @@ export default function CaseHistory() {
               Limpar filtros
             </button>
           )}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+          <span className="text-[10px] font-medium text-slate-400">Mostrar conversas de chat</span>
+          <button
+            onClick={() => setShowChats(v => !v)}
+            className={`relative w-8 h-4 rounded-full transition-colors ${showChats ? 'bg-blue-600' : 'bg-slate-200'}`}
+          >
+            <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all ${showChats ? 'left-4' : 'left-0.5'}`} />
+          </button>
         </div>
       </div>
 

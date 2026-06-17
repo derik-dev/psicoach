@@ -8,9 +8,9 @@ import { supabase } from '@/lib/supabase/client';
 import {
   Brain, Sparkles, ChevronDown, Play, RotateCcw, Copy,
   AlertTriangle, HelpCircle, BookOpen, Eye, FileText, TrendingUp,
-  CheckCircle, LayoutTemplate, Plus,
-  Target, ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, Lock,
-  Users, UserPlus, Clock, Save, MessageSquare, Send, Loader2, FolderHeart, Search,
+  CheckCircle, Plus,
+  ChevronRight, X, Shield, Zap, Check, Mic, Square, Upload, Lock,
+  Users, UserPlus, Clock, Save, Send, Loader2, FolderHeart, Search,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -885,12 +885,24 @@ function SessionNotes({ sessionId, patientName }: SessionNotesProps) {
 
 /* ════════════════════ main page ════════════════════ */
 
-function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string | null }) {
+type ChatCase = { id: string; title: string; approach_used: string; input_text: string; analysis: Record<string, unknown> };
+
+function NovaAnaliseContent({
+  requestedPatientId,
+  requestedMode = 'standard',
+  requestedCaseId = null,
+  requestedCase = null,
+}: {
+  requestedPatientId: string | null;
+  requestedMode?: Mode;
+  requestedCaseId?: string | null;
+  requestedCase?: ChatCase | null;
+}) {
   const { user, cases, setCases, addCase, updateCase, setAnalysesUsed, patients, addPatient } = useApp();
   const router = useRouter();
   const initialPatient = patients.find(patient => patient.id === requestedPatientId);
 
-  const [mode, setMode] = useState<Mode>('standard');
+  const [mode] = useState<Mode>(requestedMode);
 
   /* patient */
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(initialPatient?.id || null);
@@ -940,14 +952,13 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
 
   /* chat mode */
   type ChatMsg = { role: 'user' | 'assistant'; content: string };
-  type ChatCase = { id: string; title: string; approach_used: string; input_text: string; analysis: Record<string, unknown> };
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatInput, setChatInput]               = useState('');
   const [chatSending, setChatSending]           = useState(false);
-  const [chatImportedCase, setChatImportedCase] = useState<ChatCase | null>(null);
+  const [chatImportedCase, setChatImportedCase] = useState<ChatCase | null>(requestedCase);
   const [chatShowPicker, setChatShowPicker]     = useState(false);
   const [chatCaseSearch, setChatCaseSearch]     = useState('');
-  const [chatCaseId, setChatCaseId]             = useState<string | null>(null);
+  const [chatCaseId, setChatCaseId]             = useState<string | null>(requestedCaseId);
   const [chatError, setChatError]               = useState('');
   const [chatSelectedPatientId, setChatSelectedPatientId] = useState<string | null>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -1380,49 +1391,19 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
     <div className="space-y-4">
 
       {/* ── Header ── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="page-headline">
-            Nova <span className="page-headline-accent">análise.</span>
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Forneça as anotações do paciente. A IA estruturará o caso sob um olhar científico.
-          </p>
-        </div>
-
-        {/* Mode toggle */}
-        <div className="flex shrink-0 items-center gap-1 self-start rounded-2xl border border-slate-200 bg-slate-100 p-1 sm:self-auto">
-          <button
-            onClick={() => setMode('standard')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-              mode === 'standard'
-                ? 'border border-slate-200 bg-white text-blue-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <LayoutTemplate className="h-4 w-4" /> Padrão
-          </button>
-          <button
-            onClick={() => setMode('audio')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-              mode === 'audio'
-                ? 'border border-slate-200 bg-white text-blue-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Mic className="h-4 w-4" /> Áudio
-          </button>
-          <button
-            onClick={() => setMode('chat')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-              mode === 'chat'
-                ? 'border border-slate-200 bg-white text-blue-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <MessageSquare className="h-4 w-4" /> Chat
-          </button>
-        </div>
+      <div>
+        <h1 className="page-headline">
+          {mode === 'chat'
+            ? <>Conversa <span className="page-headline-accent">sobre o caso.</span></>
+            : <>Nova <span className="page-headline-accent">análise.</span></>
+          }
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {mode === 'chat'
+            ? 'Aprofunde a discussão clínica sobre um caso existente com a IA.'
+            : 'Forneça as anotações do paciente. A IA estruturará o caso sob um olhar científico.'
+          }
+        </p>
       </div>
 
       {/* ══════════════ STANDARD MODE ══════════════ */}
@@ -1528,14 +1509,43 @@ function NovaAnaliseContent({ requestedPatientId }: { requestedPatientId: string
                     {inputText.length} car.
                   </span>
                 </div>
-                <textarea
-                  required
-                  rows={6}
-                  value={inputText}
-                  onChange={e => setInputText(e.target.value)}
-                  placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
-                  className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                />
+                <div className="relative">
+                  <textarea
+                    required
+                    rows={6}
+                    value={inputText}
+                    onChange={e => setInputText(e.target.value)}
+                    placeholder="Insira queixas do paciente, verbalizações importantes, comportamento observado, histórico relevante..."
+                    className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 pb-10 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                  {/* Mic button */}
+                  {isTranscribing ? (
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-xl bg-blue-50 border border-blue-200 px-2.5 py-1.5">
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
+                      <span className="text-[10px] font-semibold text-blue-600">Transcrevendo...</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isRecording) {
+                          stopRecording();
+                        } else {
+                          startRecording(text => setInputText(prev => prev ? `${prev}\n${text}` : text));
+                        }
+                      }}
+                      title={isRecording ? 'Parar gravação' : 'Gravar relato por voz'}
+                      className={`absolute bottom-3 right-3 flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-semibold transition-all ${
+                        isRecording
+                          ? 'bg-rose-500 text-white shadow-sm animate-pulse'
+                          : 'bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 border border-slate-200 hover:border-blue-200'
+                      }`}
+                    >
+                      {isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                      <span>{isRecording ? 'Parar' : 'Dictar'}</span>
+                    </button>
+                  )}
+                </div>
                 {inputText.length > 0 && inputText.length < 200 && (
                   <p className="text-[10px] text-amber-600">Recomendado mínimo de 200 caracteres para análise mais precisa.</p>
                 )}
@@ -2279,10 +2289,15 @@ export default function NovaAnalise() {
 
 function NovaAnaliseFromUrl() {
   const searchParams = useSearchParams();
-  const { patients } = useApp();
+  const { patients, cases } = useApp();
   const requestedPatientId = searchParams.get('patient');
+  const requestedMode = (searchParams.get('mode') as Mode | null) ?? 'standard';
+  const requestedCaseId = searchParams.get('case');
   const requestedPatient = requestedPatientId
     ? patients.find(patient => patient.id === requestedPatientId)
+    : null;
+  const requestedCase = requestedCaseId
+    ? cases.find(c => c.id === requestedCaseId) ?? null
     : null;
 
   if (requestedPatientId && !requestedPatient) {
@@ -2293,6 +2308,15 @@ function NovaAnaliseFromUrl() {
     <NovaAnaliseContent
       key={requestedPatient?.updated_at || requestedPatientId || 'new-analysis'}
       requestedPatientId={requestedPatientId}
+      requestedMode={requestedMode}
+      requestedCaseId={requestedCaseId}
+      requestedCase={requestedCase ? {
+        id: requestedCase.id,
+        title: requestedCase.title,
+        approach_used: requestedCase.approach_used,
+        input_text: requestedCase.input_text,
+        analysis: requestedCase.analysis as Record<string, unknown>,
+      } : null}
     />
   );
 }

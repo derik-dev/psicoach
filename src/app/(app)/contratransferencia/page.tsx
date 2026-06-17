@@ -119,11 +119,11 @@ export default function ContratransferenciaPage() {
             </p>
           </div>
           <Link
-            href="/contratransferencia/chat"
+            href="/contratransferencia/nova"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-[0_8px_20px_rgba(37,99,235,0.25)] hover:-translate-y-0.5 self-start shrink-0 relative"
           >
-            <MessageSquare className="w-4 h-4" />
-            <span>Conversa livre</span>
+            <Plus className="w-4 h-4" />
+            <span>Nova análise</span>
           </Link>
         </div>
 
